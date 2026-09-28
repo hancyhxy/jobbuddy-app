@@ -1,0 +1,21 @@
+body.badge-app { background: #000; overflow: hidden; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+#root { height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(14px * var(--k, 1)); padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom); background: radial-gradient(90% 70% at 50% 40%, #262626, #000 75%); }
+.b-top { position: absolute; top: calc(12px + env(safe-area-inset-top)); left: 16px; right: 16px; display: flex; align-items: center; gap: 12px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #777; letter-spacing: .12em; }
+.b-top .state { flex: 1; } .b-top .state.on { color: var(--ac); }
+.b-top .op { width: 40px; height: 40px; border-radius: 50%; color: #555; font-size: 22px; text-align: center; }
+.nfc-pad { width: calc(228px * var(--k)); height: 44px; border-radius: 12px; border: 1.5px dashed #444; display: grid; place-items: center; font: 700 11px ui-monospace, Menlo, monospace; letter-spacing: .3em; color: #666; }
+.nfc-pad:not(:disabled) { border-color: var(--ac); color: var(--ac); animation: nfc 2.2s infinite; }
+.nfc-pad:disabled { opacity: .5; }
+@keyframes nfc { 50% { box-shadow: 0 0 0 6px #d7ff3a1a; } }
+.screen-wrap { width: calc(228px * var(--k)); height: calc(228px * var(--k)); border-radius: calc(12px * var(--k)); box-shadow: 0 0 0 calc(10px * var(--k)) #1b1b1b, 0 0 0 calc(11px * var(--k)) #3a3a3a, 0 30px 60px #000; overflow: hidden; }
+.screen-wrap .screen { transform: scale(var(--k)); transform-origin: top left; border-radius: 0; box-shadow: none; }
+.hw-row { display: flex; gap: calc(60px * var(--k)); margin-top: calc(20px * var(--k)); }
+.hw-row .hw { width: calc(64px * var(--k)); height: calc(64px * var(--k)); font-size: calc(24px * var(--k)); }
+.b-hint { color: #777; font-size: 14px; text-align: center; min-height: 40px; max-width: 320px; }
+.badge-app .scrim { position: fixed; }
+.badge-app .sheet { position: fixed; justify-items: stretch; text-align: left; gap: 8px; max-height: 85dvh; overflow-y: auto; background: #151515; }
+.badge-app .sheet > b { font-size: 18px; }
+.opt { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 10px; background: #222; font-weight: 600; font-size: 15px; }
+.opt i { display: block; font-style: normal; font-weight: 400; font-size: 12px; color: var(--mu); }
+.lbl { margin-top: 10px; letter-spacing: .1em; font-size: 11px !important; }
+.owners { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -2,7 +2,29 @@
 
 A runnable, installable mobile web app for JobBuddy's final prototype. It covers the full online and in-person event journeys. The event badge is **simulated in software**, so the interaction can be finalised before it moves to ESP32 hardware.
 
-## Open it
+## Install on phones — two apps
+
+| App | Role | URL |
+| --- | --- | --- |
+| **JobBuddy** | Attendee phone app | <https://hancyhxy.github.io/jobbuddy-app/> |
+| **JB Badge** | Event badge (stand-in for the ESP32 hardware) | <https://hancyhxy.github.io/jobbuddy-app/badge/> |
+
+Install each app from its URL, ideally on two different phones.
+
+- iPhone: open it in Safari, tap Share, then Add to Home Screen.
+- Android: open it in Chrome, tap ⋮, then Install app (or Add to Home screen).
+
+Once opened, it launches full-screen from the home-screen icon and works offline. To publish local edits, run `./deploy.command` (public repo `hancyhxy/jobbuddy-app`).
+
+### Two-device demo (devices not linked yet)
+
+Each device keeps its own local state, so the presenter moves both sides along:
+
+- **Badge ⋯ operator menu:** 1 Staff assigns badge → 2 Phone sends pair request → press ● → tap the **NFC** strip to touch badges with someone → ● yes → ● save → 3 Staff confirms return. It can also choose who the badge shows.
+- **Phone:** after pairing, **DEMO Badge on another device: confirmed** stands in for the badge's ●. In Live → Saved, **DEMO Badge on another device saved …** adds the encounter that the badge would sync.
+- **Same browser:** open both apps in two windows of the same browser (e.g. on a laptop) and they sync automatically through shared local storage.
+
+## Run locally
 
 ```bash
 ./run.command          # serves on port 8080
@@ -51,10 +73,11 @@ All data is fictional and stays in the browser's `localStorage`. **Me → Reset 
 - `js/app.js`: state, router, views, badge simulator, demo actions.
 - `js/data.js`: fictional events, people, posts, prompts.
 - `js/avatar.js`, `js/sprites.js`: 18×18 ASCII avatars adapted from The Pudding's *Hello, Stranger* (MIT, 2022) via Anonymous Connection.
+- `badge/`: standalone Badge app (fullscreen, NFC strip, ● / ○ buttons, operator menu), sharing `js/data.js` and `js/avatar.js`.
 - `manifest.webmanifest`, `sw.js`, `icons/`: PWA install and offline cache.
 
 ## Not included yet
 
-- Real multi-device sync (each phone runs its own local simulation).
+- Real multi-device sync. The phone and badge are linked only when they run in the same browser; otherwise the operator/DEMO controls bridge them.
 - ESP32 firmware. Badge screens are 240×240, with ● / ○ buttons and an NFC zone, matching the Anonymous Connection hardware so the next step can port them.
 - Organiser tools beyond the DEMO staff actions, circle pages, replies and star redemption.

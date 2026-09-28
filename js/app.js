@@ -290,6 +290,7 @@ V.pair = (id) => {
       <div class="code">${PAIR_CODE.split('').map((d) => `<span>${d}</span>`).join('')}</div>
       <p>Press <i class="kdot"></i> on the badge to confirm.</p>
       <p class="note">${ICON.info} Code doesn’t match? You may have someone else’s badge — go back and check the number.</p>
+      ${demo('Badge on another device: confirmed', 'pair-confirm')}
     </section>`;
   return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="checkin/${id}">${ICON.back}</button><b>Pair badge</b><span></span></header>
     <section class="pad">
@@ -313,7 +314,8 @@ V.live = (id) => {
   if (ui.liveTab === 'here') body = `<p class="muted small">${here.length + 1} people chose to show on the wall. Spot their avatar on a badge.</p>
       <div class="wall">${(reg(id).wall ? [me(), ...here] : here).map((p) => `<button class="wall-tile" data-a="sheet-person" data-x="${p.id}">${av(p, 64)}<b>${esc(p.short)}${p.id === 'me' ? ' (you)' : ''}</b><small>${esc(p.headline)}</small></button>`).join('')}</div>`;
   if (ui.liveTab === 'agenda') body = `<ul class="agenda">${e.agenda.map(([t, a], i) => `<li class="${i === 2 ? 'now' : ''}"><time>${t}</time>${a}${i === 2 ? ' <i class="chip">Now</i>' : ''}</li>`).join('')}</ul>`;
-  if (ui.liveTab === 'saved') body = mine.length ? mine.map(encounterRow).join('') : `<p class="empty">Nobody saved yet. When you and someone both say yes on your badges, you can save the moment here.</p>`;
+  if (ui.liveTab === 'saved') body = (mine.length ? mine.map(encounterRow).join('') : `<p class="empty">Nobody saved yet. When you and someone both say yes on your badges, you can save the moment here.</p>`)
+    + (L.noBadge ? '' : here.filter((p) => !mine.some((x) => x.person === p.id)).slice(0, 2).map((p) => demo(`Badge on another device saved ${p.short}`, 'demo-enc', p.id)).join(''));
   return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="home">${ICON.back}</button><span class="live-pill"><span class="dot"></span>Live</span>
       ${L.noBadge ? '<span class="muted small">No badge</span>' : `<button class="badge-pill" data-a="badge-open">${ICON.badge}${BADGE_ID}</button>`}</header>
     <section class="pad">
@@ -473,6 +475,8 @@ V.me = () => {
       ${list.map(eventRow).join('') || '<p class="empty">Nothing here yet.</p>'}
       <h3>Privacy</h3>
       <ul class="checklist"><li>Public: name, avatar, field, interests${p.fact ? ', fun fact' : ''}</li><li>Private: ${p.showStage ? 'email' : 'career stage, email'}</li></ul>
+      <h3>Event badge</h3>
+      <a class="row badge-link" href="./badge/" target="_blank" rel="noopener">${ICON.badge}<span class="row-main"><b>Open the Badge app</b><small>Install it on a second phone to act as the hardware</small></span>${ICON.chev}</a>
       <button class="link danger" data-a="reset">Reset demo</button>
       <div class="spacer"></div>
     </section>`;
@@ -554,7 +558,7 @@ function badgePanel() {
     idle: 'Showing your public avatar. Tap badges with someone nearby.', request: 'The other badge asked to talk. Press ● if you want to.', waiting: 'Waiting for the other person to press ●.',
     declined: 'They chose “not now”. No info exchanged.', prompt: 'Shared prompt shown on both badges. ● saves the encounter to your app.', saved: 'Encounter synced to the app.', returned: 'Badge unpaired and wiped.'
   }[S.badge.screen];
-  return `<div class="bp-head"><b>Event badge</b><small>Simulated hardware · ESP32 + NFC + 240×240 screen</small><button class="icon-btn bp-close" data-a="badge-close">${ICON.close}</button></div>
+  return `<div class="bp-head"><b>Event badge</b><small>Simulated hardware · ESP32 + NFC + 240×240 screen · <a href="./badge/" target="_blank" rel="noopener">open as separate app ↗</a></small><button class="icon-btn bp-close" data-a="badge-close">${ICON.close}</button></div>
     <div class="device ${hasBadge ? '' : 'dim'}">
       <div class="nfc">NFC</div>
       <div class="screen">${online ? '<div class="bs off"><small>Online events</small><b>No badge</b></div>' : badgeScreen()}</div>
@@ -648,6 +652,8 @@ const A = {
     if (v !== BADGE_ID) { ui.pairError = `${v} isn’t assigned to you. Check the number on the back, or ask staff.`; render(); return; }
     ui.pairError = ''; S.live.pairing = true; save(); setBadge('pairing');
   },
+  'pair-confirm': () => { S.live.paired = true; S.live.pairing = false; setBadge('idle'); toast('Badge paired ✓'); },
+  'demo-enc': (x) => { const pr = makePrompt(PEOPLE[x]); addEncounter(x, S.live.eventId, pr.text, 'badge'); toast(`Saved · ${PEOPLE[x].short}`); render(); },
   'pair-cancel': () => { S.live.pairing = false; setBadge('unpaired'); },
   'sheet-person': (x) => { ui.sheet = { type: 'person', id: x }; render(); },
   'sheet-close': () => { ui.sheet = null; render(); },
