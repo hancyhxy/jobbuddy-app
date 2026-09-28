@@ -69,10 +69,11 @@ All data is fictional and stays in the browser's `localStorage`. **Me → Reset 
 
 ## Structure
 
-- `index.html`, `styles.css`: shell and design language (dark, Spotify-inspired, accent `#D7FF3A`).
+- `index.html`, `styles.css`: shell and design language (Spotify-inspired, accent `#D7FF3A`; dark and light themes: sun/moon button on Home, or Me → Appearance → System/Light/Dark. The badge always stays dark, like hardware).
 - `js/app.js`: state, router, views, badge simulator, demo actions.
 - `js/data.js`: fictional events, people, posts, prompts.
 - `js/avatar.js`, `js/sprites.js`: 18×18 ASCII avatars adapted from The Pudding's *Hello, Stranger* (MIT, 2022) via Anonymous Connection.
+- `covers/`: event cover art generated with GPT image generation (fictional events and logos). Tech events use bold type with a logo; community and arts events use colourful poster styles.
 - `badge/`: standalone Badge app (fullscreen, NFC strip, ● / ○ buttons, operator menu), sharing `js/data.js` and `js/avatar.js`.
 - `manifest.webmanifest`, `sw.js`, `icons/`: PWA install and offline cache.
 

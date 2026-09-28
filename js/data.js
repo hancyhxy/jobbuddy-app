@@ -18,7 +18,7 @@ export const PEOPLE = {
 
 export const EVENTS = [
   {
-    id: 'build-night', mode: 'offline', title: 'Build Night: AI Agents in Practice', circle: 'Harbour Builders',
+    id: 'build-night', img: 'covers/build-night.jpg', mode: 'offline', title: 'Build Night: AI Agents in Practice', circle: 'Harbour Builders',
     date: 'Sat 19 Sep', time: '17:30 – 20:30', when: 'This Saturday', venue: 'Harbour Commons, Surry Hills', distance: '2.1 km',
     cost: 'Free', capacity: 60, going: 47, approval: true, badges: true, host: 'maya', cover: ['#D7FF3A', '#1E3A2F'],
     audience: 'Builders, designers and career changers curious about AI agents. No experience needed.',
@@ -26,7 +26,7 @@ export const EVENTS = [
     attendees: ['marcus', 'david', 'priya', 'sofia', 'ahmed'], tags: ['AI tools', 'Startups']
   },
   {
-    id: 'switch-ux', mode: 'online', title: 'Career Switch Stories: Into UX', circle: 'Switchers Circle',
+    id: 'switch-ux', img: 'covers/switch-ux.jpg', mode: 'online', title: 'Career Switch Stories: Into UX', circle: 'Switchers Circle',
     date: 'Wed 23 Sep', time: '18:00 – 19:15 AEST', when: 'Next Wednesday', platform: 'Zoom (link in app)',
     cost: 'Free', capacity: 200, going: 132, approval: false, badges: false, host: 'sofia', cover: ['#E7A6FF', '#2A1838'],
     audience: 'Anyone moving into UX from another field. Cameras optional.',
@@ -34,7 +34,7 @@ export const EVENTS = [
     attendees: ['marcus', 'leo', 'david', 'sofia'], tags: ['UX', 'Career change'], recording: true
   },
   {
-    id: 'crit-circle', mode: 'offline', title: 'Portfolio Crit Circle', circle: 'UTS Design Crowd',
+    id: 'crit-circle', img: 'covers/crit-circle.jpg', mode: 'offline', title: 'Portfolio Crit Circle', circle: 'UTS Design Crowd',
     date: 'Thu 24 Sep', time: '18:00 – 20:00', when: 'Next Thursday', venue: 'UTS Building 2, Ultimo', distance: '0.4 km',
     cost: 'Free', capacity: 30, going: 22, approval: false, badges: true, host: 'leo', cover: ['#FF9E7A', '#3A1E14'],
     audience: 'Students and juniors who want honest feedback on one portfolio piece.',
@@ -42,14 +42,14 @@ export const EVENTS = [
     attendees: ['leo', 'sofia', 'priya'], tags: ['Portfolio', 'UX']
   },
   {
-    id: 'data-ama', mode: 'online', title: 'Data Careers AMA', circle: 'Data Folks',
+    id: 'data-ama', img: 'covers/data-ama.jpg', mode: 'online', title: 'Data Careers AMA', circle: 'Data Folks',
     date: 'Tue 29 Sep', time: '12:30 – 13:15 AEST', when: 'In 2 weeks', platform: 'Zoom (link in app)',
     cost: 'Free', capacity: 300, going: 88, approval: false, badges: false, host: 'marcus', cover: ['#8FB8FF', '#14223A'],
     audience: 'Grads and switchers asking what data jobs are really like.',
     agenda: [['12:30', 'Panel'], ['12:55', 'Questions']], attendees: ['marcus', 'priya'], tags: ['Data viz', 'Interviews']
   },
   {
-    id: 'mixer', mode: 'offline', title: 'Sydney Tech Mixer', circle: 'Sydney Tech',
+    id: 'mixer', img: 'covers/mixer.jpg', mode: 'offline', title: 'Sydney Tech Mixer', circle: 'Sydney Tech',
     date: 'Fri 2 Oct', time: '18:00 – 21:00', when: 'In 2 weeks', venue: 'The Rocks, Sydney', distance: '4.8 km',
     cost: '$15', capacity: 120, going: 95, approval: false, badges: true, host: 'ahmed', cover: ['#FFD166', '#3A2E10'],
     audience: 'Meet engineers, designers and hiring managers.',

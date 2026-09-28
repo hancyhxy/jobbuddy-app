@@ -22,6 +22,18 @@ function load() {
 function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
 window.addEventListener('storage', (e) => { if (e.key === KEY) { S = load(); render(); } });
 
+/* ------------------------------------------------------------------ theme */
+const THEME_KEY = 'jobbuddy-theme';
+const themePref = () => localStorage.getItem(THEME_KEY) || 'system';
+const mq = matchMedia('(prefers-color-scheme: light)');
+function applyTheme() {
+  const t = themePref() === 'system' ? (mq.matches ? 'light' : 'dark') : themePref();
+  document.documentElement.dataset.theme = t;
+  document.querySelector('meta[name="theme-color"]').content = t === 'light' ? '#ffffff' : '#121212';
+}
+mq.addEventListener('change', applyTheme);
+applyTheme();
+
 /* ---------------------------------------------------------------- helpers */
 const $ = (s) => document.querySelector(s);
 const esc = (s = '') => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -59,6 +71,8 @@ function makePrompt(p) {
 /* ------------------------------------------------------------------ cover */
 function cover(e, size = 'lg') {
   const [c1, c2] = e.cover;
+  if (e.img) return `<div class="cover cover-${size} has-img" style="--c1:${c1};--c2:${c2}"><img src="${e.img}" alt="" loading="lazy">
+    <span class="cover-mode">${e.mode === 'online' ? ICON.globe : ICON.pin}${e.mode === 'online' ? 'Online' : 'In person'}</span></div>`;
   return `<div class="cover cover-${size}" style="--c1:${c1};--c2:${c2}">
     <span class="cover-mode">${e.mode === 'online' ? ICON.globe : ICON.pin}${e.mode === 'online' ? 'Online' : 'In person'}</span>
     <span class="cover-title">${esc(e.title)}</span></div>`;
@@ -130,7 +144,8 @@ V.home = () => {
   const next = mine[0];
   const hour = new Date().getHours();
   return `<header class="top"><h1>${hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'}${p ? ', ' + esc(p.short) : ''}</h1>
-      ${p ? `<button class="plain" data-a="nav" data-x="me">${av(p, 36, 'round')}</button>` : `<button class="btn small" data-a="nav" data-x="onboarding">Sign up</button>`}</header>
+      <span class="top-actions"><button class="icon-btn theme-btn" data-a="theme-cycle" aria-label="Switch theme">${document.documentElement.dataset.theme === 'light' ? ICON.moon : ICON.sun}</button>
+      ${p ? `<button class="plain" data-a="nav" data-x="me">${av(p, 36, 'round')}</button>` : `<button class="btn small" data-a="nav" data-x="onboarding">Sign up</button>`}</span></header>
     <div class="pills scroll"><button class="pill on" data-a="nav" data-x="events">All events</button><button class="pill" data-a="filter-go" data-x="offline">In person</button><button class="pill" data-a="filter-go" data-x="online">Online</button><button class="pill" data-a="nav" data-x="community">Circles</button></div>
     ${liveE ? `<button class="live-card" data-a="nav" data-x="${liveE.mode === 'online' ? 'room' : 'live'}/${liveE.id}"><span class="dot"></span><div><small>HAPPENING NOW</small><b>${esc(liveE.title)}</b></div>${ICON.chev}</button>` : ''}
     ${next && !liveE ? `<h2 class="sec">Your next event</h2>
@@ -475,6 +490,8 @@ V.me = () => {
       ${list.map(eventRow).join('') || '<p class="empty">Nothing here yet.</p>'}
       <h3>Privacy</h3>
       <ul class="checklist"><li>Public: name, avatar, field, interests${p.fact ? ', fun fact' : ''}</li><li>Private: ${p.showStage ? 'email' : 'career stage, email'}</li></ul>
+      <h3>Appearance</h3>
+      <div class="seg3">${[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([k, l]) => `<button class="${themePref() === k ? 'on' : ''}" data-a="theme" data-x="${k}">${l}</button>`).join('')}</div>
       <h3>Event badge</h3>
       <a class="row badge-link" href="./badge/" target="_blank" rel="noopener">${ICON.badge}<span class="row-main"><b>Open the Badge app</b><small>Install it on a second phone to act as the hardware</small></span>${ICON.chev}</a>
       <button class="link danger" data-a="reset">Reset demo</button>
@@ -652,6 +669,8 @@ const A = {
     if (v !== BADGE_ID) { ui.pairError = `${v} isn’t assigned to you. Check the number on the back, or ask staff.`; render(); return; }
     ui.pairError = ''; S.live.pairing = true; save(); setBadge('pairing');
   },
+  theme: (x) => { localStorage.setItem(THEME_KEY, x); applyTheme(); render(); },
+  'theme-cycle': () => { const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; localStorage.setItem(THEME_KEY, next); applyTheme(); render(); },
   'pair-confirm': () => { S.live.paired = true; S.live.pairing = false; setBadge('idle'); toast('Badge paired ✓'); },
   'demo-enc': (x) => { const pr = makePrompt(PEOPLE[x]); addEncounter(x, S.live.eventId, pr.text, 'badge'); toast(`Saved · ${PEOPLE[x].short}`); render(); },
   'pair-cancel': () => { S.live.pairing = false; setBadge('unpaired'); },
