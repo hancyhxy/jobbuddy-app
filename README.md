@@ -7,7 +7,7 @@ A runnable, installable mobile web app for JobBuddy's final prototype. It covers
 | App | Role | URL |
 | --- | --- | --- |
 | **JobBuddy** | Attendee phone app | <https://hancyhxy.github.io/jobbuddy-app/> |
-| **Tappy** | Event device (stand-in for the ESP32 hardware) | <https://hancyhxy.github.io/jobbuddy-app/badge/> |
+| **Tappy** | Event device (stand-in for the ESP32 hardware) | <https://hancyhxy.github.io/jobbuddy-app/tappy/> |
 
 Install each app from its URL, ideally on two different phones.
 
@@ -75,7 +75,7 @@ All data is fictional and stays in the browser's `localStorage`. **Me → Reset 
 - `js/data.js`: fictional events, people, posts, prompts.
 - `js/avatar.js`, `js/sprites.js`: 18×18 ASCII avatars adapted from The Pudding's *Hello, Stranger* (MIT, 2022) via Anonymous Connection.
 - `covers/`: event cover art generated with GPT image generation (fictional events and logos). Tech events use bold type with a logo; community and arts events use colourful poster styles.
-- `badge/`: standalone Tappy app (fullscreen, NFC strip, ● / ○ buttons, operator menu), sharing `js/data.js` and `js/avatar.js`.
+- `tappy/`: standalone Tappy app (fullscreen, NFC strip, ● / ○ buttons, operator menu), sharing `js/data.js` and `js/avatar.js`.
 - `manifest.webmanifest`, `sw.js`, `icons/`: PWA install and offline cache.
 
 ## Not included yet

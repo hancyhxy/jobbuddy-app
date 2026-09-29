@@ -554,7 +554,7 @@ V.me = () => {
       <h3>Appearance</h3>
       <div class="seg3">${[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([k, l]) => `<button class="${themePref() === k ? 'on' : ''}" data-a="theme" data-x="${k}">${l}</button>`).join('')}</div>
       <h3>Event Tappy</h3>
-      <a class="row badge-link" href="./badge/" target="_blank" rel="noopener">${ICON.badge}<span class="row-main"><b>Open the Tappy app</b><small>Install it on a second phone to act as the hardware</small></span>${ICON.chev}</a>
+      <a class="row badge-link" href="./tappy/" target="_blank" rel="noopener">${ICON.badge}<span class="row-main"><b>Open the Tappy app</b><small>Install it on a second phone to act as the hardware</small></span>${ICON.chev}</a>
       <button class="link" data-a="logout">Log out</button>
       <button class="link danger" data-a="reset">Reset demo</button>
       <div class="spacer"></div>
@@ -637,7 +637,7 @@ function badgePanel() {
     idle: 'Showing your public avatar. Tap Tappys with someone nearby.', request: 'The other Tappy asked to talk. Press ● if you want to.', waiting: 'Waiting for the other person to press ●.',
     declined: 'They chose “not now”. No info exchanged.', prompt: 'Shared prompt shown on both badges. ● saves the encounter to your app.', saved: 'Encounter synced to the app.', returned: 'Tappy unpaired and wiped.'
   }[S.badge.screen];
-  return `<div class="bp-head"><b>Tappy</b><small>Simulated hardware · ESP32 + NFC + 240×240 screen · <a href="./badge/" target="_blank" rel="noopener">open as separate app ↗</a></small><button class="icon-btn bp-close" data-a="badge-close">${ICON.close}</button></div>
+  return `<div class="bp-head"><b>Tappy</b><small>Simulated hardware · ESP32 + NFC + 240×240 screen · <a href="./tappy/" target="_blank" rel="noopener">open as separate app ↗</a></small><button class="icon-btn bp-close" data-a="badge-close">${ICON.close}</button></div>
     <div class="device ${hasBadge ? '' : 'dim'}">
       <div class="nfc">NFC</div>
       <div class="screen">${online ? '<div class="bs off"><small>Online events</small><b>No Tappy</b></div>' : badgeScreen()}</div>
