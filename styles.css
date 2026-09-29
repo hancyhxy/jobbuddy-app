@@ -503,3 +503,20 @@ kbd { font: inherit; background: var(--ac); color: var(--ac-ink); border-radius:
 .two-bars small { grid-column: 1 / -1; }
 .hbar { height: 10px; border-radius: 10px; background: var(--s3); overflow: hidden; }
 .hbar i { display: block; height: 100%; background: #8FB8FF; } .hbar i.full { background: var(--ac); }
+
+/* ---------- camera scanner */
+.scanner { position: absolute; inset: 0; z-index: 45; background: #000; display: grid; place-items: center; align-content: center; gap: 22px; color: #fff; }
+.scanner video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .9; }
+.scanner > *:not(video) { position: relative; }
+.scanner p { font-weight: 700; text-shadow: 0 2px 8px #000; }
+.scanner .btn { background: #000a; box-shadow: inset 0 0 0 1px #fff8; color: #fff; }
+.reticle { width: 230px; height: 230px; position: relative; display: grid; place-items: center; }
+.reticle i { position: absolute; width: 40px; height: 40px; border: 4px solid #fff; }
+.reticle i:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; border-radius: 14px 0 0 0; }
+.reticle i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; border-radius: 0 14px 0 0; }
+.reticle i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; border-radius: 0 0 0 14px; }
+.reticle i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; border-radius: 0 0 14px 0; }
+.reticle.found i { border-color: #D7FF3A; }
+.reticle b { background: #D7FF3A; color: #10140a; padding: 8px 14px; border-radius: 99px; }
+.scanline { position: absolute; left: 12px; right: 12px; height: 2px; background: #D7FF3A; box-shadow: 0 0 12px #D7FF3A; animation: scanmove 1.6s ease-in-out infinite alternate; }
+@keyframes scanmove { from { top: 14px; } to { top: 214px; } }

@@ -16,7 +16,13 @@ Install each app from its URL, ideally on two different phones.
 
 Once opened, it launches full-screen from the home-screen icon and works offline. To publish local edits, run `./deploy.command` (public repo `hancyhxy/jobbuddy-app`).
 
-### Two-device demo (devices not linked yet)
+### Two-phone demo: presentation mode (recommended)
+
+Tappy opens in **presentation mode**: an 11-step script (desk → QR → confirm code → paired → avatar → tap → waiting → shared prompt → saved → return → wiped). Advance with **Next ▶**; ● / ○ and the NFC strip also work where they make sense. A *Presenter* note under each step says what to do on the JobBuddy phone. ⋯ lets you restart, hide the notes, and set the name, avatar, colour and tag shown on Tappy (match what you picked when registering).
+
+On the JobBuddy phone, **Pair Tappy → Tap to scan** opens the real rear camera. Point it at the QR on Tappy and it “finds” JB-07 after about 2 seconds, then shows code 4812. This is staged: there is no QR decoding and no network. After pressing ● on Tappy, tap **DEMO Tappy shows ✓ — continue** on the phone.
+
+### Free play (manual operator)
 
 Each device keeps its own local state, so the presenter moves both sides along:
 

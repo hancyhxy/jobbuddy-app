@@ -19,3 +19,23 @@ body.badge-app { background: #000; overflow: hidden; touch-action: manipulation;
 .opt i { display: block; font-style: normal; font-weight: 400; font-size: 12px; color: var(--mu); }
 .lbl { margin-top: 10px; letter-spacing: .1em; font-size: 11px !important; }
 .owners { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* presentation mode */
+.qr-screen { gap: 8px; padding: 10px; }
+.t-qr { width: 150px; height: 150px; border-radius: 6px; }
+.qr-screen small { color: #D7FF3A; font-size: 10px; }
+.b-top .state { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.presenter { max-width: 340px; min-height: 58px; margin: 0; padding: 10px 12px; border-radius: 10px; background: #151515; color: #bbb; font-size: 13px; line-height: 1.45; text-align: left; }
+.presenter:empty { background: none; }
+.presenter b { display: block; font-size: 10px; letter-spacing: .14em; color: #D7FF3A; margin-bottom: 3px; }
+.player { position: absolute; left: 16px; right: 16px; bottom: calc(14px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 10px; }
+.player button { height: 48px; min-width: 48px; border-radius: 99px; background: #222; color: #ddd; font-weight: 800; text-align: center; }
+.player .next { padding: 0 22px; background: #D7FF3A; color: #10140a; }
+.dots { flex: 1; display: flex; justify-content: center; gap: 5px; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: #333; } .dots i.done { background: #6b7d2a; } .dots i.on { background: #D7FF3A; width: 16px; border-radius: 6px; }
+#root { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+.look-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.look-grid button { border-radius: 8px; padding: 2px; display: grid; place-items: center; } .look-grid button.on { box-shadow: 0 0 0 2px #D7FF3A; }
+.look-grid .av { width: 100% !important; height: auto !important; aspect-ratio: 1; }
+.owners .sw { width: 28px; height: 28px; border-radius: 50%; } .owners .sw.on { box-shadow: 0 0 0 2px #000, 0 0 0 4px #fff; }
+.badge-app .sheet .field { padding: 10px 12px; font-size: 15px; background: #222; border-color: #333; }

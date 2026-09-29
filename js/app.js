@@ -372,11 +372,11 @@ V.pair = (id) => {
       <div class="code">${PAIR_CODE.split('').map((d) => `<span>${d}</span>`).join('')}</div>
       <p>Press <i class="kdot"></i> on the Tappy to confirm.</p>
       <p class="note">${ICON.info} Code doesn’t match? You may have someone else’s Tappy — go back and check the number.</p>
-      ${demo('Tappy on another device: confirmed', 'pair-confirm')}
+      ${demo('Tappy shows ✓ — continue', 'pair-confirm')}
     </section>`;
   return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="checkin/${id}">${ICON.back}</button><b>Pair Tappy</b><span></span></header>
     <section class="pad">
-      <h2>Scan the code on the back of your Tappy</h2>
+      <h2>Scan the QR code on your Tappy</h2>
       <button class="scan" data-a="scan">${ICON.qr}<span>Tap to scan</span></button>
       <p class="muted center">or type the Tappy number</p>
       <input class="field code-in" data-model="pairInput" placeholder="JB-00" value="${esc(ui.pairInput || '')}" maxlength="5">
@@ -873,6 +873,33 @@ function addEncounter(person, eventId, prompt, via) {
   save();
 }
 
+/* ------------------------------------------------ camera scan (demo)
+   Opens the real rear camera as a viewfinder; “detects” the Tappy after ~2 s.
+   No QR decoding and no network — it just makes the two-phone demo feel real. */
+let scanStream = null; let scanTimer = null;
+async function startScan() {
+  ui.scanning = true; ui.pairError = ''; render();
+  try { scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }); attachScan(); } catch { scanStream = null; }
+  clearTimeout(scanTimer);
+  scanTimer = setTimeout(() => {
+    if (!ui.scanning) return;
+    ui.scanFound = true; render(); navigator.vibrate?.(30);
+    setTimeout(() => { stopScan(true); ui.pairInput = BADGE_ID; A['pair-start'](); }, 700);
+  }, 2200);
+}
+function attachScan() { const v = document.querySelector('.scanner video'); if (v && scanStream && v.srcObject !== scanStream) { v.srcObject = scanStream; v.play?.().catch(() => {}); } }
+function stopScan(silent) {
+  clearTimeout(scanTimer); scanStream?.getTracks().forEach((t) => t.stop()); scanStream = null;
+  ui.scanning = false; ui.scanFound = false; if (!silent) render();
+}
+function scannerHTML() {
+  if (!ui.scanning) return '';
+  return `<div class="scanner"><video playsinline muted autoplay></video>
+    <div class="reticle ${ui.scanFound ? 'found' : ''}"><i></i><i></i><i></i><i></i>${ui.scanFound ? `<b>${BADGE_ID}</b>` : '<span class="scanline"></span>'}</div>
+    <p>${ui.scanFound ? `Tappy ${BADGE_ID} found ✓` : 'Point at the QR code on the Tappy screen'}</p>
+    <button class="btn small" data-a="scan-cancel">Cancel</button></div>`;
+}
+
 /* ============================================================== ACTIONS */
 const A = {
   nav: (x) => { ui.sheet = null; ui.growthHelp = false; go(x); },
@@ -925,7 +952,8 @@ const A = {
   checkin: (id) => { S.regs[id].status = 'checkedin'; S.live = { eventId: id }; save(); earn(20, 'Checked in at an event'); render(); },
   'give-badge': (id) => { S.live = { eventId: id, badgeId: BADGE_ID }; S.badge = { screen: 'unpaired' }; save(); render(); },
   'no-badge': (id) => { S.live = { eventId: id, noBadge: true }; save(); go('live/' + id); },
-  scan: () => { ui.pairInput = BADGE_ID; ui.pairError = ''; render(); },
+  scan: () => startScan(),
+  'scan-cancel': () => stopScan(),
   'pair-start': () => {
     const v = (ui.pairInput || '').trim().toUpperCase();
     if (!v) { ui.pairError = 'Scan the code or type the Tappy number.'; render(); return; }
@@ -1042,7 +1070,8 @@ function render() {
   const [name, arg] = route();
   const app = $('#app');
   const prev = app.dataset.view;
-  app.innerHTML = V[name](arg) + sheetHTML() + (ui.growthHelp ? growthHelp() : '');
+  app.innerHTML = V[name](arg) + sheetHTML() + (ui.growthHelp ? growthHelp() : '') + scannerHTML();
+  attachScan();
   app.dataset.view = name + '/' + (arg || '');
   if (prev !== app.dataset.view) app.scrollTop = 0;
   const showNav = !NO_NAV.includes(name);
