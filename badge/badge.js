@@ -29,7 +29,10 @@ const esc = (s = '') => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<'
 function owner() {
   const o = S.badge.owner;
   if (o && PEOPLE[o]) return PEOPLE[o];
-  if (o !== 'demo' && S.profile) return { ...S.profile, short: S.profile.name.split(' ')[0] };
+  if (o !== 'demo' && S.profile) {
+    const b = S.regs?.[S.live?.eventId]?.badge || S.lastBadge || {};
+    return { ...S.profile, short: S.profile.name.split(' ')[0], avatar: b.avatar || S.profile.avatar, color: b.color || S.profile.color, interests: [b.tag || S.profile.interests[0], ...S.profile.interests] };
+  }
   return DEMO_OWNER;
 }
 

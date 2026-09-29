@@ -41,7 +41,8 @@ All data is fictional and stays in the browser's `localStorage`. **Me → Reset 
 **In person — “Build Night: AI Agents in Practice”**
 
 1. The app opens straight on **Home** (Luma-style discovery: Your events, then Picked for you grouped by date, with an All / In person / Online switch). No sign-up is needed to browse.
-2. Event → Request to join → account creation (name, field, private career stage, interests, ASCII avatar) → back to the request → **DEMO Host approves** (shows the Pending → Approved states).
+2. Event → Request to join → **Log in** (email / Apple / Google, all mocked as the demo account; or *Create an account*: name, field, private stage, interests) → registration.
+   For badge events, registration includes **Your badge for this event**: avatar, colour and one tag. It is saved per event and can be changed from the pass (*Your badge look → Change*). The badge and participant wall show this look, not the account profile. → **DEMO Host approves** (shows the Pending → Approved states).
 3. I’m here → **DEMO Staff scans pass** → **DEMO Staff hands you badge JB-07**, or *Continue without a badge*.
 4. Pair: typing a wrong ID shows an error. *Tap to scan* fills JB-07. The phone and badge show the same code, and you press ● on the badge to confirm.
 5. Live: participant wall (opt-in), agenda, saved encounters.

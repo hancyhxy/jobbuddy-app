@@ -115,7 +115,7 @@ V.onboarding = () => {
     return `<button class="pill ${on ? 'on' : ''}" data-a="ob-pick" data-x="${key}|${v}">${v}</button>`;
   }).join('');
   const steps = [
-    `${S.afterOnboard ? `<p class="eyebrow">Create your account to register</p>` : ''}<h2>Hi. What should people call you?</h2>
+    `${S.onboarded ? '' : '<p class="eyebrow">New account · 2 quick steps</p>'}<h2>Hi. What should people call you?</h2>
      <input class="field" data-model="ob.name" placeholder="Display name" value="${esc(o.name)}" maxlength="24">
      <h3>Your field</h3><div class="pills">${chips(FIELDS, 'field')}</div>
      <h3>Where you are right now</h3><div class="pills">${chips(STAGES, 'stage')}</div>
@@ -123,18 +123,13 @@ V.onboarding = () => {
     `<h2>What do you like talking about?</h2><p class="muted">Pick up to 3. We use these to suggest conversation starters.</p>
      <div class="pills">${chips(INTERESTS, 'interests', true)}</div>
      <h3>A fun fact (optional)</h3>
-     <input class="field" data-model="ob.fact" placeholder="Something people can ask you about" value="${esc(o.fact)}" maxlength="60">`,
-    `<h2>Your event avatar</h2><p class="muted">Shown on your badge and the participant wall. Not your photo.</p>
-     <div class="avatar-grid">${AVATAR_CHOICES.map((k) => `<button class="${o.avatar === k ? 'on' : ''}" data-a="ob-pick" data-x="avatar|${k}">${avatar(k, o.color, 60)}</button>`).join('')}</div>
-     <div class="swatches">${AVATAR_COLORS.map((c) => `<button class="${o.color === c ? 'on' : ''}" style="background:${c}" data-a="ob-pick" data-x="color|${c}" aria-label="colour ${c}"></button>`).join('')}</div>
-     <h3>What others see</h3>
-     <div class="public-card">${avatar(o.avatar, o.color, 56)}<div><b>${esc(o.name || 'Your name')}</b><small>${o.field || 'Field'}${o.showStage && o.stage ? ' · ' + o.stage : ''}</small><small class="tags">${o.interests.map((t) => '#' + t).join(' ')}</small></div></div>
+     <input class="field" data-model="ob.fact" placeholder="Something people can ask you about" value="${esc(o.fact)}" maxlength="60">
      <label class="toggle"><input type="checkbox" data-a="ob-toggle" ${o.showStage ? 'checked' : ''}><span>Show my career stage publicly</span></label>`
   ];
-  const valid = [o.name.trim() && o.field && o.stage, o.interests.length > 0, true][o.step];
-  return `<header class="bar"><button class="icon-btn" data-a="${o.step ? 'ob-back' : 'back'}">${ICON.back}</button><div class="progress"><i style="width:${((o.step + 1) / 3) * 100}%"></i></div><span></span></header>
+  const valid = [o.name.trim() && o.field && o.stage, o.interests.length > 0][o.step];
+  return `<header class="bar"><button class="icon-btn" data-a="${o.step ? 'ob-back' : 'back'}">${ICON.back}</button><div class="progress"><i style="width:${((o.step + 1) / 2) * 100}%"></i></div><span></span></header>
     <section class="pad ob">${steps[o.step]}</section>
-    <footer class="sticky"><button class="btn primary" data-a="ob-next" ${valid ? '' : 'disabled'}>${o.step === 2 ? 'Finish' : 'Continue'}</button></footer>`;
+    <footer class="sticky"><button class="btn primary" data-a="ob-next" ${valid ? '' : 'disabled'}>${o.step === 1 ? (S.onboarded ? 'Save' : 'Create account') : 'Continue'}</button></footer>`;
 };
 
 const DAYS = { Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday' };
@@ -169,7 +164,7 @@ V.home = () => {
   return `<header class="top home-top">
       <span class="brand">${p ? `<button class="plain" data-a="nav" data-x="me">${av(p, 36, 'round')}</button>` : `<span class="brand-dot">${ICON.badge}</span>`}<b>JobBuddy</b></span>
       <span class="top-actions"><button class="icon-btn theme-btn" data-a="theme-cycle" aria-label="Switch theme">${document.documentElement.dataset.theme === 'light' ? ICON.moon : ICON.sun}</button>
-      ${p ? '' : `<button class="btn small" data-a="nav" data-x="onboarding">Sign in</button>`}</span></header>
+      ${p ? '' : `<button class="btn small" data-a="login-demo">Log in</button>`}</span></header>
     <section class="pad">
       ${liveE ? `<button class="live-card flush" data-a="nav" data-x="${liveE.mode === 'online' ? 'room' : 'live'}/${liveE.id}"><span class="dot"></span><div><small>HAPPENING NOW</small><b>${esc(liveE.title)}</b></div>${ICON.chev}</button>` : ''}
       <button class="h2link" data-a="nav" data-x="me"><h2>Your events</h2>${ICON.chev}</button>
@@ -230,16 +225,58 @@ V.event = (id) => {
     <footer class="sticky">${cta}</footer>`;
 };
 
+V.auth = () => `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><span></span><span></span></header>
+  <section class="pad auth">
+    <span class="brand-dot big">${ICON.badge}</span>
+    <h2>Log in to register</h2>
+    <p class="muted">Registering needs a JobBuddy account, so hosts know who’s coming and you keep the people you meet.</p>
+    <input class="field" type="email" placeholder="Email" value="xinyi@student.uts.edu.au">
+    <button class="btn primary" data-a="login-demo">Continue with email</button>
+    <div class="or"><span>or</span></div>
+    <button class="btn" data-a="login-demo">Continue with Apple</button>
+    <button class="btn" data-a="login-demo">Continue with Google</button>
+    <p class="muted center small">New here? <button class="linkish" data-a="signup">Create an account</button></p>
+  </section>`;
+
+const DEFAULT_PROFILE = { name: 'Xinyi Han', field: 'Design', stage: 'Studying', interests: ['AI tools', 'UX', 'Portfolio'], fact: 'Built a badge from scratch', avatar: 'female_2_1', color: '#D7FF3A', showStage: false };
+
+function badgeLook(eventId) {
+  const p = S.profile || DEFAULT_PROFILE;
+  const b = (eventId && S.regs[eventId]?.badge) || S.lastBadge || {};
+  return { avatar: b.avatar || p.avatar, color: b.color || p.color, tag: b.tag || p.interests[0] || p.field };
+}
+
+function badgePicker(d) {
+  const p = me();
+  const tags = [...new Set([...p.interests, p.field])];
+  return `<div class="badge-preview"><div class="mini-screen"><div class="bs idle">${avatar(d.avatar, d.color, 84)}<b>${esc(p.short)}</b><small>#${esc(d.tag)}</small></div></div>
+      <small>Shown on your loan badge and the participant wall at this event only.</small></div>
+    <h3>Pick an avatar</h3>
+    <div class="avatar-grid">${AVATAR_CHOICES.map((k) => `<button class="${d.avatar === k ? 'on' : ''}" data-a="bd-pick" data-x="avatar|${k}">${avatar(k, d.color, 60)}</button>`).join('')}</div>
+    <div class="swatches">${AVATAR_COLORS.map((c) => `<button class="${d.color === c ? 'on' : ''}" style="background:${c}" data-a="bd-pick" data-x="color|${c}" aria-label="colour ${c}"></button>`).join('')}</div>
+    <h3>Tag on your badge</h3><p class="muted small">A conversation hook for this crowd.</p>
+    <div class="pills" style="margin-top:10px">${tags.map((t) => `<button class="pill ${d.tag === t ? 'on' : ''}" data-a="bd-pick" data-x="tag|${t}">#${t}</button>`).join('')}</div>`;
+}
+
+V.badgeedit = (id) => {
+  const e = ev(id); if (!reg(id)) return V.event(id);
+  if (!ui.regDraft || ui.regDraft.id !== id) ui.regDraft = { id, ...badgeLook(id) };
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><b>Your badge</b><span></span></header>
+    <section class="pad"><p class="muted">${esc(e.title)}</p>${badgePicker(ui.regDraft)}<div class="spacer"></div></section>
+    <footer class="sticky"><button class="btn primary" data-a="badge-save" data-x="${id}">Save badge</button></footer>`;
+};
+
 V.register = (id) => {
   const e = ev(id);
-  if (!S.onboarded) { if (S.afterOnboard !== 'register/' + id) { S.afterOnboard = 'register/' + id; save(); ui.ob = null; } return V.onboarding(); }
-  ui.regDraft = ui.regDraft?.id === id ? ui.regDraft : { id, list: true, wall: true };
+  if (!S.onboarded) { if (S.afterOnboard !== 'register/' + id) { S.afterOnboard = 'register/' + id; save(); ui.ob = null; } return ui.authNew ? V.onboarding() : V.auth(); }
+  ui.regDraft = ui.regDraft?.id === id ? ui.regDraft : { id, list: true, wall: true, ...badgeLook() };
   const d = ui.regDraft; const p = me();
   return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><b>${e.approval ? 'Request to join' : 'Register'}</b><span></span></header>
     <section class="pad">
       <div class="next-card static">${cover(e, 'sm')}<div><b>${esc(e.title)}</b><small>${e.date} · ${e.time}</small></div></div>
-      <h3>What attendees will see</h3>
-      <div class="public-card">${av(p, 56)}<div><b>${esc(p.name)}</b><small>${p.field}${p.showStage ? ' · ' + p.stage : ''}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
+      ${e.badges ? `<h3>Your badge for this event</h3>${badgePicker(d)}` : ''}
+      <h3>${e.badges ? 'In the attendee list' : 'What attendees will see'}</h3>
+      <div class="public-card">${av(e.badges ? { ...p, ...d } : p, 56)}<div><b>${esc(p.name)}</b><small>${p.field}${p.showStage ? ' · ' + p.stage : ''}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
       <label class="toggle"><input type="checkbox" data-a="reg-toggle" data-x="list" ${d.list ? 'checked' : ''}><span>Show me in the attendee list</span></label>
       ${e.mode === 'offline' ? `<label class="toggle"><input type="checkbox" data-a="reg-toggle" data-x="wall" ${d.wall ? 'checked' : ''}><span>Appear on the live participant wall after check-in</span></label>` : ''}
       <p class="note">${ICON.lock} Email, career stage and CV are never shown to attendees.</p>
@@ -273,6 +310,7 @@ V.ticket = (id) => {
   else if (r.status === 'declined') body = `<div class="state-box warn"><b>This one’s full</b><small>The host couldn’t fit everyone. Similar events:</small></div>${EVENTS.filter((x) => x.id !== id && x.mode === e.mode).slice(0, 2).map(eventRow).join('')}`;
   else if (off) body = `<div class="pass">${fakeQR(id + S.profile.name)}<b>${esc(S.profile.name)}</b><small>Show this at the check-in desk</small></div>
       <div class="info-grid"><div>${ICON.pin}<b>${e.venue}</b><small>Get directions</small></div><div>${ICON.badge}<b>Badge on loan</b><small>Collect → pair → return</small></div></div>
+      ${e.badges ? `<button class="row badge-link" data-a="nav" data-x="badgeedit/${id}">${avatar(badgeLook(id).avatar, badgeLook(id).color, 44)}<span class="row-main"><b>Your badge look</b><small>#${esc(badgeLook(id).tag)} · only for this event</small></span><span class="small muted">Change</span></button>` : ''}
       <h3>Before you go</h3><ul class="checklist"><li>Arrive by 17:45 — first 30 get a drink token</li><li>Bring your phone charged (or pair with staff help)</li><li>Nothing to prepare. Just come curious.</li></ul>`;
   else body = `<div class="pass online"><div>${ICON.globe}</div><b>${e.date} · ${e.time}</b><small>Lobby opens 10 min before</small></div>
       <h3>Before you join</h3><ul class="checklist"><li>Stream runs in Zoom. Camera optional.</li><li>Waves and chats happen here in JobBuddy</li><li>${e.recording ? 'Recording shared afterwards' : 'Not recorded'}</li></ul>`;
@@ -350,7 +388,7 @@ V.live = (id) => {
   const tabs = [['here', 'Who’s here'], ['agenda', 'Agenda'], ['saved', `Saved · ${mine.length}`]];
   let body = '';
   if (ui.liveTab === 'here') body = `<p class="muted small">${here.length + 1} people chose to show on the wall. Spot their avatar on a badge.</p>
-      <div class="wall">${(reg(id).wall ? [me(), ...here] : here).map((p) => `<button class="wall-tile" data-a="sheet-person" data-x="${p.id}">${av(p, 64)}<b>${esc(p.short)}${p.id === 'me' ? ' (you)' : ''}</b><small>${esc(p.headline)}</small></button>`).join('')}</div>`;
+      <div class="wall">${(reg(id).wall ? [{ ...me(), ...badgeLook(id), headline: '#' + badgeLook(id).tag }, ...here] : here).map((p) => `<button class="wall-tile" data-a="sheet-person" data-x="${p.id}">${av(p, 64)}<b>${esc(p.short)}${p.id === 'me' ? ' (you)' : ''}</b><small>${esc(p.headline)}</small></button>`).join('')}</div>`;
   if (ui.liveTab === 'agenda') body = `<ul class="agenda">${e.agenda.map(([t, a], i) => `<li class="${i === 2 ? 'now' : ''}"><time>${t}</time>${a}${i === 2 ? ' <i class="chip">Now</i>' : ''}</li>`).join('')}</ul>`;
   if (ui.liveTab === 'saved') body = (mine.length ? mine.map(encounterRow).join('') : `<p class="empty">Nobody saved yet. When you and someone both say yes on your badges, you can save the moment here.</p>`)
     + (L.noBadge ? '' : here.filter((p) => !mine.some((x) => x.person === p.id)).slice(0, 2).map((p) => demo(`Badge on another device saved ${p.short}`, 'demo-enc', p.id)).join(''));
@@ -501,7 +539,7 @@ V.rewards = () => `
 
 V.me = () => {
   const p = me();
-  if (!p) return `<header class="top"><h1>Me</h1></header><section class="pad center"><p class="muted">Set up a profile to register for events and keep the people you meet.</p><button class="btn primary" data-a="nav" data-x="onboarding">Get started</button></section>`;
+  if (!p) return `<header class="top"><h1>Me</h1></header><section class="pad center"><p class="muted">Log in to register for events and keep the people you meet.</p><button class="btn primary" data-a="login-demo">Log in</button><button class="link" data-a="nav" data-x="onboarding">Create an account</button></section>`;
   const groups = { upcoming: ['going', 'checkedin'], pending: ['pending', 'declined'], past: ['attended'] };
   const list = EVENTS.filter((e) => groups[ui.meSeg].includes(reg(e.id)?.status));
   return `<header class="top"><h1>Me</h1><button class="icon-btn" data-a="edit-profile">${ICON.edit}</button></header>
@@ -517,6 +555,7 @@ V.me = () => {
       <div class="seg3">${[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([k, l]) => `<button class="${themePref() === k ? 'on' : ''}" data-a="theme" data-x="${k}">${l}</button>`).join('')}</div>
       <h3>Event badge</h3>
       <a class="row badge-link" href="./badge/" target="_blank" rel="noopener">${ICON.badge}<span class="row-main"><b>Open the Badge app</b><small>Install it on a second phone to act as the hardware</small></span>${ICON.chev}</a>
+      <button class="link" data-a="logout">Log out</button>
       <button class="link danger" data-a="reset">Reset demo</button>
       <div class="spacer"></div>
     </section>`;
@@ -576,7 +615,7 @@ function badgeScreen() {
     case 'off': return `<div class="bs off"><small>JobBuddy</small><b>${BADGE_ID}</b><small>Not assigned</small></div>`;
     case 'unpaired': return `<div class="bs"><small>BADGE</small><b class="huge">${BADGE_ID}</b><small>Open JobBuddy<br>to pair</small></div>`;
     case 'pairing': return `<div class="bs"><small>PAIR WITH</small><b>${esc(p.short)}?</b><div class="bcode">${PAIR_CODE}</div><small>● yes · ○ no</small></div>`;
-    case 'idle': return `<div class="bs idle"><div class="badge-av">${avatar(p.avatar, p.color, 118, ui.frame)}</div><b>${esc(p.short)}</b><small>#${esc(p.interests[0] || p.field)}</small></div>`;
+    case 'idle': { const l = badgeLook(S.live?.eventId); return `<div class="bs idle"><div class="badge-av">${avatar(l.avatar, l.color, 118, ui.frame)}</div><b>${esc(p.short)}</b><small>#${esc(l.tag)}</small></div>`; }
     case 'request': return `<div class="bs">${avatar(partner.avatar, partner.color, 64)}<small>TALK WITH</small><b>${partner.short}?</b><small>● yes · ○ not now</small></div>`;
     case 'waiting': return `<div class="bs">${avatar(partner.avatar, partner.color, 64)}<small>Waiting for</small><b>${partner.short}…</b></div>`;
     case 'declined': return `<div class="bs"><b>Maybe later</b><small>Nothing was shared.</small></div>`;
@@ -648,6 +687,11 @@ const A = {
   back: () => history.length > 1 ? history.back() : go('home'),
   toast: (x) => toast(x),
   browse: () => { S.browsing = true; save(); go('home'); },
+  'login-demo': () => { S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; const next = S.afterOnboard || 'home'; S.afterOnboard = null; save(); toast('Logged in as Xinyi'); go(next); render(); },
+  signup: () => { ui.authNew = true; ui.ob = null; render(); },
+  'bd-pick': (x) => { const [k, v] = x.split('|'); ui.regDraft[k] = v; render(); },
+  'badge-save': (id) => { const d = ui.regDraft; S.regs[id].badge = { avatar: d.avatar, color: d.color, tag: d.tag }; S.lastBadge = S.regs[id].badge; save(); toast('Badge updated'); history.back(); },
+  logout: () => { S.onboarded = false; S.profile = null; save(); toast('Logged out'); go('home'); },
   'home-mode': (x) => { ui.homeMode = x; render(); },
   'filter-go': (x) => { ui.filter = x; go('events'); },
   filter: (x) => { ui.filter = x; render(); },
@@ -665,11 +709,12 @@ const A = {
   'ob-back': () => { ui.ob.step--; render(); },
   'ob-next': () => {
     const o = ui.ob;
-    if (o.step < 2) { o.step++; render(); return; }
-    S.profile = { name: o.name.trim(), field: o.field, stage: o.stage, interests: o.interests, fact: o.fact.trim(), avatar: o.avatar, color: o.color, showStage: o.showStage };
-    S.onboarded = true; ui.ob = null;
+    if (o.step < 1) { o.step++; render(); return; }
+    const wasNew = !S.onboarded;
+    S.profile = { name: o.name.trim(), field: o.field, stage: o.stage, interests: o.interests, fact: o.fact.trim(), avatar: S.profile?.avatar || o.avatar, color: S.profile?.color || o.color, showStage: o.showStage };
+    S.onboarded = true; ui.ob = null; ui.authNew = false;
     const next = S.afterOnboard || 'home'; S.afterOnboard = null; save();
-    toast('Profile ready'); go(next);
+    toast(wasNew ? 'Account created' : 'Profile saved'); go(next);
     if (next.startsWith('register')) render();
   },
   'edit-profile': () => { ui.ob = null; go('onboarding'); },
@@ -677,6 +722,7 @@ const A = {
   register: (id) => {
     const e = ev(id); const d = ui.regDraft || {};
     S.regs[id] = { status: e.approval ? 'pending' : 'going', list: d.list !== false, wall: d.wall !== false };
+    if (e.badges) { S.regs[id].badge = { avatar: d.avatar, color: d.color, tag: d.tag }; S.lastBadge = S.regs[id].badge; }
     save(); toast(e.approval ? 'Request sent' : 'You’re in ✓');
     history.replaceState(null, '', '#/ticket/' + id); render();
   },
@@ -750,7 +796,7 @@ const A = {
 };
 
 /* =============================================================== RENDER */
-const NO_NAV = ['welcome', 'onboarding', 'register', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'event', 'recap'];
+const NO_NAV = ['welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'event', 'recap'];
 const TABS = [['home', 'Home', 'home'], ['events', 'Events', 'search'], ['community', 'Community', 'people'], ['me', 'Me', 'user']];
 
 function route() {
@@ -776,7 +822,7 @@ function render() {
 function tickBadge() {
   ui.frame++;
   const el = document.querySelector('.badge-av');
-  if (el && S.badge.screen === 'idle') { const p = me(); el.innerHTML = avatar(p.avatar, p.color, 118, ui.frame); }
+  if (el && S.badge.screen === 'idle') { const l = badgeLook(S.live?.eventId); el.innerHTML = avatar(l.avatar, l.color, 118, ui.frame); }
 }
 
 document.addEventListener('click', (e) => {

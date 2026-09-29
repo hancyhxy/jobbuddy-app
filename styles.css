@@ -374,3 +374,13 @@ kbd { font: inherit; background: var(--ac); color: var(--ac-ink); border-radius:
 .lrow-meta .ic { width: 16px; height: 16px; }
 .badge-tag { color: var(--ac-tx); font-weight: 600; font-size: 12px; }
 .live-card.flush { margin: 0 0 18px; width: 100%; }
+
+/* ---------- auth + per-event badge picker */
+.auth { display: grid; gap: 12px; padding-top: 20px; }
+.brand-dot.big { width: 56px; height: 56px; border-radius: 16px; }
+.or { display: flex; align-items: center; gap: 12px; color: var(--mu); font-size: 13px; }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.linkish { color: var(--tx); font-weight: 700; text-decoration: underline; }
+.badge-preview { display: grid; justify-items: center; gap: 10px; text-align: center; margin: 4px 0 6px; }
+.mini-screen { width: 168px; height: 168px; border-radius: 14px; background: #050505; box-shadow: 0 0 0 8px #1d1d1d, 0 0 0 9px #3a3a3a; overflow: hidden; --ac-tx: #D7FF3A; }
+.mini-screen .bs { padding: 8px; } .mini-screen .bs b { font-size: 16px; } .mini-screen .bs small { color: #D7FF3A; }
