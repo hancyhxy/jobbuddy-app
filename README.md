@@ -59,14 +59,23 @@ All data is fictional and stays in the browser's `localStorage`. **Me → Reset 
 4. **DEMO David waves at you** → Wave back or Ignore quietly.
 5. Leave event → the same recap as in person.
 
+## Community, connections and growth
+
+- **Two avatars:** a real profile photo (`people/`, fictional GPT-generated portraits) is used in the app and at online events. The ASCII Tappy avatar is chosen per in-person event and shown on Tappy and the participant wall.
+- **Connections = mutual follows** (LinkedIn-style). Anyone can follow anyone. When both follow, you are *Connected*. Event rows and event pages show round photos of connections who are going (Build Night: 4; Career Switch Stories: 1).
+- **Community:** *Public* (open questions, takeaways, referrals, going-together, wins), *My circles* (members-only circles joined by attending their events), *Connections*. Posts can be Question, Takeaway, Resource, Offer help, Referral, Going together or Win. Replies open a comment sheet.
+- **Me:** level card, connections / followers / following / met, **Career tools** (AI CV review: 3 free a month; mock interview with a real practitioner: 1 free a month), the two avatars, events and settings.
+- **Growth & points:** post +10, event takeaway +15, comment +3, marked helpful +5, received comment +2, check-in +20, new connection +5, with fair-play caps. Levels: Newcomer → Explorer → Contributor → Connector → Mentor → Community Leader. Points redeem for an extra AI CV review (30), an extra mock interview (80) or a priority spot (150).
+- The demo account (*Log in*) starts with 5 connections, 2 people waiting for a follow-back (Marcus, Ahmed) and 140 pts. Following David triggers a simulated follow-back.
+
 ## Interaction rules encoded
 
-- Pair ≠ Tap ≠ Follow. Pairing links a loan Tappy to one account. A tap only *asks* to talk. Follow is a separate, one-way choice in the app.
+- Pair ≠ Tap ≠ Follow. Pairing links a loan Tappy to one account. A tap only *asks* to talk. Follow is a separate choice in the app; a mutual follow becomes a connection.
 - The shared prompt appears only after both people say yes. Declines and unanswered waves are silent.
 - Registration, check-in and attendance are separate states: pending / declined / going / checked in / attended.
 - The Tappy is optional. The *Continue without a Tappy* path uses in-app hi requests.
 - A returned Tappy is wiped. Saved encounters stay in the app.
-- Stars reward helpfulness, not popularity. Redeeming them for AI CV review is concept only.
+- Points reward contribution and helpfulness. Redeeming them works in the prototype (local, mocked).
 
 ## Structure
 

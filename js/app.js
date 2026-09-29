@@ -1,4 +1,4 @@
-import { FIELDS, STAGES, INTERESTS, AVATAR_CHOICES, AVATAR_COLORS, PEOPLE, EVENTS, SEED_POSTS, PROMPTS } from './data.js';
+import { FIELDS, STAGES, INTERESTS, AVATAR_CHOICES, AVATAR_COLORS, PEOPLE, EVENTS, SEED_POSTS, SEED_COMMENTS, SEED_GRAPH, FOLLOWS_BACK, POINT_RULES, LEVELS, REDEEM, PRACTITIONERS, POST_TYPES, PROMPTS } from './data.js';
 import { avatar } from './avatar.js';
 import { ICON } from './icons.js';
 
@@ -9,8 +9,8 @@ const PAIR_CODE = '4812';
 
 const fresh = () => ({
   onboarded: false, profile: null, regs: {}, live: null,
-  badge: { screen: 'off' }, encounters: [], following: [],
-  posts: [], helped: [], stars: 3, feedback: {}
+  badge: { screen: 'off' }, encounters: [], following: [], followers: [], circles: [],
+  posts: [], helped: [], myComments: {}, points: 0, ledger: [], credits: {}, cvFree: 3, mockFree: 1, bookings: [], feedback: {}
 });
 
 let S = load();
@@ -39,9 +39,11 @@ const $ = (s) => document.querySelector(s);
 const esc = (s = '') => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ev = (id) => EVENTS.find((e) => e.id === id);
 const reg = (id) => S.regs[id];
-const me = () => S.profile && { ...S.profile, id: 'me', short: S.profile.name.split(' ')[0], headline: `${S.profile.field} · ${S.profile.stage}` };
+const me = () => S.profile && { photo: 'people/me.jpg', ...S.profile, id: 'me', short: S.profile.name.split(' ')[0], headline: `${S.profile.field} · ${S.profile.stage}` };
 const who = (id) => (id === 'me' ? me() : PEOPLE[id]);
-const av = (p, size = 40, extra = '') => avatar(p.avatar, p.color, size, 0, extra);
+// Two avatar systems: real profile photo (app, online) and ASCII Tappy avatar (in-person device & wall).
+const av = (p, size = 40) => (p.photo ? `<span class="ph" style="width:${size}px;height:${size}px"><img src="${p.photo}" alt="" loading="lazy"></span>` : avatar(p.avatar, p.color, size, 0, 'round'));
+const asc = (p, size = 40, extra = '') => avatar(p.avatar, p.color, size, 0, extra);
 const go = (path) => { location.hash = '#/' + path; };
 const demo = (label, a, x = '') => `<button class="demo" data-a="${a}" data-x="${x}"><span>DEMO</span>${label}</button>`;
 const allPosts = () => [...S.posts, ...SEED_POSTS];
@@ -85,6 +87,7 @@ function eventRow(e) {
     <span class="row-main"><b>${esc(e.title)}</b>
       <small>${e.date} · ${e.mode === 'online' ? 'Online' : e.venue.split(',')[1]?.trim() || e.venue}</small>
       ${r ? `<i class="chip chip-${r.status}">${statusLabel(e, r)}</i>` : `<small>${e.cost} · ${e.going} going</small>`}
+      ${connLine(e, 18)}
     </span></button>`;
 }
 
@@ -116,6 +119,7 @@ V.onboarding = () => {
   }).join('');
   const steps = [
     `${S.onboarded ? '' : '<p class="eyebrow">New account · 2 quick steps</p>'}<h2>Hi. What should people call you?</h2>
+     <div class="photo-row"><span class="ph" style="width:64px;height:64px"><img src="people/me.jpg" alt=""></span><div><b>Profile photo</b><small>Shown in the app and at online events. Your Tappy avatar is chosen per in-person event.</small><button class="linkish" data-a="toast" data-x="Photo picker (mocked)">Change photo</button></div></div>
      <input class="field" data-model="ob.name" placeholder="Display name" value="${esc(o.name)}" maxlength="24">
      <h3>Your field</h3><div class="pills">${chips(FIELDS, 'field')}</div>
      <h3>Where you are right now</h3><div class="pills">${chips(STAGES, 'stage')}</div>
@@ -145,6 +149,7 @@ function lumaRow(e) {
       <span class="lrow-host">${av(host, 20)}<span>${esc(e.circle)}</span>${r ? `<i class="chip chip-${r.status}">${statusLabel(e, r)}</i>` : e.cost !== 'Free' ? `<i class="price">${e.cost}</i>` : ''}</span>
       <b>${esc(e.title)}</b>
       <span class="lrow-meta"><span>${ICON.clock}${e.time.split(' ')[0]}</span><span>${e.mode === 'online' ? ICON.globe : ICON.pin}${esc(place)}</span>${e.mode === 'offline' && e.badges ? `<span class="badge-tag">${ICON.badge}Tappy</span>` : ''}</span>
+      ${connLine(e)}
     </span></button>`;
 }
 
@@ -214,7 +219,8 @@ V.event = (id) => {
       <button class="host" data-a="nav" data-x="person/${host.id}">${av(host, 40, 'round')}<span><small>Hosted by</small><b>${host.name}</b></span></button>
       <p>${esc(e.audience)}</p>
       <h3>Who’s going</h3>
-      <div class="stack">${e.attendees.map((pid) => av(PEOPLE[pid], 36, 'round')).join('')}<small>${e.going} going · ${Math.round(e.going * 0.6)} visible</small></div>
+      ${connsGoing(e).length ? `<div class="conn-going">${faces(connsGoing(e), 36)}<div><b>${connsGoing(e).length} connection${connsGoing(e).length > 1 ? 's' : ''} going</b><small>${connsGoing(e).map((pid) => PEOPLE[pid].short).join(', ')}</small></div></div>` : ''}
+      <div class="stack">${e.attendees.filter((pid) => !isConn(pid)).map((pid) => av(PEOPLE[pid], 32)).join('')}<small>${e.going} going · ${Math.round(e.going * 0.6)} visible</small></div>
       <h3>How it works</h3>
       <ol class="how">${how.map(([a, b]) => `<li><b>${a}</b><small>${b}</small></li>`).join('')}</ol>
       ${e.badges ? `<p class="note">${ICON.badge} Tappy is optional. No phone or rather not use one? You can still join everything.</p>` : ''}
@@ -276,7 +282,7 @@ V.register = (id) => {
       <div class="next-card static">${cover(e, 'sm')}<div><b>${esc(e.title)}</b><small>${e.date} · ${e.time}</small></div></div>
       ${e.badges ? `<h3>Your Tappy for this event</h3>${badgePicker(d)}` : ''}
       <h3>${e.badges ? 'In the attendee list' : 'What attendees will see'}</h3>
-      <div class="public-card">${av(e.badges ? { ...p, ...d } : p, 56)}<div><b>${esc(p.name)}</b><small>${p.field}${p.showStage ? ' · ' + p.stage : ''}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
+      <div class="public-card">${e.badges ? asc({ ...p, ...d }, 56) : av(p, 56)}<div><b>${esc(p.name)}</b><small>${p.field}${p.showStage ? ' · ' + p.stage : ''}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
       <label class="toggle"><input type="checkbox" data-a="reg-toggle" data-x="list" ${d.list ? 'checked' : ''}><span>Show me in the attendee list</span></label>
       ${e.mode === 'offline' ? `<label class="toggle"><input type="checkbox" data-a="reg-toggle" data-x="wall" ${d.wall ? 'checked' : ''}><span>Appear on the live participant wall after check-in</span></label>` : ''}
       <p class="note">${ICON.lock} Email, career stage and CV are never shown to attendees.</p>
@@ -388,7 +394,7 @@ V.live = (id) => {
   const tabs = [['here', 'Who’s here'], ['agenda', 'Agenda'], ['saved', `Saved · ${mine.length}`]];
   let body = '';
   if (ui.liveTab === 'here') body = `<p class="muted small">${here.length + 1} people chose to show on the wall. Spot their avatar on a badge.</p>
-      <div class="wall">${(reg(id).wall ? [{ ...me(), ...badgeLook(id), headline: '#' + badgeLook(id).tag }, ...here] : here).map((p) => `<button class="wall-tile" data-a="sheet-person" data-x="${p.id}">${av(p, 64)}<b>${esc(p.short)}${p.id === 'me' ? ' (you)' : ''}</b><small>${esc(p.headline)}</small></button>`).join('')}</div>`;
+      <div class="wall">${(reg(id).wall ? [{ ...me(), ...badgeLook(id), headline: '#' + badgeLook(id).tag }, ...here] : here).map((p) => `<button class="wall-tile" data-a="sheet-person" data-x="${p.id}">${asc(p, 64)}<b>${esc(p.short)}${p.id === 'me' ? ' (you)' : ''}</b><small>${esc(p.headline)}</small></button>`).join('')}</div>`;
   if (ui.liveTab === 'agenda') body = `<ul class="agenda">${e.agenda.map(([t, a], i) => `<li class="${i === 2 ? 'now' : ''}"><time>${t}</time>${a}${i === 2 ? ' <i class="chip">Now</i>' : ''}</li>`).join('')}</ul>`;
   if (ui.liveTab === 'saved') body = (mine.length ? mine.map(encounterRow).join('') : `<p class="empty">Nobody saved yet. When you and someone both say yes on your Tappys, you can save the moment here.</p>`)
     + (L.noBadge ? '' : here.filter((p) => !mine.some((x) => x.person === p.id)).slice(0, 2).map((p) => demo(`Tappy on another device saved ${p.short}`, 'demo-enc', p.id)).join(''));
@@ -406,7 +412,7 @@ V.live = (id) => {
 function encounterRow(x) {
   const p = who(x.person); const f = S.following.includes(x.person);
   return `<div class="enc">${av(p, 44, 'round')}<div><b>${esc(p.name)}</b><small>${esc(x.prompt)}</small></div>
-    <button class="btn small ${f ? '' : 'primary'}" data-a="follow" data-x="${p.id}">${f ? 'Following' : 'Follow'}</button></div>`;
+    ${followBtn(p.id)}</div>`;
 }
 
 V.leave = (id) => {
@@ -476,11 +482,11 @@ V.recap = (id) => {
     <section class="pad">
       <p class="eyebrow">You went · ${e.date}</p>
       <h1 class="title">${esc(e.title)}</h1>
-      <div class="stats"><div><b>${mine.length}</b><small>people saved</small></div><div><b>${S.following.filter((p) => mine.some((x) => x.person === p)).length}</b><small>followed</small></div><div><b>${e.mode === 'online' ? '75' : '170'}</b><small>minutes</small></div></div>
+      <div class="stats"><div><b>${mine.length}</b><small>people saved</small></div><div><b>${S.following.filter((p) => mine.some((x) => x.person === p)).length}</b><small>following</small></div><div><b>${e.mode === 'online' ? '75' : '170'}</b><small>minutes</small></div></div>
       <h3>People you met</h3>
-      ${mine.length ? mine.map(encounterRow).join('') + `<p class="note">${ICON.info} Following is one-way. They aren’t asked to follow back, and it doesn’t open direct messages.</p>` : '<p class="empty">You didn’t save anyone this time — that’s fine.</p>'}
+      ${mine.length ? mine.map(encounterRow).join('') + `<p class="note">${ICON.info} Follow anyone you met. If they follow you back, you’re connected — connections see each other at future events.</p>` : '<p class="empty">You didn’t save anyone this time — that’s fine.</p>'}
       <div class="msg">${av(host, 36, 'round')}<div><small>Message from ${host.short} · host</small><p>Thanks for coming! Slides and the resource list are in the ${esc(e.circle)} circle. See you at the next one.</p></div></div>
-      <div class="prompt-card" data-a="compose" data-x="${id}"><small>Share a takeaway</small><b>What’s one thing you’ll try this week?</b><span>Help someone who couldn’t make it · earn ★ when it helps</span></div>
+      <div class="prompt-card" data-a="compose" data-x="${id}"><small>Share a takeaway</small><b>What’s one thing you’ll try this week?</b><span>Help someone who couldn’t make it · +15 pts</span></div>
       <h3>How was it?</h3>
       <div class="rate">${['😕', '😐', '🙂', '😄', '🤩'].map((m, i) => `<button class="${fb === i ? 'on' : ''}" data-a="rate" data-x="${id}|${i}">${m}</button>`).join('')}</div>
       ${nextUp.length ? `<h3>Keep going</h3><div class="shelf">${nextUp.map(eventCard).join('')}</div>` : ''}
@@ -488,72 +494,192 @@ V.recap = (id) => {
     </section>`;
 };
 
+/* ------------------------------------------------------------ social graph */
+const isConn = (id) => S.following.includes(id) && S.followers.includes(id);
+const connections = () => S.following.filter((id) => S.followers.includes(id));
+const connsGoing = (e) => (S.profile ? e.attendees.filter(isConn) : []);
+const faces = (ids, size = 22) => `<span class="faces">${ids.slice(0, 4).map((id) => av(PEOPLE[id], size)).join('')}</span>`;
+function connLine(e, size = 20) {
+  const c = connsGoing(e); if (!c.length) return '';
+  const names = c.slice(0, 2).map((id) => PEOPLE[id].short).join(', ');
+  return `<span class="conn-line">${faces(c, size)}<span>${names}${c.length > 2 ? ` +${c.length - 2}` : ''} going</span></span>`;
+}
+function relLabel(id) {
+  if (isConn(id)) return 'Connected';
+  if (S.following.includes(id)) return 'Following';
+  if (S.followers.includes(id)) return 'Follow back';
+  return 'Follow';
+}
+function followBtn(id, small = true) {
+  const l = relLabel(id); const cta = l === 'Follow' || l === 'Follow back';
+  return `<button class="btn ${small ? 'small' : ''} ${cta ? 'primary' : ''}" data-a="follow" data-x="${id}">${l === 'Connected' ? '✓ Connected' : l}</button>`;
+}
+const circlesJoined = () => [...new Set([...(S.circles || []), ...Object.keys(S.regs).map((id) => ev(id).circle)])];
+
+/* ------------------------------------------------------------ growth points */
+function level(pts = S.points || 0) {
+  let i = 0; LEVELS.forEach(([min], k) => { if (pts >= min) i = k; });
+  const [min, name] = LEVELS[i]; const nx = LEVELS[i + 1];
+  return { n: i + 1, name, min, next: nx && nx[0], nextName: nx && nx[1], pct: nx ? Math.round(((pts - min) / (nx[0] - min)) * 100) : 100 };
+}
+function earn(n, why, quiet) {
+  const before = level().n;
+  S.points = (S.points || 0) + n;
+  S.ledger = [{ n, why, at: Date.now() }, ...(S.ledger || [])].slice(0, 30);
+  save();
+  const after = level();
+  if (after.n > before) setTimeout(() => toast(`🎉 Level up — you’re now a ${after.name}`), quiet ? 0 : 2700);
+  if (!quiet) toast(`+${n} pts · ${why}`);
+}
+function seedAccount(points) {
+  S.following = [...SEED_GRAPH.following]; S.followers = [...SEED_GRAPH.followers];
+  S.circles = ['Harbour Builders', 'UTS Design Crowd'];
+  S.points = points; S.ledger = points ? [{ n: 15, why: 'Shared an event takeaway', at: Date.now() - 864e5 }, { n: 20, why: 'Checked in at an event', at: Date.now() - 9e7 }, { n: 5, why: 'New connection · Leo', at: Date.now() - 2e8 }] : [];
+}
+const lvChip = () => { const l = level(); return `<button class="lv-chip" data-a="nav" data-x="rewards">Lv ${l.n} · ${l.name}<span>${S.points || 0} pts</span></button>`; };
+
 /* ------------------------------------------------------------ community */
+const comments = (id) => [...(SEED_COMMENTS[id] || []), ...((S.myComments || {})[id] || []).map((t) => ['me', t])];
 function postCard(p) {
-  const a = p.anon ? { avatar: 'male_0_0', color: '#777777', name: 'Anonymous member' } : who(p.author); const helped = S.helped.includes(p.id); const own = p.author === 'me';
+  const a = p.anon ? { name: 'Anonymous member' } : who(p.author);
+  const helped = S.helped.includes(p.id); const own = p.author === 'me';
+  const conn = !own && !p.anon && isConn(p.author);
   return `<article class="post">
-    <header>${av(a, 36, 'round')}<div><b>${esc(p.anon ? 'Anonymous member' : a.name)}</b><small>${esc(p.circle)} · ${p.ago}</small></div><i class="chip">${p.type}</i></header>
+    <header>${p.anon ? '<span class="ph anon" style="width:36px;height:36px">?</span>' : `<button class="plain" data-a="nav" data-x="${own ? 'me' : 'person/' + p.author}">${av(a, 36)}</button>`}
+      <div><b>${esc(a.name)}${conn ? ' <i class="conn-tag">Connection</i>' : ''}</b><small>${p.aud === 'circle' ? ICON.lock : ''}${esc(p.circle)} · ${p.ago}</small></div><i class="chip">${p.type}</i></header>
     <p>${esc(p.text)}</p>
-    <footer><button class="help ${helped ? 'on' : ''}" data-a="helped" data-x="${p.id}" ${own ? 'disabled' : ''}>★ ${own ? 'Helpful' : helped ? 'You found this helpful' : 'This helped'} · ${p.stars + (helped ? 1 : 0)}</button><button class="plain muted small" data-a="toast" data-x="Replies are coming in the next build">Reply</button></footer>
+    <footer><button class="help ${helped ? 'on' : ''}" data-a="helped" data-x="${p.id}" ${own ? 'disabled' : ''}>${ICON.spark}Helpful · ${p.helpful + (helped ? 1 : 0)}</button><button class="help" data-a="comments" data-x="${p.id}">${ICON.chat}${p.comments + ((S.myComments || {})[p.id] || []).length}</button></footer>
   </article>`;
 }
 
 V.community = () => {
-  const circles = [...new Set([...Object.keys(S.regs).map((id) => ev(id).circle), 'Harbour Builders', 'Switchers Circle'])];
-  let list = allPosts();
-  if (ui.seg === 'following') list = list.filter((p) => S.following.includes(p.author));
-  return `<header class="top"><h1>Community</h1><button class="star-pill" data-a="nav" data-x="rewards">★ ${S.stars}</button></header>
-    <div class="pills scroll">${[['foryou', 'For you'], ['circles', 'Circles'], ['following', 'Following']].map(([k, l]) => `<button class="pill ${ui.seg === k ? 'on' : ''}" data-a="seg" data-x="${k}">${l}</button>`).join('')}</div>
-    ${ui.seg === 'circles' ? circles.map((c) => { const e = EVENTS.find((x) => x.circle === c); return `<button class="row" data-a="toast" data-x="Circle pages come next">${cover(e, 'sm')}<span class="row-main"><b>${c}</b><small>${e.going + 80} members · ${EVENTS.filter((x) => x.circle === c).length} upcoming</small></span></button>`; }).join('')
-      : list.map(postCard).join('') || '<p class="empty">Follow people you meet at events to see their posts here.</p>'}
+  const seg = ['public', 'circles', 'connections'].includes(ui.seg) ? ui.seg : 'public';
+  const tabs = [['public', 'Public'], ['circles', 'My circles'], ['connections', 'Connections']];
+  let body;
+  if (seg !== 'public' && !S.profile) body = `<p class="empty">Log in to see your circles and connections.</p><button class="btn primary" data-a="login-demo">Log in</button>`;
+  else if (seg === 'public') {
+    body = `<p class="note">${ICON.globe} Open to everyone on JobBuddy: questions, takeaways, referrals, and people looking for someone to go with.</p>` + allPosts().filter((p) => p.aud === 'public').map(postCard).join('');
+  } else if (seg === 'circles') {
+    const mine = circlesJoined(); const c = mine.includes(ui.circle) ? ui.circle : null;
+    const list = allPosts().filter((p) => p.aud === 'circle' && mine.includes(p.circle) && (!c || p.circle === c));
+    body = `<div class="pills scroll flush"><button class="pill ${!c ? 'on' : ''}" data-a="circle" data-x="">All circles</button>${mine.map((x) => `<button class="pill ${c === x ? 'on' : ''}" data-a="circle" data-x="${x}">${x}</button>`).join('')}</div>
+      <p class="note">${ICON.lock} Members only. You join a circle by attending its events; posts stay inside it.</p>` + (list.map(postCard).join('') || '<p class="empty">No posts in this circle yet.</p>');
+  } else {
+    const list = allPosts().filter((p) => isConn(p.author));
+    body = `<div class="conn-strip">${connections().map((id) => `<button data-a="nav" data-x="person/${id}">${av(PEOPLE[id], 52)}<small>${PEOPLE[id].short}</small></button>`).join('')}</div>` + (list.map(postCard).join('') || '<p class="empty">Posts from your connections show up here.</p>');
+  }
+  return `<header class="top"><h1>Community</h1>${S.profile ? lvChip() : ''}</header>
+    <div class="pad"><div class="seg3">${tabs.map(([k, l]) => `<button class="${seg === k ? 'on' : ''}" data-a="seg" data-x="${k}">${l}</button>`).join('')}</div></div>
+    <section class="pad feed">${body}</section>
     <button class="fab" data-a="compose" data-x="">${ICON.plus}</button>
     <div class="spacer"></div>`;
 };
 
+const PLACEHOLDER = { Question: 'What are you stuck on?', Takeaway: 'What’s one thing you’ll try this week?', Resource: 'Share a link, template or tool…', 'Offer help': 'What could you help someone with?', Referral: 'Which role, and who should reach out?', 'Going together': 'Which event? Where should people meet you?', Win: 'What happened? Who helped?' };
 V.compose = (eventId) => {
   const e = eventId && ev(eventId);
-  if (!ui.compose || ui.compose.eventId !== eventId) ui.compose = { eventId, type: 'Takeaway', text: '', audience: 'circle' };
+  const mine = circlesJoined();
+  if (!ui.compose || ui.compose.eventId !== eventId) ui.compose = { eventId, type: e ? 'Takeaway' : 'Question', text: '', audience: e || mine.length ? 'circle' : 'public', circle: e ? e.circle : mine[0] };
   const c = ui.compose;
-  const qs = { Takeaway: 'What’s one thing you’ll try this week?', Resource: 'What link or tool would help others?', Question: 'What are you still unsure about?', 'Offer help': 'What could you help someone with?' };
   return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><b>New post</b><button class="btn small primary" data-a="post">Post</button></header>
     <section class="pad">
       ${e ? `<div class="linked">${cover(e, 'sm')}<div><small>Linked to</small><b>${esc(e.title)}</b></div></div>` : ''}
-      <div class="pills">${Object.keys(qs).map((t) => `<button class="pill ${c.type === t ? 'on' : ''}" data-a="compose-type" data-x="${t}">${t}</button>`).join('')}</div>
-      <textarea class="field area" data-model="compose.text" placeholder="${qs[c.type]}">${esc(c.text)}</textarea>
+      <div class="pills">${POST_TYPES.map((t) => `<button class="pill ${c.type === t ? 'on' : ''}" data-a="compose-type" data-x="${t}">${t}</button>`).join('')}</div>
+      <textarea class="field area" data-model="compose.text" placeholder="${PLACEHOLDER[c.type]}">${esc(c.text)}</textarea>
       <h3>Who can see this</h3>
-      <div class="seg3">${[['circle', e ? e.circle : 'My circles'], ['public', 'Everyone'], ['anon', 'Anonymous']].map(([k, l]) => `<button class="${c.audience === k ? 'on' : ''}" data-a="compose-aud" data-x="${k}">${l}</button>`).join('')}</div>
-      <p class="note">${ICON.info} Stars come from people who found your post helpful — not from likes or post count.</p>
+      <div class="seg3">${[['circle', 'Circle'], ['public', 'Public'], ['anon', 'Anonymous']].map(([k, l]) => `<button class="${c.audience === k ? 'on' : ''}" data-a="compose-aud" data-x="${k}">${l}</button>`).join('')}</div>
+      ${c.audience === 'circle' ? `<div class="pills" style="margin-top:12px">${(e ? [e.circle] : mine).map((x) => `<button class="pill ${c.circle === x ? 'on' : ''}" data-a="compose-circle" data-x="${x}">${ICON.lock}${x}</button>`).join('')}</div>` : ''}
+      <p class="note">${ICON.spark} +${e ? 15 : 10} pts for posting. More when people mark it helpful or reply.</p>
     </section>`;
 };
 
-V.rewards = () => `
-  <header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>Your stars</b><span></span></header>
+/* ------------------------------------------------------------ growth */
+V.rewards = () => {
+  const l = level();
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>Growth & points</b><span></span></header>
   <section class="pad">
-    <div class="star-hero"><b>★ ${S.stars}</b><small>earned by helping people in your circles</small></div>
-    <h3>How stars work</h3>
-    <ol class="how"><li><b>Share or answer</b><small>takeaways, resources, offers of help</small></li><li><b>Someone marks it helpful</b><small>one star per person, per post</small></li><li><b>Unlock extras</b><small>core features are always free</small></li></ol>
-    <h3>Use stars</h3>
-    ${[['AI CV deep review', 'Line-by-line feedback for one role', 5], ['Priority mock interview', 'Get matched with a practitioner first', 8], ['Host a circle session', 'Run your own small event', 12]].map(([t, d, n]) => `<div class="enc"><span class="reward-ico">★</span><div><b>${t}</b><small>${d}</small></div><button class="btn small ${S.stars >= n ? 'primary' : ''}" data-a="toast" data-x="Concept only — redemption isn’t built in this prototype">${n} ★</button></div>`).join('')}
-    <p class="note">${ICON.info} Everyone gets one free AI CV check each month, stars or not.</p>
+    <div class="lv-hero"><small>LEVEL ${l.n}</small><b>${l.name}</b><div class="lvbar"><i style="width:${l.pct}%"></i></div>
+      <span>${S.points || 0} pts${l.next ? ` · ${l.next - S.points} to ${l.nextName}` : ' · top level'}</span></div>
+    <h3>Levels</h3>
+    <ol class="levels">${LEVELS.map(([min, name], i) => `<li class="${i + 1 === l.n ? 'now' : i + 1 < l.n ? 'done' : ''}"><span>${i + 1}</span><b>${name}</b><small>${min} pts</small></li>`).join('')}</ol>
+    <h3>How you earn</h3>
+    <ul class="rules-list">${POINT_RULES.map(([t, n]) => `<li><span>${t}</span><b>+${n}</b></li>`).join('')}</ul>
+    <p class="note">${ICON.info} Fair play: up to 60 pts a day from posts and comments; each person’s “helpful” counts once; self-votes and vote swaps don’t count.</p>
+    <h3>Redeem</h3>
+    ${REDEEM.map((r) => `<div class="enc"><span class="reward-ico">${ICON.spark}</span><div><b>${r.title}</b><small>${r.desc}${(S.credits || {})[r.id] ? ` · you have ${S.credits[r.id]}` : ''}</small></div><button class="btn small ${(S.points || 0) >= r.cost ? 'primary' : ''}" data-a="redeem" data-x="${r.id}" ${(S.points || 0) >= r.cost ? '' : 'disabled'}>${r.cost} pts</button></div>`).join('')}
+    <h3>Recent</h3>
+    ${(S.ledger || []).slice(0, 6).map((x) => `<div class="ledger"><span>${esc(x.why)}</span><b class="${x.n < 0 ? 'neg' : ''}">${x.n > 0 ? '+' : ''}${x.n}</b></div>`).join('') || '<p class="empty">No points yet.</p>'}
+    <div class="spacer"></div>
   </section>`;
+};
 
+/* ------------------------------------------------------------ tools */
+const CV_TIPS = [
+  ['Lead with outcomes', 'Turn “Designed onboarding screens” into “Redesigned onboarding, cutting drop-off from 38% to 21%”.'],
+  ['Match the role’s words', 'The UX designer ads you saved mention “usability testing” 6×; your CV mentions it once.'],
+  ['Cut the skills cloud', 'Replace the 18-item tool list with 3 projects that show those tools in use.']
+];
+V.cv = () => {
+  if (!S.profile) return V.me();
+  const free = S.cvFree ?? 3; const extra = (S.credits || {}).cv || 0; const r = ui.cvResult;
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>AI CV review</b><span></span></header>
+  <section class="pad">
+    <div class="usage"><div><b>${free}</b><small>free left this month</small></div><div><b>${extra}</b><small>extra (redeemed)</small></div></div>
+    ${r ? `<div class="cv-score"><b>72</b><small>/100 for ${esc(ui.cvRole || 'UX designer')}</small></div>
+      <h3>Top fixes</h3><ol class="how">${CV_TIPS.map(([a, b]) => `<li><b>${a}</b><small>${b}</small></li>`).join('')}</ol>
+      <h3>Strengths</h3><ul class="checklist"><li>Clear project structure</li><li>Real research methods, named</li></ul>
+      <p class="note">${ICON.info} AI suggestions are a starting point. Ask someone in your circle to sanity-check.</p>
+      <button class="btn" data-a="cv-again">Review another version</button>`
+    : `<div class="upload">${ICON.file}<b>Xinyi_Han_CV.pdf</b><small>Uploaded · 2 pages</small></div>
+      <h3>Target role</h3><div class="pills">${['UX designer', 'Product designer', 'Design intern'].map((t) => `<button class="pill ${(ui.cvRole || 'UX designer') === t ? 'on' : ''}" data-a="cv-role" data-x="${t}">${t}</button>`).join('')}</div>
+      <p class="note">${ICON.lock} Your CV is private and never shown in the community.</p>`}
+    <div class="spacer"></div>
+  </section>
+  ${r ? '' : `<footer class="sticky">${free || extra ? `<button class="btn primary" data-a="cv-run">Review my CV${free ? '' : ' · uses 1 extra'}</button>` : `<button class="btn primary" data-a="redeem" data-x="cv">Out of free reviews · redeem 30 pts</button>`}</footer>`}`;
+};
+
+V.mock = () => {
+  if (!S.profile) return V.me();
+  const free = S.mockFree ?? 1; const extra = (S.credits || {}).mock || 0;
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>Mock interview</b><span></span></header>
+  <section class="pad">
+    <p class="muted">Practise with a real person from the community — 30 minutes, video, honest feedback.</p>
+    <div class="usage"><div><b>${free}</b><small>free session this month</small></div><div><b>${extra}</b><small>extra (redeemed)</small></div></div>
+    ${(S.bookings || []).length ? `<h3>Booked</h3>${S.bookings.map((b) => `<div class="enc">${av(PEOPLE[b.who], 44)}<div><b>${PEOPLE[b.who].name}</b><small>${b.slot} · ${esc(b.role)}</small></div><i class="chip chip-going">Booked</i></div>`).join('')}` : ''}
+    <h3>Practitioners</h3>
+    ${PRACTITIONERS.map((x) => { const p = PEOPLE[x.id]; return `<div class="prac"><div class="enc">${av(p, 44)}<div><b>${p.name}${isConn(x.id) ? ' <i class="conn-tag">Connection</i>' : ''}</b><small>${x.role}</small></div></div>
+      <div class="pills">${x.slots.map((s) => `<button class="pill" data-a="book" data-x="${x.id}|${s}">${s}</button>`).join('')}</div></div>`; }).join('')}
+    <p class="note">${ICON.spark} Practitioners earn points for every session they give.</p>
+    <div class="spacer"></div>
+  </section>`;
+};
+
+/* ------------------------------------------------------------ me & people */
 V.me = () => {
   const p = me();
   if (!p) return `<header class="top"><h1>Me</h1></header><section class="pad center"><p class="muted">Log in to register for events and keep the people you meet.</p><button class="btn primary" data-a="login-demo">Log in</button><button class="link" data-a="nav" data-x="onboarding">Create an account</button></section>`;
   const groups = { upcoming: ['going', 'checkedin'], pending: ['pending', 'declined'], past: ['attended'] };
   const list = EVENTS.filter((e) => groups[ui.meSeg].includes(reg(e.id)?.status));
+  const l = level(); const look = badgeLook();
+  const metIds = [...new Set(S.encounters.map((x) => x.person))];
   return `<header class="top"><h1>Me</h1><button class="icon-btn" data-a="edit-profile">${ICON.edit}</button></header>
     <section class="pad">
-      <div class="me-hero">${av(p, 96)}<div><h2>${esc(p.name)}</h2><small>${p.field} · ${p.stage}${p.showStage ? '' : ' 🔒'}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
-      <div class="stats"><button data-a="nav" data-x="people"><b>${S.encounters.length}</b><small>met</small></button><button data-a="nav" data-x="people"><b>${S.following.length}</b><small>following</small></button><button data-a="nav" data-x="rewards"><b>★ ${S.stars}</b><small>stars</small></button></div>
+      <div class="me-hero">${av(p, 88)}<div><h2>${esc(p.name)}</h2><small>${p.field} · ${p.stage}${p.showStage ? '' : ' 🔒'}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
+      <button class="lv-card" data-a="nav" data-x="rewards"><div><small>LEVEL ${l.n}</small><b>${l.name}</b></div><span>${S.points || 0} pts</span><div class="lvbar"><i style="width:${l.pct}%"></i></div><small>${l.next ? `${l.next - S.points} pts to ${l.nextName}` : 'Top level'} · See how to earn & redeem</small></button>
+      <div class="stats four">${[['connections', connections().length, 'connections'], ['followers', S.followers.length, 'followers'], ['following', S.following.length, 'following'], ['met', metIds.length, 'met']].map(([t, n, lbl]) => `<button data-a="people-tab" data-x="${t}"><b>${n}</b><small>${lbl}</small></button>`).join('')}</div>
+      <h3>Career tools</h3>
+      <button class="tool" data-a="nav" data-x="cv"><span class="tool-ico">${ICON.file}</span><span class="row-main"><b>AI CV review</b><small>${S.cvFree ?? 3} free this month${(S.credits || {}).cv ? ` · +${S.credits.cv} extra` : ''}</small></span>${ICON.chev}</button>
+      <button class="tool" data-a="nav" data-x="mock"><span class="tool-ico">${ICON.people}</span><span class="row-main"><b>Mock interview with a person</b><small>${S.mockFree ?? 1} free session this month</small></span>${ICON.chev}</button>
       <h3>My events</h3>
-      <div class="pills">${[['upcoming', 'Upcoming'], ['pending', 'Requests'], ['past', 'Past']].map(([k, l]) => `<button class="pill ${ui.meSeg === k ? 'on' : ''}" data-a="me-seg" data-x="${k}">${l}</button>`).join('')}</div>
+      <div class="pills">${[['upcoming', 'Upcoming'], ['pending', 'Requests'], ['past', 'Past']].map(([k, lb]) => `<button class="pill ${ui.meSeg === k ? 'on' : ''}" data-a="me-seg" data-x="${k}">${lb}</button>`).join('')}</div>
       ${list.map(eventRow).join('') || '<p class="empty">Nothing here yet.</p>'}
+      <h3>Two avatars</h3>
+      <div class="two-av"><div>${av(p, 56)}<small>Profile photo<br>app & online events</small></div><div>${avatar(look.avatar, look.color, 56)}<small>Tappy avatar<br>chosen per in-person event</small></div></div>
       <h3>Privacy</h3>
-      <ul class="checklist"><li>Public: name, avatar, field, interests${p.fact ? ', fun fact' : ''}</li><li>Private: ${p.showStage ? 'email' : 'career stage, email'}</li></ul>
+      <ul class="checklist"><li>Public: name, photo, field, interests${p.fact ? ', fun fact' : ''}</li><li>Private: ${p.showStage ? 'email, CV' : 'career stage, email, CV'}</li></ul>
       <h3>Appearance</h3>
-      <div class="seg3">${[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([k, l]) => `<button class="${themePref() === k ? 'on' : ''}" data-a="theme" data-x="${k}">${l}</button>`).join('')}</div>
-      <h3>Event Tappy</h3>
+      <div class="seg3">${[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([k, lb]) => `<button class="${themePref() === k ? 'on' : ''}" data-a="theme" data-x="${k}">${lb}</button>`).join('')}</div>
+      <h3>Tappy</h3>
       <a class="row badge-link" href="./tappy/" target="_blank" rel="noopener">${ICON.badge}<span class="row-main"><b>Open the Tappy app</b><small>Install it on a second phone to act as the hardware</small></span>${ICON.chev}</a>
       <button class="link" data-a="logout">Log out</button>
       <button class="link danger" data-a="reset">Reset demo</button>
@@ -562,22 +688,33 @@ V.me = () => {
 };
 
 V.people = () => {
-  const ids = [...new Set([...S.encounters.map((x) => x.person), ...S.following])];
+  const tab = ui.pplTab || 'connections';
+  const metIds = [...new Set(S.encounters.map((x) => x.person))];
+  const ids = { connections: connections(), followers: S.followers, following: S.following, met: metIds }[tab];
+  const empty = { connections: 'When you and someone follow each other, you’re connected.', followers: 'No followers yet.', following: 'You’re not following anyone yet.', met: 'People you save at events show up here.' }[tab];
   return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>People</b><span></span></header>
-    <section class="pad">${ids.map((id) => { const x = S.encounters.find((y) => y.person === id); const p = PEOPLE[id]; const f = S.following.includes(id);
-      return `<button class="enc" data-a="nav" data-x="person/${id}">${av(p, 44, 'round')}<div><b>${p.name}</b><small>${x ? 'Met at ' + ev(x.eventId).title : p.headline}</small></div><i class="chip">${f ? 'Following' : 'Met'}</i></button>`; }).join('') || '<p class="empty">People you save at events show up here.</p>'}</section>`;
+    <section class="pad">
+      <div class="tabs">${[['connections', 'Connections'], ['followers', 'Followers'], ['following', 'Following'], ['met', 'Met']].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-a="people-tab" data-x="${k}">${l}</button>`).join('')}</div>
+      ${tab === 'connections' ? `<p class="note">${ICON.info} A connection is a mutual follow.</p>` : ''}
+      ${ids.map((id) => { const p = PEOPLE[id]; const x = S.encounters.find((y) => y.person === id);
+        return `<div class="enc"><button class="plain" data-a="nav" data-x="person/${id}">${av(p, 44)}</button><div><b>${p.name}</b><small>${x ? 'Met at ' + ev(x.eventId).title : p.headline}</small></div>${followBtn(id)}</div>`; }).join('') || `<p class="empty">${empty}</p>`}
+    </section>`;
 };
 
 V.person = (id) => {
-  const p = PEOPLE[id]; const f = S.following.includes(id);
+  const p = PEOPLE[id]; if (!p) return V.notfound();
   const met = S.encounters.filter((x) => x.person === id);
+  const both = EVENTS.filter((e) => e.attendees.includes(id) && reg(e.id));
   return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><span></span><span></span></header>
     <section class="pad">
-      <div class="me-hero">${av(p, 96)}<div><h2>${p.name}</h2><small>${esc(p.headline)}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
-      <button class="btn ${f ? '' : 'primary'}" data-a="follow" data-x="${id}">${f ? 'Following' : 'Follow'}</button>
+      <div class="me-hero">${av(p, 88)}<div><h2>${p.name}</h2><small>${esc(p.headline)}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
+      ${S.profile ? followBtn(id, false) : ''}
+      ${S.followers.includes(id) && !S.following.includes(id) ? `<p class="note">${ICON.info} ${p.short} follows you. Follow back to connect.</p>` : ''}
       ${met.map((x) => `<div class="msg"><div><small>You met at ${esc(ev(x.eventId).title)}</small><p>${esc(x.prompt)}</p></div></div>`).join('')}
+      ${both.length ? `<h3>Also going</h3>${both.map(lumaRow).join('')}` : ''}
       <h3>Fun fact</h3><p>${esc(p.fact)}</p>
-      <h3>Posts</h3>${SEED_POSTS.filter((x) => x.author === id).map(postCard).join('') || '<p class="empty">No posts yet.</p>'}
+      <h3>Posts</h3>${allPosts().filter((x) => x.author === id && (x.aud === 'public' || circlesJoined().includes(x.circle))).map(postCard).join('') || '<p class="empty">No posts yet.</p>'}
+      <div class="spacer"></div>
     </section>`;
 };
 
@@ -588,14 +725,15 @@ function sheetHTML() {
   const s = ui.sheet; if (!s) return '';
   let inner = '';
   if (s.type === 'person') {
-    const p = who(s.id); const noBadge = S.live?.noBadge;
-    inner = `${av(p, 80)}<h2>${esc(p.name)}</h2><p class="muted">${esc(p.headline)}</p><p>“${esc(p.fact || '')}”</p>
+    const p = s.id === 'me' ? { ...me(), ...badgeLook(S.live?.eventId) } : who(s.id); const noBadge = S.live?.noBadge;
+    inner = `${asc(p, 80)}<h2>${esc(p.name)}</h2><p class="muted">${esc(p.headline)}</p><p>“${esc(p.fact || '')}”</p>
       <div class="pills center">${p.interests.map((t) => `<i class="pill">${t}</i>`).join('')}</div>
       ${p.id === 'me' ? '<p class="note">This is how you appear on the wall.</p>' : noBadge ? `<button class="btn primary" data-a="hi-request" data-x="${p.id}">Send a hi request</button>` : `<p class="note">${ICON.badge} Look for this avatar on a Tappy and say hi. Tap Tappys if you both want a conversation prompt.</p>`}`;
   }
   if (s.type === 'match') {
     const p = PEOPLE[s.id];
-    inner = `<div class="duo">${av(me(), 64)}${av(p, 64)}</div><small class="eyebrow">You both said yes · ${esc(s.tag)}</small><h2 class="prompt">${esc(s.prompt)}</h2>
+    const online = S.live?.online;
+    inner = `<div class="duo">${online ? av(me(), 64) + av(p, 64) : asc({ ...me(), ...badgeLook(S.live?.eventId) }, 64) + asc(p, 64)}</div><small class="eyebrow">You both said yes · ${esc(s.tag)}</small><h2 class="prompt">${esc(s.prompt)}</h2>
       <button class="btn" data-a="toast" data-x="Opens a 5-minute video room (mocked)">Open 5-min chat room</button>
       <button class="btn primary" data-a="save-enc" data-x="${p.id}">Save encounter</button><button class="link" data-a="sheet-close">Skip</button>`;
   }
@@ -604,7 +742,13 @@ function sheetHTML() {
     inner = `${av(p, 80)}<h2>${p.short} waved at you</h2><p class="muted">${esc(p.headline)}</p><p class="note">${ICON.lock} If you ignore it, ${p.short} won’t be told.</p>
       <button class="btn primary" data-a="accept-wave" data-x="${p.id}">Wave back</button><button class="link" data-a="sheet-close">Ignore quietly</button>`;
   }
-  return `<div class="scrim" data-a="sheet-close"></div><div class="sheet"><i class="grab"></i>${inner}</div>`;
+  if (s.type === 'comments') {
+    const p = allPosts().find((x) => x.id === s.id); const cs = comments(s.id);
+    inner = `<h2 class="sheet-title">Comments · ${p.comments + ((S.myComments || {})[s.id] || []).length}</h2>
+      <div class="clist">${cs.map(([a, t]) => { const u = who(a); return `<div class="cmt">${av(u, 30)}<div><b>${esc(u.name)}</b><p>${esc(t)}</p></div></div>`; }).join('') || '<p class="muted small">Be the first to reply.</p>'}${p.comments > cs.length ? `<p class="muted small">+ ${p.comments - cs.length} earlier comments</p>` : ''}</div>
+      <div class="cinput"><input class="field" data-model="commentText" placeholder="Add a helpful reply… (+3 pts)" value="${esc(ui.commentText || '')}"><button class="btn small primary" data-a="send-comment" data-x="${s.id}">Send</button></div>`;
+  }
+  return `<div class="scrim" data-a="sheet-close"></div><div class="sheet ${s.type === 'comments' ? 'left' : ''}"><i class="grab"></i>${inner}</div>`;
 }
 
 /* ================================================================ BADGE */
@@ -687,7 +831,7 @@ const A = {
   back: () => history.length > 1 ? history.back() : go('home'),
   toast: (x) => toast(x),
   browse: () => { S.browsing = true; save(); go('home'); },
-  'login-demo': () => { S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; const next = S.afterOnboard || 'home'; S.afterOnboard = null; save(); toast('Logged in as Xinyi'); go(next); render(); },
+  'login-demo': () => { S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; if (!S.following.length) seedAccount(140); const next = S.afterOnboard || 'home'; S.afterOnboard = null; save(); toast('Logged in as Xinyi'); go(next); render(); },
   signup: () => { ui.authNew = true; ui.ob = null; render(); },
   'bd-pick': (x) => { const [k, v] = x.split('|'); ui.regDraft[k] = v; render(); },
   'badge-save': (id) => { const d = ui.regDraft; S.regs[id].badge = { avatar: d.avatar, color: d.color, tag: d.tag }; S.lastBadge = S.regs[id].badge; save(); toast('Tappy updated'); history.back(); },
@@ -712,6 +856,7 @@ const A = {
     if (o.step < 1) { o.step++; render(); return; }
     const wasNew = !S.onboarded;
     S.profile = { name: o.name.trim(), field: o.field, stage: o.stage, interests: o.interests, fact: o.fact.trim(), avatar: S.profile?.avatar || o.avatar, color: S.profile?.color || o.color, showStage: o.showStage };
+    if (wasNew) seedAccount(0);
     S.onboarded = true; ui.ob = null; ui.authNew = false;
     const next = S.afterOnboard || 'home'; S.afterOnboard = null; save();
     toast(wasNew ? 'Account created' : 'Profile saved'); go(next);
@@ -729,7 +874,7 @@ const A = {
   approve: (id) => { S.regs[id].status = 'going'; save(); toast('🎉 Approved — address unlocked'); render(); },
   decline: (id) => { S.regs[id].status = 'declined'; save(); render(); },
   cancel: (id) => { if (confirm('Cancel? Your spot goes to the next person.')) { delete S.regs[id]; save(); toast('Cancelled'); go('event/' + id); } },
-  checkin: (id) => { S.regs[id].status = 'checkedin'; S.live = { eventId: id }; save(); toast('Checked in ✓'); render(); },
+  checkin: (id) => { S.regs[id].status = 'checkedin'; S.live = { eventId: id }; save(); earn(20, 'Checked in at an event'); render(); },
   'give-badge': (id) => { S.live = { eventId: id, badgeId: BADGE_ID }; S.badge = { screen: 'unpaired' }; save(); render(); },
   'no-badge': (id) => { S.live = { eventId: id, noBadge: true }; save(); go('live/' + id); },
   scan: () => { ui.pairInput = BADGE_ID; ui.pairError = ''; render(); },
@@ -775,9 +920,44 @@ const A = {
   'accept-wave': (x) => { const pr = makePrompt(PEOPLE[x]); ui.sheet = { type: 'match', id: x, prompt: pr.text, tag: pr.tag }; render(); },
   'save-enc': (x) => { addEncounter(x, S.live.eventId, ui.sheet.prompt, S.live.online ? 'wave' : 'hi'); ui.sheet = null; toast(`Saved · ${PEOPLE[x].short}`); render(); },
   follow: (x) => {
-    const f = S.following.includes(x);
-    S.following = f ? S.following.filter((p) => p !== x) : [...S.following, x];
-    save(); toast(f ? 'Unfollowed' : `Following ${PEOPLE[x].short} · they won’t be asked to follow back`); render();
+    if (!S.profile) { go('onboarding'); return; }
+    const p = PEOPLE[x]; const was = S.following.includes(x);
+    if (was) { if (isConn(x) && !confirm(`Remove ${p.short} as a connection? You’ll stop following them.`)) return; S.following = S.following.filter((y) => y !== x); save(); toast(`Unfollowed ${p.short}`); render(); return; }
+    S.following = [...S.following, x]; save();
+    if (isConn(x)) { earn(5, `New connection · ${p.short}`, true); toast(`🤝 You and ${p.short} are now connected · +5 pts`); }
+    else {
+      toast(`Following ${p.short}. You’ll connect if they follow back.`);
+      if (FOLLOWS_BACK.includes(x)) setTimeout(() => { if (!S.following.includes(x) || S.followers.includes(x)) return; S.followers = [...S.followers, x]; earn(5, `New connection · ${p.short}`, true); render(); toast(`🤝 ${p.short} followed you back — you’re connected · +5 pts`); }, 3000);
+    }
+    render();
+  },
+  'people-tab': (x) => { ui.pplTab = x; if (!location.hash.startsWith('#/people')) go('people'); else render(); },
+  circle: (x) => { ui.circle = x || null; render(); },
+  comments: (x) => { ui.sheet = { type: 'comments', id: x }; render(); },
+  'send-comment': (x) => {
+    if (!S.profile) { ui.sheet = null; go('onboarding'); return; }
+    const t = (ui.commentText || '').trim(); if (!t) return;
+    S.myComments = S.myComments || {}; S.myComments[x] = [...(S.myComments[x] || []), t]; ui.commentText = '';
+    earn(3, 'Commented on a post'); render();
+  },
+  'compose-circle': (x) => { ui.compose.circle = x; render(); },
+  redeem: (x) => {
+    const r = REDEEM.find((y) => y.id === x); if ((S.points || 0) < r.cost) { toast('Not enough points yet'); return; }
+    if (!confirm(`Redeem ${r.cost} pts for “${r.title}”?`)) return;
+    S.credits = S.credits || {}; S.credits[x] = (S.credits[x] || 0) + 1; earn(-r.cost, `Redeemed · ${r.title}`, true); toast(`Redeemed · ${r.title}`); render();
+  },
+  'cv-role': (x) => { ui.cvRole = x; render(); },
+  'cv-run': () => {
+    if ((S.cvFree ?? 3) > 0) S.cvFree = (S.cvFree ?? 3) - 1; else if ((S.credits || {}).cv) S.credits.cv--; else return;
+    save(); ui.cvResult = true; toast('Reviewing…'); render();
+  },
+  'cv-again': () => { ui.cvResult = false; render(); },
+  book: (x) => {
+    const [who_, slot] = x.split('|'); const pr = PRACTITIONERS.find((y) => y.id === who_);
+    if ((S.mockFree ?? 1) > 0) S.mockFree = (S.mockFree ?? 1) - 1;
+    else if ((S.credits || {}).mock) S.credits.mock--;
+    else { if (confirm('Your free session is used. Redeem 80 pts for another?')) { A.redeem('mock'); if ((S.credits || {}).mock) { S.credits.mock--; } else return; } else return; }
+    S.bookings = [...(S.bookings || []), { who: who_, slot, role: pr.role }]; save(); toast(`Booked with ${PEOPLE[who_].short} · ${slot}`); render();
   },
   rate: (x) => { const [id, i] = x.split('|'); S.feedback[id] = +i; save(); toast('Thanks — sent to the host'); render(); },
   compose: (x) => { if (!S.onboarded) { go('onboarding'); return; } go('compose/' + x); },
@@ -786,17 +966,20 @@ const A = {
   post: () => {
     const c = ui.compose; if (!c.text.trim()) { toast('Write something first'); return; }
     const e = c.eventId && ev(c.eventId);
-    const post = { id: 'm' + Date.now(), author: 'me', anon: c.audience === 'anon', circle: e ? e.circle : 'Everyone', type: c.type, text: c.text.trim(), stars: 0, ago: 'now' };
+    const aud = c.audience === 'circle' ? 'circle' : 'public';
+    const post = { id: 'm' + Date.now(), author: 'me', anon: c.audience === 'anon', aud, circle: aud === 'circle' ? c.circle || (e && e.circle) : 'Public', type: c.type, text: c.text.trim(), helpful: 0, comments: 0, ago: 'now' };
     S.posts.unshift(post); ui.compose = null; save();
-    ui.seg = 'foryou'; go('community'); toast('Posted');
-    setTimeout(() => { const p = S.posts.find((y) => y.id === post.id); if (!p) return; p.stars++; S.stars++; save(); render(); toast('★ Marcus found your post helpful · +1 star'); }, 3500);
+    ui.seg = aud === 'circle' ? 'circles' : 'public'; ui.circle = null; go('community');
+    e ? earn(15, 'Shared an event takeaway') : earn(10, 'Published a post');
+    setTimeout(() => { const p = S.posts.find((y) => y.id === post.id); if (!p) return; p.helpful++; earn(5, 'Marcus marked your post helpful'); render(); }, 3500);
+    setTimeout(() => { const p = S.posts.find((y) => y.id === post.id); if (!p) return; p.comments++; earn(2, 'Sofia commented on your post'); render(); }, 7000);
   },
   helped: (x) => { S.helped = S.helped.includes(x) ? S.helped.filter((p) => p !== x) : [...S.helped, x]; save(); render(); },
   reset: () => { if (confirm('Reset all demo data?')) { localStorage.removeItem(KEY); S = fresh(); Object.assign(ui, { sheet: null, ob: null, compose: null, waved: {}, pairInput: '' }); go('home'); render(); } }
 };
 
 /* =============================================================== RENDER */
-const NO_NAV = ['welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'event', 'recap'];
+const NO_NAV = ['welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'cv', 'mock', 'event', 'recap'];
 const TABS = [['home', 'Home', 'home'], ['events', 'Events', 'search'], ['community', 'Community', 'people'], ['me', 'Me', 'user']];
 
 function route() {
@@ -836,6 +1019,7 @@ document.addEventListener('input', (e) => {
   const v = e.target.value;
   if (m === 'q') { ui.q = v; $('#event-list').innerHTML = eventListHTML(); return; }
   if (m === 'pairInput') { ui.pairInput = v; return; }
+  if (m === 'commentText') { ui.commentText = v; return; }
   const [obj, key] = m.split('.');
   ui[obj][key] = v;
   if (obj === 'ob') { const btn = $('[data-a="ob-next"]'); const o = ui.ob; if (btn && o.step === 0) btn.disabled = !(o.name.trim() && o.field && o.stage); }
