@@ -1,13 +1,13 @@
 # JobBuddy App Prototype (PWA)
 
-A runnable, installable mobile web app for JobBuddy's final prototype. It covers the full online and in-person event journeys. The event badge is **simulated in software**, so the interaction can be finalised before it moves to ESP32 hardware.
+A runnable, installable mobile web app for JobBuddy's final prototype. It covers the full online and in-person event journeys. The event device, **Tappy**, is **simulated in software**, so the interaction can be finalised before it moves to ESP32 hardware.
 
 ## Install on phones — two apps
 
 | App | Role | URL |
 | --- | --- | --- |
 | **JobBuddy** | Attendee phone app | <https://hancyhxy.github.io/jobbuddy-app/> |
-| **JB Badge** | Event badge (stand-in for the ESP32 hardware) | <https://hancyhxy.github.io/jobbuddy-app/badge/> |
+| **Tappy** | Event device (stand-in for the ESP32 hardware) | <https://hancyhxy.github.io/jobbuddy-app/badge/> |
 
 Install each app from its URL, ideally on two different phones.
 
@@ -20,8 +20,8 @@ Once opened, it launches full-screen from the home-screen icon and works offline
 
 Each device keeps its own local state, so the presenter moves both sides along:
 
-- **Badge ⋯ operator menu:** 1 Staff assigns badge → 2 Phone sends pair request → press ● → tap the **NFC** strip to touch badges with someone → ● yes → ● save → 3 Staff confirms return. It can also choose who the badge shows.
-- **Phone:** after pairing, **DEMO Badge on another device: confirmed** stands in for the badge's ●. In Live → Saved, **DEMO Badge on another device saved …** adds the encounter that the badge would sync.
+- **Tappy ⋯ operator menu:** 1 Staff assigns Tappy → 2 Phone sends pair request → press ● → tap the **NFC** strip to touch Tappys with someone → ● yes → ● save → 3 Staff confirms return. It can also choose who the Tappy shows.
+- **Phone:** after pairing, **DEMO Tappy on another device: confirmed** stands in for the Tappy's ●. In Live → Saved, **DEMO Tappy on another device saved …** adds the encounter that the Tappy would sync.
 - **Same browser:** open both apps in two windows of the same browser (e.g. on a laptop) and they sync automatically through shared local storage.
 
 ## Run locally
@@ -30,8 +30,8 @@ Each device keeps its own local state, so the presenter moves both sides along:
 ./run.command          # serves on port 8080
 ```
 
-- Laptop: <http://localhost:8080>. The phone and the simulated badge appear side by side.
-- Phone on the same Wi-Fi: use the second URL that `run.command` prints. Tap **Badge** (floating button) to open the badge.
+- Laptop: <http://localhost:8080>. The phone and the simulated Tappy appear side by side.
+- Phone on the same Wi-Fi: use the second URL that `run.command` prints. Tap **Tappy** (floating button) to open the badge.
 - Install: Safari → Share → Add to Home Screen.
 
 All data is fictional and stays in the browser's `localStorage`. **Me → Reset demo** starts again from the beginning.
@@ -42,12 +42,12 @@ All data is fictional and stays in the browser's `localStorage`. **Me → Reset 
 
 1. The app opens straight on **Home** (Luma-style discovery: Your events, then Picked for you grouped by date, with an All / In person / Online switch). No sign-up is needed to browse.
 2. Event → Request to join → **Log in** (email / Apple / Google, all mocked as the demo account; or *Create an account*: name, field, private stage, interests) → registration.
-   For badge events, registration includes **Your badge for this event**: avatar, colour and one tag. It is saved per event and can be changed from the pass (*Your badge look → Change*). The badge and participant wall show this look, not the account profile. → **DEMO Host approves** (shows the Pending → Approved states).
-3. I’m here → **DEMO Staff scans pass** → **DEMO Staff hands you badge JB-07**, or *Continue without a badge*.
-4. Pair: typing a wrong ID shows an error. *Tap to scan* fills JB-07. The phone and badge show the same code, and you press ● on the badge to confirm.
+   For Tappy events, registration includes **Your Tappy for this event**: avatar, colour and one tag. It is saved per event and can be changed from the pass (*Your Tappy look → Change*). The Tappy and participant wall show this look, not the account profile. → **DEMO Host approves** (shows the Pending → Approved states).
+3. I’m here → **DEMO Staff scans pass** → **DEMO Staff hands you Tappy JB-07**, or *Continue without a Tappy*.
+4. Pair: typing a wrong ID shows an error. *Tap to scan* fills JB-07. The phone and Tappy show the same code, and you press ● on the Tappy to confirm.
 5. Live: participant wall (opt-in), agenda, saved encounters.
-6. On the badge, use the DEMO chips to tap with Marcus. Press ● to say yes, then a shared prompt appears. Press ● again to save. Tap with Priya to see a “not now” decline where nothing is shared.
-7. Return badge → **DEMO Staff confirms return** → the badge is wiped → recap.
+6. On the Tappy, use the DEMO chips to tap with Marcus. Press ● to say yes, then a shared prompt appears. Press ● again to save. Tap with Priya to see a “not now” decline where nothing is shared.
+7. Return Tappy → **DEMO Staff confirms return** → the Tappy is wiped → recap.
 8. Recap: one-way Follow, host message, share-a-takeaway prompt, rating, next events.
 9. Post a takeaway. A few seconds later a simulated Star arrives, and the balance shows under Community → ★.
 
@@ -61,25 +61,25 @@ All data is fictional and stays in the browser's `localStorage`. **Me → Reset 
 
 ## Interaction rules encoded
 
-- Pair ≠ Tap ≠ Follow. Pairing links a loan badge to one account. A tap only *asks* to talk. Follow is a separate, one-way choice in the app.
+- Pair ≠ Tap ≠ Follow. Pairing links a loan Tappy to one account. A tap only *asks* to talk. Follow is a separate, one-way choice in the app.
 - The shared prompt appears only after both people say yes. Declines and unanswered waves are silent.
 - Registration, check-in and attendance are separate states: pending / declined / going / checked in / attended.
-- The badge is optional. The *Continue without a badge* path uses in-app hi requests.
-- A returned badge is wiped. Saved encounters stay in the app.
+- The Tappy is optional. The *Continue without a Tappy* path uses in-app hi requests.
+- A returned Tappy is wiped. Saved encounters stay in the app.
 - Stars reward helpfulness, not popularity. Redeeming them for AI CV review is concept only.
 
 ## Structure
 
-- `index.html`, `styles.css`: shell and design language (Spotify-inspired, accent `#D7FF3A`; dark and light themes: sun/moon button on Home, or Me → Appearance → System/Light/Dark. The badge always stays dark, like hardware).
-- `js/app.js`: state, router, views, badge simulator, demo actions.
+- `index.html`, `styles.css`: shell and design language (Spotify-inspired, accent `#D7FF3A`; dark and light themes: sun/moon button on Home, or Me → Appearance → System/Light/Dark. The Tappy always stays dark, like hardware).
+- `js/app.js`: state, router, views, Tappy simulator, demo actions.
 - `js/data.js`: fictional events, people, posts, prompts.
 - `js/avatar.js`, `js/sprites.js`: 18×18 ASCII avatars adapted from The Pudding's *Hello, Stranger* (MIT, 2022) via Anonymous Connection.
 - `covers/`: event cover art generated with GPT image generation (fictional events and logos). Tech events use bold type with a logo; community and arts events use colourful poster styles.
-- `badge/`: standalone Badge app (fullscreen, NFC strip, ● / ○ buttons, operator menu), sharing `js/data.js` and `js/avatar.js`.
+- `badge/`: standalone Tappy app (fullscreen, NFC strip, ● / ○ buttons, operator menu), sharing `js/data.js` and `js/avatar.js`.
 - `manifest.webmanifest`, `sw.js`, `icons/`: PWA install and offline cache.
 
 ## Not included yet
 
-- Real multi-device sync. The phone and badge are linked only when they run in the same browser; otherwise the operator/DEMO controls bridge them.
-- ESP32 firmware. Badge screens are 240×240, with ● / ○ buttons and an NFC zone, matching the Anonymous Connection hardware so the next step can port them.
+- Real multi-device sync. The phone and Tappy are linked only when they run in the same browser; otherwise the operator/DEMO controls bridge them.
+- ESP32 firmware. Tappy screens are 240×240, with ● / ○ buttons and an NFC zone, matching the Anonymous Connection hardware so the next step can port them.
 - Organiser tools beyond the DEMO staff actions, circle pages, replies and star redemption.

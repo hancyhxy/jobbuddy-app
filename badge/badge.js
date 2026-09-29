@@ -1,4 +1,4 @@
-// JobBuddy Badge — standalone simulated hardware app.
+// JobBuddy Tappy — standalone simulated hardware app.
 // Shares localStorage with the phone app (same origin), so two windows in one browser stay in sync.
 // On a separate device it runs on its own; the operator menu (⋯) stands in for signals from the phone/staff.
 import { PEOPLE, PROMPTS } from '../js/data.js';
@@ -63,15 +63,15 @@ function screen() {
 function sheetHTML() {
   if (!sheet) return '';
   let inner = '';
-  if (sheet === 'nfc') inner = `<b>Touch badges with…</b><small>Simulates holding this badge against another attendee’s badge.</small>
+  if (sheet === 'nfc') inner = `<b>Touch Tappys with…</b><small>Simulates holding this Tappy against another attendee’s badge.</small>
     ${PARTNERS.map((id) => { const p = PEOPLE[id]; return `<button class="opt" data-a="tap" data-x="${id}">${avatar(p.avatar, p.color, 32)}<span>${p.name}${p.responds === 'later' ? '<i>will say “not now”</i>' : ''}</span></button>`; }).join('')}`;
   if (sheet === 'op') {
     const hasProfile = !!S.profile;
     inner = `<b>Operator</b><small>Stands in for the phone and staff while the devices aren’t linked.</small>
-      <button class="opt" data-a="assign">1 · Staff assigns badge ${BADGE_ID}</button>
+      <button class="opt" data-a="assign">1 · Staff assigns Tappy ${BADGE_ID}</button>
       <button class="opt" data-a="pair-req">2 · Phone sends pair request</button>
       <button class="opt" data-a="return">3 · Staff confirms return (wipe)</button>
-      <button class="opt" data-a="reset">Reset badge</button>
+      <button class="opt" data-a="reset">Reset Tappy</button>
       <small class="lbl">SHOWN ON BADGE</small>
       <div class="owners">${[hasProfile ? ['me', S.profile.name.split(' ')[0]] : null, ['demo', 'Xinyi (demo)'], ...['leo', 'marcus', 'sofia'].map((id) => [id, PEOPLE[id].short])].filter(Boolean)
         .map(([id, l]) => `<button class="pill ${(S.badge.owner || (hasProfile ? 'me' : 'demo')) === id ? 'on' : ''}" data-a="owner" data-x="${id}">${l}</button>`).join('')}</div>`;
@@ -81,7 +81,7 @@ function sheetHTML() {
 
 const HINT = {
   off: 'Not assigned. Open ⋯ → Staff assigns badge.', unpaired: 'Waiting for the phone to pair.', pairing: 'Press ● if the code matches the phone.',
-  idle: 'Tap the NFC strip to touch badges with someone.', request: '● to talk · ○ not now', waiting: 'Waiting for the other badge…',
+  idle: 'Tap the NFC strip to touch Tappys with someone.', request: '● to talk · ○ not now', waiting: 'Waiting for the other Tappy…',
   declined: 'No info was exchanged.', prompt: '● save to app · ○ skip', saved: 'Encounter synced to the app.', returned: 'Unpaired and wiped.'
 };
 
@@ -120,7 +120,7 @@ function hw(btn) {
   } else if (b.screen === 'prompt') {
     if (btn === 'B') return set('idle', { partner: null });
     const eventId = S.live?.eventId || EVENT_ID;
-    if (!S.encounters.some((x) => x.person === b.partner && x.eventId === eventId)) S.encounters.push({ id: 'x' + Date.now(), person: b.partner, eventId, prompt: b.prompt, via: 'badge', at: Date.now() });
+    if (!S.encounters.some((x) => x.person === b.partner && x.eventId === eventId)) S.encounters.push({ id: 'x' + Date.now(), person: b.partner, eventId, prompt: b.prompt, via: 'tappy', at: Date.now() });
     set('saved');
     later(2200, () => set('idle', { partner: null }));
   }

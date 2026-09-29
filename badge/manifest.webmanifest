@@ -1,7 +1,7 @@
 {
-  "name": "JobBuddy Badge",
-  "short_name": "JB Badge",
-  "description": "Simulated JobBuddy event badge (hardware stand-in).",
+  "name": "Tappy · JobBuddy",
+  "short_name": "Tappy",
+  "description": "Tappy — the JobBuddy event device (simulated hardware).",
   "id": "./",
   "start_url": "./",
   "scope": "./",
