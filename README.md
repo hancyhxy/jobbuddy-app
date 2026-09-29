@@ -66,6 +66,7 @@ All data is fictional and stays in the browser's `localStorage`. **Me → Reset 
 - **Community:** *Public* (open questions, takeaways, referrals, going-together, wins), *My circles* (members-only circles joined by attending their events), *Connections*. Posts can be Question, Takeaway, Resource, Offer help, Referral, Going together or Win. Replies open a comment sheet.
 - **Me:** level card, connections / followers / following / met, **Career tools** (AI CV review: 3 free a month; mock interview with a real practitioner: 1 free a month), the two avatars, events and settings.
 - **Growth & points:** post +10, event takeaway +15, comment +3, marked helpful +5, received comment +2, check-in +20, new connection +5, with fair-play caps. Levels: Newcomer → Explorer → Contributor → Connector → Mentor → Community Leader. Points redeem for an extra AI CV review (30), an extra mock interview (80) or a priority spot (150).
+- **How growth works** (ⓘ at the top right of Growth & points, or on the Me level card): a full-screen explainer with a take part → earn → level up flow, a level track showing where you are, perks per level, the points table with bars, a “one good week” stacked-bar example, and spend-vs-level bars. Levels use lifetime points, so redeeming never lowers your level.
 - The demo account (*Log in*) starts with 5 connections, 2 people waiting for a follow-back (Marcus, Ahmed) and 140 pts. Following David triggers a simulated follow-back.
 
 ## Interaction rules encoded

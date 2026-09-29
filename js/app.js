@@ -1,4 +1,4 @@
-import { FIELDS, STAGES, INTERESTS, AVATAR_CHOICES, AVATAR_COLORS, PEOPLE, EVENTS, SEED_POSTS, SEED_COMMENTS, SEED_GRAPH, FOLLOWS_BACK, POINT_RULES, LEVELS, REDEEM, PRACTITIONERS, POST_TYPES, PROMPTS } from './data.js';
+import { FIELDS, STAGES, INTERESTS, AVATAR_CHOICES, AVATAR_COLORS, PEOPLE, EVENTS, SEED_POSTS, SEED_COMMENTS, SEED_GRAPH, FOLLOWS_BACK, POINT_RULES, LEVELS, REDEEM, PRACTITIONERS, POST_TYPES, LEVEL_PERKS, RULE_ICONS, PROMPTS } from './data.js';
 import { avatar } from './avatar.js';
 import { ICON } from './icons.js';
 
@@ -517,7 +517,7 @@ function followBtn(id, small = true) {
 const circlesJoined = () => [...new Set([...(S.circles || []), ...Object.keys(S.regs).map((id) => ev(id).circle)])];
 
 /* ------------------------------------------------------------ growth points */
-function level(pts = S.points || 0) {
+function level(pts = S.lifetime ?? S.points ?? 0) {
   let i = 0; LEVELS.forEach(([min], k) => { if (pts >= min) i = k; });
   const [min, name] = LEVELS[i]; const nx = LEVELS[i + 1];
   return { n: i + 1, name, min, next: nx && nx[0], nextName: nx && nx[1], pct: nx ? Math.round(((pts - min) / (nx[0] - min)) * 100) : 100 };
@@ -525,6 +525,7 @@ function level(pts = S.points || 0) {
 function earn(n, why, quiet) {
   const before = level().n;
   S.points = (S.points || 0) + n;
+  if (n > 0) S.lifetime = (S.lifetime ?? S.points - n) + n;
   S.ledger = [{ n, why, at: Date.now() }, ...(S.ledger || [])].slice(0, 30);
   save();
   const after = level();
@@ -534,7 +535,7 @@ function earn(n, why, quiet) {
 function seedAccount(points) {
   S.following = [...SEED_GRAPH.following]; S.followers = [...SEED_GRAPH.followers];
   S.circles = ['Harbour Builders', 'UTS Design Crowd'];
-  S.points = points; S.ledger = points ? [{ n: 15, why: 'Shared an event takeaway', at: Date.now() - 864e5 }, { n: 20, why: 'Checked in at an event', at: Date.now() - 9e7 }, { n: 5, why: 'New connection · Leo', at: Date.now() - 2e8 }] : [];
+  S.points = points; S.lifetime = points; S.ledger = points ? [{ n: 15, why: 'Shared an event takeaway', at: Date.now() - 864e5 }, { n: 20, why: 'Checked in at an event', at: Date.now() - 9e7 }, { n: 5, why: 'New connection · Leo', at: Date.now() - 2e8 }] : [];
 }
 const lvChip = () => { const l = level(); return `<button class="lv-chip" data-a="nav" data-x="rewards">Lv ${l.n} · ${l.name}<span>${S.points || 0} pts</span></button>`; };
 
@@ -596,10 +597,10 @@ V.compose = (eventId) => {
 /* ------------------------------------------------------------ growth */
 V.rewards = () => {
   const l = level();
-  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>Growth & points</b><span></span></header>
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>Growth & points</b><button class="icon-btn help-btn" data-a="growth-help" aria-label="How growth works">${ICON.help}</button></header>
   <section class="pad">
     <div class="lv-hero"><small>LEVEL ${l.n}</small><b>${l.name}</b><div class="lvbar"><i style="width:${l.pct}%"></i></div>
-      <span>${S.points || 0} pts${l.next ? ` · ${l.next - S.points} to ${l.nextName}` : ' · top level'}</span></div>
+      <span>${S.points || 0} pts to spend · ${S.lifetime ?? S.points} earned in total${l.next ? ` · ${l.next - (S.lifetime ?? S.points)} to ${l.nextName}` : ''}</span></div>
     <h3>Levels</h3>
     <ol class="levels">${LEVELS.map(([min, name], i) => `<li class="${i + 1 === l.n ? 'now' : i + 1 < l.n ? 'done' : ''}"><span>${i + 1}</span><b>${name}</b><small>${min} pts</small></li>`).join('')}</ol>
     <h3>How you earn</h3>
@@ -612,6 +613,53 @@ V.rewards = () => {
     <div class="spacer"></div>
   </section>`;
 };
+
+function growthHelp() {
+  const l = level(); const life = S.lifetime ?? S.points ?? 0;
+  const max = LEVELS[LEVELS.length - 1][0];
+  const pos = (v) => Math.min(100, (Math.sqrt(v) / Math.sqrt(max)) * 100);
+  const week = [['📍', 'Check in at Build Night', 20], ['📝', 'Share a takeaway', 15], ['✨', '4 people mark it helpful', 20], ['💬', 'Reply to 3 questions', 9], ['🤝', 'Connect with someone you met', 5]];
+  const total = week.reduce((a, x) => a + x[2], 0);
+  const after = life + total; const next = LEVELS.find(([m]) => m > life) || LEVELS[LEVELS.length - 1];
+  return `<div class="help-overlay" role="dialog" aria-label="How growth works">
+    <header class="bar"><span></span><b>How growth works</b><button class="icon-btn" data-a="growth-help-close" aria-label="Close">${ICON.close}</button></header>
+    <section class="pad">
+      <p class="lead-sm">JobBuddy rewards people who make the community better: showing up, sharing what you learned and helping others.</p>
+
+      <div class="flow3"><div><span>✍️</span><b>Take part</b><small>attend, post, reply, help</small></div><i>→</i><div><span>✦</span><b>Earn points</b><small>every action has a value</small></div><i>→</i><div><span>⬆</span><b>Level up & redeem</b><small>unlock perks and extras</small></div></div>
+
+      <h3>The level track</h3>
+      <div class="track">
+        <div class="track-bar"><i style="width:${pos(life)}%"></i></div>
+        ${LEVELS.map(([m, name], i) => `<div class="track-node ${i + 1 <= l.n ? 'on' : ''}" style="left:${pos(m)}%"><span>${i + 1}</span></div>`).join('')}
+        <div class="track-you" style="left:${pos(life)}%"><b>You</b><small>${life}</small></div>
+      </div>
+      <ol class="level-cards">${LEVELS.map(([m, name], i) => `<li class="${i + 1 === l.n ? 'now' : i + 1 < l.n ? 'done' : ''}"><div><span>${i + 1}</span><b>${name}</b><small>${m}+ pts</small></div><p>${LEVEL_PERKS[i]}</p></li>`).join('')}</ol>
+
+      <h3>How you earn</h3>
+      <table class="pts-table"><thead><tr><th>Action</th><th>Points</th></tr></thead><tbody>
+        ${POINT_RULES.map(([t, n], i) => `<tr><td><span>${RULE_ICONS[i]}</span>${t}</td><td><b>+${n}</b><i class="mini-bar" style="width:${n * 3}px"></i></td></tr>`).join('')}
+      </tbody></table>
+
+      <h3>Example: one good week</h3>
+      <div class="week">${week.map(([ic, t, n]) => `<div class="week-row"><span>${ic}</span><small>${t}</small><b>+${n}</b></div>`).join('')}
+        <div class="stacked">${week.map(([, , n], i) => `<i style="flex:${n}" class="c${i}"></i>`).join('')}</div>
+        <p class="week-sum"><b>+${total} pts</b> in a week → ${life} → ${after}${after >= next[0] && next[0] > life ? ` · reaches <b>${next[1]}</b> 🎉` : ` · ${Math.max(0, next[0] - after)} to ${next[1]}`}</p>
+      </div>
+
+      <h3>Spend vs. level</h3>
+      <div class="two-bars">
+        <div><small>Points to spend</small><div class="hbar"><i style="width:${Math.min(100, ((S.points || 0) / Math.max(life, 1)) * 100)}%"></i></div><b>${S.points || 0}</b></div>
+        <div><small>Earned in total (sets your level)</small><div class="hbar"><i class="full" style="width:100%"></i></div><b>${life}</b></div>
+      </div>
+      <p class="note">${ICON.info} Redeeming points (for extra AI CV reviews or mock interviews) never lowers your level.</p>
+
+      <h3>Fair play</h3>
+      <ul class="checklist"><li>Up to 60 pts a day from posts and comments</li><li>Each person’s “helpful” counts once per post</li><li>Self-votes and vote swapping don’t count</li><li>Points are never shown as a ranking or leaderboard</li></ul>
+      <div class="spacer"></div>
+    </section>
+  </div>`;
+}
 
 /* ------------------------------------------------------------ tools */
 const CV_TIPS = [
@@ -665,7 +713,7 @@ V.me = () => {
   return `<header class="top"><h1>Me</h1><button class="icon-btn" data-a="edit-profile">${ICON.edit}</button></header>
     <section class="pad">
       <div class="me-hero">${av(p, 88)}<div><h2>${esc(p.name)}</h2><small>${p.field} · ${p.stage}${p.showStage ? '' : ' 🔒'}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
-      <button class="lv-card" data-a="nav" data-x="rewards"><div><small>LEVEL ${l.n}</small><b>${l.name}</b></div><span>${S.points || 0} pts</span><div class="lvbar"><i style="width:${l.pct}%"></i></div><small>${l.next ? `${l.next - S.points} pts to ${l.nextName}` : 'Top level'} · See how to earn & redeem</small></button>
+      <div class="lv-card" data-a="nav" data-x="rewards" role="button"><div><small>LEVEL ${l.n}</small><b>${l.name}</b></div><span>${S.points || 0} pts<button class="icon-btn help-btn sm" data-a="growth-help" aria-label="How growth works">${ICON.help}</button></span><div class="lvbar"><i style="width:${l.pct}%"></i></div><small>${l.next ? `${l.next - (S.lifetime ?? S.points)} pts to ${l.nextName}` : 'Top level'} · See how to earn & redeem</small></div>
       <div class="stats four">${[['connections', connections().length, 'connections'], ['followers', S.followers.length, 'followers'], ['following', S.following.length, 'following'], ['met', metIds.length, 'met']].map(([t, n, lbl]) => `<button data-a="people-tab" data-x="${t}"><b>${n}</b><small>${lbl}</small></button>`).join('')}</div>
       <h3>Career tools</h3>
       <button class="tool" data-a="nav" data-x="cv"><span class="tool-ico">${ICON.file}</span><span class="row-main"><b>AI CV review</b><small>${S.cvFree ?? 3} free this month${(S.credits || {}).cv ? ` · +${S.credits.cv} extra` : ''}</small></span>${ICON.chev}</button>
@@ -827,7 +875,7 @@ function addEncounter(person, eventId, prompt, via) {
 
 /* ============================================================== ACTIONS */
 const A = {
-  nav: (x) => { ui.sheet = null; go(x); },
+  nav: (x) => { ui.sheet = null; ui.growthHelp = false; go(x); },
   back: () => history.length > 1 ? history.back() : go('home'),
   toast: (x) => toast(x),
   browse: () => { S.browsing = true; save(); go('home'); },
@@ -932,6 +980,8 @@ const A = {
     render();
   },
   'people-tab': (x) => { ui.pplTab = x; if (!location.hash.startsWith('#/people')) go('people'); else render(); },
+  'growth-help': () => { ui.growthHelp = true; render(); },
+  'growth-help-close': () => { ui.growthHelp = false; render(); },
   circle: (x) => { ui.circle = x || null; render(); },
   comments: (x) => { ui.sheet = { type: 'comments', id: x }; render(); },
   'send-comment': (x) => {
@@ -992,7 +1042,7 @@ function render() {
   const [name, arg] = route();
   const app = $('#app');
   const prev = app.dataset.view;
-  app.innerHTML = V[name](arg) + sheetHTML();
+  app.innerHTML = V[name](arg) + sheetHTML() + (ui.growthHelp ? growthHelp() : '');
   app.dataset.view = name + '/' + (arg || '');
   if (prev !== app.dataset.view) app.scrollTop = 0;
   const showNav = !NO_NAV.includes(name);

@@ -88,6 +88,15 @@ export const POINT_RULES = [
 export const LEVELS = [
   [0, 'Newcomer'], [100, 'Explorer'], [300, 'Contributor'], [700, 'Connector'], [1500, 'Mentor'], [3000, 'Community Leader']
 ];
+export const LEVEL_PERKS = [
+  'Register for events, post and comment',
+  'Your posts appear in “Picked for you” feeds',
+  'Contributor tag on your profile and posts',
+  'Start a “Going together” group for any event',
+  'Offer mock interviews and earn points for each',
+  'Co-host events with organisers'
+];
+export const RULE_ICONS = ['✍️', '📝', '💬', '✨', '📨', '📍', '🤝'];
 export const REDEEM = [
   { id: 'cv', title: 'Extra AI CV review', desc: 'One more AI review after your free ones', cost: 30 },
   { id: 'mock', title: 'Extra mock interview', desc: 'Book a practitioner beyond your free session', cost: 80 },

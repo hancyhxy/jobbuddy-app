@@ -25,5 +25,6 @@ export const ICON = {
   chat: s('<path d="M4 5h16v11H9l-5 4z"/>'),
   spark: s('<path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/>'),
   file: s('<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>'),
+  help: s('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7M12 17v.5"/>'),
   edit: s('<path d="M4 20h4L19 9l-4-4L4 16z"/>')
 };
