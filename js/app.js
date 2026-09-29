@@ -827,7 +827,7 @@ function badgePanel() {
   const hint = {
     off: 'No Tappy assigned. Collect one at check-in.', unpaired: 'Assigned but not paired. Pair it from the phone.', pairing: 'Press ● to confirm the code matches the phone.',
     idle: 'Showing your public avatar. Tap Tappys with someone nearby.', request: 'The other Tappy asked to talk. Press ● if you want to.', waiting: 'Waiting for the other person to press ●.',
-    declined: 'They chose “not now”. No info exchanged.', prompt: 'Shared prompt shown on both badges. ● saves the encounter to your app.', saved: 'Encounter synced to the app.', returned: 'Tappy unpaired and wiped.'
+    declined: 'They chose “not now”. No info exchanged.', prompt: 'Shared prompt shown on both Tappys. ● saves the encounter to your app.', saved: 'Encounter synced to the app.', returned: 'Tappy unpaired and wiped.'
   }[S.badge.screen];
   return `<div class="bp-head"><b>Tappy</b><small>Simulated hardware · ESP32 + NFC + 240×240 screen · <a href="./tappy/" target="_blank" rel="noopener">open as separate app ↗</a></small><button class="icon-btn bp-close" data-a="badge-close">${ICON.close}</button></div>
     <div class="device ${hasBadge ? '' : 'dim'}">
