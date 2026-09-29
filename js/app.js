@@ -393,7 +393,7 @@ V.live = (id) => {
   const mine = S.encounters.filter((x) => x.eventId === id);
   const tabs = [['here', 'Who’s here'], ['agenda', 'Agenda'], ['saved', `Saved · ${mine.length}`]];
   let body = '';
-  if (ui.liveTab === 'here') body = `<p class="muted small">${here.length + 1} people chose to show on the wall. Spot their avatar on a badge.</p>
+  if (ui.liveTab === 'here') body = `<p class="muted small">${here.length + 1} people chose to show on the wall. Spot their avatar on a Tappy.</p>
       <div class="wall">${(reg(id).wall ? [{ ...me(), ...badgeLook(id), headline: '#' + badgeLook(id).tag }, ...here] : here).map((p) => `<button class="wall-tile" data-a="sheet-person" data-x="${p.id}">${asc(p, 64)}<b>${esc(p.short)}${p.id === 'me' ? ' (you)' : ''}</b><small>${esc(p.headline)}</small></button>`).join('')}</div>`;
   if (ui.liveTab === 'agenda') body = `<ul class="agenda">${e.agenda.map(([t, a], i) => `<li class="${i === 2 ? 'now' : ''}"><time>${t}</time>${a}${i === 2 ? ' <i class="chip">Now</i>' : ''}</li>`).join('')}</ul>`;
   if (ui.liveTab === 'saved') body = (mine.length ? mine.map(encounterRow).join('') : `<p class="empty">Nobody saved yet. When you and someone both say yes on your Tappys, you can save the moment here.</p>`)
@@ -1105,6 +1105,13 @@ document.addEventListener('input', (e) => {
 });
 window.addEventListener('hashchange', render);
 setInterval(tickBadge, 650);
+
+// Deep-link helpers for design capture: ?demo=1 logs in the demo account, ?theme=light|dark forces a theme.
+{
+  const q = new URLSearchParams(location.search);
+  if (q.get('theme')) { localStorage.setItem(THEME_KEY, q.get('theme')); applyTheme(); }
+  if (q.get('demo') && !S.onboarded) { S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; seedAccount(140); save(); }
+}
 render();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').catch(() => {});

@@ -520,3 +520,7 @@ kbd { font: inherit; background: var(--ac); color: var(--ac-ink); border-radius:
 .reticle b { background: #D7FF3A; color: #10140a; padding: 8px 14px; border-radius: 99px; }
 .scanline { position: absolute; left: 12px; right: 12px; height: 2px; background: #D7FF3A; box-shadow: 0 0 12px #D7FF3A; animation: scanmove 1.6s ease-in-out infinite alternate; }
 @keyframes scanmove { from { top: 14px; } to { top: 214px; } }
+
+/* overlays stay pinned to the phone viewport even when the page is scrolled */
+.phone { transform: translateZ(0); }
+.scrim, .sheet, .help-overlay, .scanner { position: fixed; }
