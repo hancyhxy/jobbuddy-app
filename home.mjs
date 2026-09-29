@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ executablePath: process.env.CHROME });
+const p = await b.newPage({ viewport: { width: 390, height: 844 } }); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+const shot=async n=>{await p.waitForTimeout(400); await p.screenshot({path:`run6/${n}.png`});};
+await p.goto('http://localhost:8765/'); await p.evaluate(()=>localStorage.setItem('jobbuddy-theme','light')); await p.reload(); await shot('1-home-fresh');
+await p.click('[data-x="offline"]'); await shot('2-inperson');
+await p.click('[data-x="online"]'); await shot('3-online');
+await p.click('[data-x="all"]'); await p.click('.lrow >> nth=0'); await p.click('text=Request to join'); await shot('4-onboarding');
+await p.fill('[data-model="ob.name"]','Xinyi Han'); await p.click('text=Design'); await p.click('text=Studying'); await p.click('text=Continue'); await p.click('text=AI tools'); await p.click('text=Continue'); await p.click('text=Finish'); await shot('5-back-to-register');
+await p.click('text=Send request'); await p.goto('http://localhost:8765/#/home'); await shot('6-home-registered');
+await p.evaluate(()=>localStorage.setItem('jobbuddy-theme','dark')); await p.reload(); await shot('7-home-dark');
+console.log(errs.join('|')||'NO ERRORS'); await b.close();

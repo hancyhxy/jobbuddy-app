@@ -40,8 +40,8 @@ All data is fictional and stays in the browser's `localStorage`. **Me → Reset 
 
 **In person — “Build Night: AI Agents in Practice”**
 
-1. Onboarding: name, field, private career stage, up to 3 interests, ASCII avatar.
-2. Event → Request to join → **DEMO Host approves** (shows the Pending → Approved states).
+1. The app opens straight on **Home** (Luma-style discovery: Your events, then Picked for you grouped by date, with an All / In person / Online switch). No sign-up is needed to browse.
+2. Event → Request to join → account creation (name, field, private career stage, interests, ASCII avatar) → back to the request → **DEMO Host approves** (shows the Pending → Approved states).
 3. I’m here → **DEMO Staff scans pass** → **DEMO Staff hands you badge JB-07**, or *Continue without a badge*.
 4. Pair: typing a wrong ID shows an error. *Tap to scan* fills JB-07. The phone and badge show the same code, and you press ● on the badge to confirm.
 5. Live: participant wall (opt-in), agenda, saved encounters.

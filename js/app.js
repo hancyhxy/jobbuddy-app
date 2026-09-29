@@ -115,7 +115,7 @@ V.onboarding = () => {
     return `<button class="pill ${on ? 'on' : ''}" data-a="ob-pick" data-x="${key}|${v}">${v}</button>`;
   }).join('');
   const steps = [
-    `<h2>Hi. What should people call you?</h2>
+    `${S.afterOnboard ? `<p class="eyebrow">Create your account to register</p>` : ''}<h2>Hi. What should people call you?</h2>
      <input class="field" data-model="ob.name" placeholder="Display name" value="${esc(o.name)}" maxlength="24">
      <h3>Your field</h3><div class="pills">${chips(FIELDS, 'field')}</div>
      <h3>Where you are right now</h3><div class="pills">${chips(STAGES, 'stage')}</div>
@@ -137,26 +137,49 @@ V.onboarding = () => {
     <footer class="sticky"><button class="btn primary" data-a="ob-next" ${valid ? '' : 'disabled'}>${o.step === 2 ? 'Finish' : 'Continue'}</button></footer>`;
 };
 
+const DAYS = { Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday' };
+const MONTHS = { Sep: 'September', Oct: 'October' };
+function dayParts(e) { const [d, n, m] = e.date.split(' '); return [`${n} ${MONTHS[m] || m}`, DAYS[d] || d]; }
+
+function lumaRow(e) {
+  const r = reg(e.id); const host = PEOPLE[e.host];
+  const place = e.mode === 'online' ? 'Online' : e.venue.split(',')[0];
+  return `<button class="lrow" data-a="nav" data-x="event/${e.id}">
+    ${cover(e, 'th')}
+    <span class="lrow-main">
+      <span class="lrow-host">${av(host, 20)}<span>${esc(e.circle)}</span>${r ? `<i class="chip chip-${r.status}">${statusLabel(e, r)}</i>` : e.cost !== 'Free' ? `<i class="price">${e.cost}</i>` : ''}</span>
+      <b>${esc(e.title)}</b>
+      <span class="lrow-meta"><span>${ICON.clock}${e.time.split(' ')[0]}</span><span>${e.mode === 'online' ? ICON.globe : ICON.pin}${esc(place)}</span>${e.mode === 'offline' && e.badges ? `<span class="badge-tag">${ICON.badge}Badge</span>` : ''}</span>
+    </span></button>`;
+}
+
 V.home = () => {
   const p = me();
   const liveE = S.live && ev(S.live.eventId);
   const mine = EVENTS.filter((e) => ['pending', 'going', 'checkedin'].includes(reg(e.id)?.status));
-  const next = mine[0];
-  const hour = new Date().getHours();
-  return `<header class="top"><h1>${hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'}${p ? ', ' + esc(p.short) : ''}</h1>
+  const mode = ui.homeMode || 'all';
+  const list = EVENTS.filter((e) => mode === 'all' || e.mode === mode);
+  let groups = ''; let last = '';
+  list.forEach((e) => {
+    const [day, wd] = dayParts(e);
+    if (day !== last) { groups += `<h3 class="day">${day} <span>/ ${wd}</span></h3>`; last = day; }
+    groups += lumaRow(e);
+  });
+  const hint = { all: '', offline: `<p class="note">${ICON.badge} In-person events can lend you a badge. You pair it with your account when you arrive.</p>`, online: `<p class="note">${ICON.globe} Online events run in the app. No badge needed — wave at people instead.</p>` }[mode];
+  return `<header class="top home-top">
+      <span class="brand">${p ? `<button class="plain" data-a="nav" data-x="me">${av(p, 36, 'round')}</button>` : `<span class="brand-dot">${ICON.badge}</span>`}<b>JobBuddy</b></span>
       <span class="top-actions"><button class="icon-btn theme-btn" data-a="theme-cycle" aria-label="Switch theme">${document.documentElement.dataset.theme === 'light' ? ICON.moon : ICON.sun}</button>
-      ${p ? `<button class="plain" data-a="nav" data-x="me">${av(p, 36, 'round')}</button>` : `<button class="btn small" data-a="nav" data-x="onboarding">Sign up</button>`}</span></header>
-    <div class="pills scroll"><button class="pill on" data-a="nav" data-x="events">All events</button><button class="pill" data-a="filter-go" data-x="offline">In person</button><button class="pill" data-a="filter-go" data-x="online">Online</button><button class="pill" data-a="nav" data-x="community">Circles</button></div>
-    ${liveE ? `<button class="live-card" data-a="nav" data-x="${liveE.mode === 'online' ? 'room' : 'live'}/${liveE.id}"><span class="dot"></span><div><small>HAPPENING NOW</small><b>${esc(liveE.title)}</b></div>${ICON.chev}</button>` : ''}
-    ${next && !liveE ? `<h2 class="sec">Your next event</h2>
-      <button class="next-card" data-a="nav" data-x="ticket/${next.id}">${cover(next, 'sm')}<div><b>${esc(next.title)}</b><small>${next.date} · ${next.time}</small><i class="chip chip-${reg(next.id).status}">${statusLabel(next, reg(next.id))}</i></div></button>` : ''}
-    <h2 class="sec">In person near you</h2>
-    <div class="shelf">${EVENTS.filter((e) => e.mode === 'offline').map(eventCard).join('')}</div>
-    <h2 class="sec">Online this week</h2>
-    <div class="shelf">${EVENTS.filter((e) => e.mode === 'online').map(eventCard).join('')}</div>
-    <h2 class="sec">From your circles</h2>
-    ${allPosts().slice(0, 2).map(postCard).join('')}
-    <div class="spacer"></div>`;
+      ${p ? '' : `<button class="btn small" data-a="nav" data-x="onboarding">Sign in</button>`}</span></header>
+    <section class="pad">
+      ${liveE ? `<button class="live-card flush" data-a="nav" data-x="${liveE.mode === 'online' ? 'room' : 'live'}/${liveE.id}"><span class="dot"></span><div><small>HAPPENING NOW</small><b>${esc(liveE.title)}</b></div>${ICON.chev}</button>` : ''}
+      <button class="h2link" data-a="nav" data-x="me"><h2>Your events</h2>${ICON.chev}</button>
+      ${mine.length ? mine.map(lumaRow).join('') : `<div class="empty-your"><span>${ICON.ticket}</span><p>You have a clear schedule ahead. Explore events below and register for one.</p></div>`}
+      <h2 class="picked">Picked for you</h2>
+      <div class="seg3 mode-seg">${[['all', 'All'], ['offline', 'In person'], ['online', 'Online']].map(([k, l]) => `<button class="${mode === k ? 'on' : ''}" data-a="home-mode" data-x="${k}">${l}</button>`).join('')}</div>
+      ${hint}
+      ${groups}
+      <div class="spacer"></div>
+    </section>`;
 };
 
 function filteredEvents() {
@@ -209,7 +232,7 @@ V.event = (id) => {
 
 V.register = (id) => {
   const e = ev(id);
-  if (!S.onboarded) { S.afterOnboard = 'register/' + id; save(); ui.ob = null; return V.onboarding(); }
+  if (!S.onboarded) { if (S.afterOnboard !== 'register/' + id) { S.afterOnboard = 'register/' + id; save(); ui.ob = null; } return V.onboarding(); }
   ui.regDraft = ui.regDraft?.id === id ? ui.regDraft : { id, list: true, wall: true };
   const d = ui.regDraft; const p = me();
   return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><b>${e.approval ? 'Request to join' : 'Register'}</b><span></span></header>
@@ -625,6 +648,7 @@ const A = {
   back: () => history.length > 1 ? history.back() : go('home'),
   toast: (x) => toast(x),
   browse: () => { S.browsing = true; save(); go('home'); },
+  'home-mode': (x) => { ui.homeMode = x; render(); },
   'filter-go': (x) => { ui.filter = x; go('events'); },
   filter: (x) => { ui.filter = x; render(); },
   seg: (x) => { ui.seg = x; render(); },
@@ -722,7 +746,7 @@ const A = {
     setTimeout(() => { const p = S.posts.find((y) => y.id === post.id); if (!p) return; p.stars++; S.stars++; save(); render(); toast('★ Marcus found your post helpful · +1 star'); }, 3500);
   },
   helped: (x) => { S.helped = S.helped.includes(x) ? S.helped.filter((p) => p !== x) : [...S.helped, x]; save(); render(); },
-  reset: () => { if (confirm('Reset all demo data?')) { localStorage.removeItem(KEY); S = fresh(); Object.assign(ui, { sheet: null, ob: null, compose: null, waved: {}, pairInput: '' }); go('welcome'); render(); } }
+  reset: () => { if (confirm('Reset all demo data?')) { localStorage.removeItem(KEY); S = fresh(); Object.assign(ui, { sheet: null, ob: null, compose: null, waved: {}, pairInput: '' }); go('home'); render(); } }
 };
 
 /* =============================================================== RENDER */
@@ -731,7 +755,7 @@ const TABS = [['home', 'Home', 'home'], ['events', 'Events', 'search'], ['commun
 
 function route() {
   const [name = '', arg] = location.hash.replace(/^#\/?/, '').split('/');
-  if (!name) return [S.onboarded || S.browsing ? 'home' : 'welcome'];
+  if (!name || name === 'welcome') return ['home'];
   return [V[name] ? name : 'notfound', arg];
 }
 
