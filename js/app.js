@@ -592,8 +592,7 @@ V.community = () => {
 function communityView() {
   const q = (ui.cq || '').toLowerCase();
   const list = allPosts().filter((p) => p.aud === 'public' && (!q || (p.text + p.circle + p.type + (who(p.author)?.name || '')).toLowerCase().includes(q)));
-  return `${art(3, 'heroart')}
-    <div class="search" style="margin-top:14px">${ICON.search}<input data-model="cq" placeholder="Search" aria-label="Search posts" value="${esc(ui.cq || '')}"></div>
+  return `<div class="search">${ICON.search}<input data-model="cq" placeholder="Search" aria-label="Search posts" value="${esc(ui.cq || '')}"></div>
     <button class="btn primary" style="margin-bottom:18px" data-a="compose" data-x="">+ Create post</button>
     <p class="note">${ICON.globe} Open to everyone on JobBuddy: questions, takeaways, referrals, and people looking for someone to go with.</p>
     ${list.map(postCard).join('') || '<div class="empty">No posts match that search</div>'}`;
@@ -621,7 +620,6 @@ function networkView() {
     + (seen.length ? `<h3>Explore who else was there</h3>${seen.map((id) => person(id, followBtn(id))).join('')}` : '');
   const circles = circlesJoined();
   return `<div class="search">${ICON.search}<input data-model="nq" placeholder="Search connections" aria-label="Search connections" value="${esc(ui.nq || '')}"></div>
-    ${art(1, 'banner')}
     <div class="seg2"><button class="${sub === 'Connections' ? 'on' : ''}" data-a="nsub" data-x="Connections">Connections</button><button class="${sub === 'Requests' ? 'on' : ''}" data-a="nsub" data-x="Requests">Requests${reqs.length ? `<i class="cnt">${reqs.length}</i>` : ''}</button></div>
     ${body}
     <h2 style="margin:28px 0 6px">Event Circles</h2>
