@@ -750,3 +750,12 @@ i.pill { height: 30px; }
 .card-bub small b { color: var(--tx); }
 
 .hero { background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 50%, #fff) 0%, color-mix(in srgb, var(--c1) 22%, #fff) 45%, #fff 100%) !important; }
+
+/* create event */
+.explorer-row { display: flex; align-items: center; justify-content: space-between; margin-top: 28px; }
+.explorer-row .explorer { margin: 0; }
+.ce-cover { width: 100%; display: grid; justify-items: center; gap: 10px; padding: 22px 0 16px; border-radius: 20px; border: 2px dashed #cfcdc9; background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 35%, #fff), #fafaf9); }
+.ce-cover .cover-art { width: 150px; height: 150px; }
+.ce-cover .cover-title { font-size: 20px; }
+.ce-cover small { display: inline-flex; gap: 6px; align-items: center; } .ce-cover small .ic { width: 16px; height: 16px; }
+.toggle small { font-size: 12px; color: var(--mu); margin-top: 2px; }

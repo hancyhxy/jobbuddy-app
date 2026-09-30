@@ -160,16 +160,16 @@ V.onboarding = () => {
 };
 
 const DAYS = { Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday' };
-const MONTHS = { Sep: 'September', Oct: 'October' };
+const MONTHS = { Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April', May: 'May', Jun: 'June', Jul: 'July', Aug: 'August', Sep: 'September', Oct: 'October', Nov: 'November', Dec: 'December' };
 function dayParts(e) { const [d, n, m] = e.date.split(' '); return [`${n} ${MONTHS[m] || m}`, DAYS[d] || d]; }
 
 function lumaRow(e) {
-  const r = reg(e.id); const host = PEOPLE[e.host];
+  const r = reg(e.id); const host = hostOf(e);
   const place = e.mode === 'online' ? 'Online' : e.venue.split(',')[0];
   return `<button class="lrow" data-a="nav" data-x="event/${e.id}">
     ${cover(e, 'th')}
     <span class="lrow-main">
-      <span class="lrow-host">${av(host, 20)}<span>${esc(e.circle)}</span>${r ? `<i class="chip chip-${r.status}">${statusLabel(e, r)}</i>` : e.cost !== 'Free' ? `<i class="price">${e.cost}</i>` : ''}</span>
+      <span class="lrow-host">${av(host, 20)}<span>${esc(e.circle)}</span>${isHost(e) ? '<i class="chip chip-going">Hosting</i>' : r ? `<i class="chip chip-${r.status}">${statusLabel(e, r)}</i>` : e.cost !== 'Free' ? `<i class="price">${e.cost}</i>` : ''}</span>
       <b>${esc(e.title)}</b>
       <span class="lrow-meta"><span>${ICON.clock}${e.time.split(' ')[0]}</span><span>${e.mode === 'online' ? ICON.globe : ICON.pin}${esc(place)}</span>${e.mode === 'offline' && e.badges ? `<span class="badge-tag">${ICON.badge}EventBuddy</span>` : ''}</span>
       ${connLine(e)}
@@ -179,7 +179,7 @@ function lumaRow(e) {
 V.home = () => {
   const p = me();
   const liveE = S.live && ev(S.live.eventId);
-  const mine = EVENTS.filter((e) => ['pending', 'going', 'checkedin'].includes(reg(e.id)?.status));
+  const mine = EVENTS.filter((e) => isHost(e) || ['pending', 'going', 'checkedin'].includes(reg(e.id)?.status));
   const mode = ui.homeMode || 'all';
   const list = EVENTS.filter((e) => mode === 'all' || e.mode === mode);
   let groups = ''; let last = '';
@@ -192,14 +192,14 @@ V.home = () => {
   const past = EVENTS.filter((e) => reg(e.id)?.status === 'attended');
   return `<header class="top home-top">
       <div class="hi"><h1>Hi, ${p ? esc(p.short) : 'there'}</h1><p class="sub">${p ? `${esc(p.stage)} /<br>${esc(p.field)}` : 'Find career events and the people at them.'}</p></div>
-      <span class="top-actions">${p ? `<button class="icon-btn dark" data-a="nav" data-x="events" aria-label="Search events">${ICON.search}</button>` : `<button class="btn small primary" data-a="login-demo">Log in</button>`}</span></header>
+      <span class="top-actions">${p ? `<button class="icon-btn dark" data-a="ce-new" aria-label="Create event">${ICON.plus}</button>` : `<button class="btn small primary" data-a="login-demo">Log in</button>`}</span></header>
     <section class="pad">
       ${p ? `<div class="pills" style="gap:6px">${p.interests.map((t) => `<i class="tag">${esc(t)}</i>`).join('')}</div>` : ''}
       <div style="height:22px"></div>
       ${liveE ? `<button class="live-card flush" data-a="nav" data-x="${liveE.mode === 'online' ? 'room' : 'live'}/${liveE.id}"><span class="dot"></span><div><small>HAPPENING NOW</small><b>${esc(liveE.title)}</b></div>${ICON.chev}</button>` : ''}
       <button class="h2link" data-a="nav" data-x="me"><h2>Your events</h2>${ICON.chev}</button>
       ${mine.length ? mine.map(lumaRow).join('') : `<div class="empty">No upcoming events. Explore events below and RSVP to one.</div>`}
-      <h2 class="explorer">Event Explorer</h2>
+      <div class="explorer-row"><h2 class="explorer">Event Explorer</h2><button class="icon-btn" data-a="nav" data-x="events" aria-label="Search events">${ICON.search}</button></div>
       <div class="seg3 mode-seg">${[['all', 'All'], ['offline', 'In person'], ['online', 'Online']].map(([k, l]) => `<button class="${mode === k ? 'on' : ''}" data-a="home-mode" data-x="${k}">${l}</button>`).join('')}</div>
       ${hint}
       ${groups}
@@ -223,12 +223,13 @@ const eventListHTML = () => filteredEvents().map(eventRow).join('') || '<p class
 
 V.event = (id) => {
   const e = ev(id); if (!e) return V.notfound();
-  const r = reg(id); const host = PEOPLE[e.host];
+  const r = reg(id); const host = hostOf(e);
   const how = e.mode === 'offline'
-    ? [['Check in', 'Show your pass at the desk'], ['Collect a EventBuddy', 'Optional loan device'], ['Pair it', 'Link the EventBuddy to your app'], ['Tap to talk', 'Both say yes, get a shared prompt'], ['Return it', 'Your encounters stay in the app']]
+    ? [['Check in', 'Show your pass at the desk'], ['Collect an EventBuddy', 'Optional loan device'], ['Pair it', 'Link the EventBuddy to your app'], ['Tap to talk', 'Both say yes, get a shared prompt'], ['Return it', 'Your encounters stay in the app']]
     : [['Join the lobby', 'Choose what others see'], ['Watch the stream', 'Camera & mic stay in Zoom'], ['Wave at people', 'Both say yes, get a shared prompt'], ['Save & follow', 'Only if you want to']];
   let cta;
-  if (!r || r.status === 'cancelled') cta = `<button class="btn primary" data-a="nav" data-x="register/${id}">${e.approval ? 'Request to join' : 'RSVP'}${e.cost === 'Free' ? '' : ' · ' + e.cost}</button>`;
+  if (isHost(e)) cta = `<button class="btn primary" data-a="toast" data-x="Invite link copied">${ICON.share}Share invite link</button><p class="muted small center">You’re hosting · ${e.going} going so far</p>`;
+  else if (!r || r.status === 'cancelled') cta = `<button class="btn primary" data-a="nav" data-x="register/${id}">${e.approval ? 'Request to join' : 'RSVP'}${e.cost === 'Free' ? '' : ' · ' + e.cost}</button>`;
   else if (r.status === 'attended') cta = `<button class="btn" data-a="nav" data-x="recap/${id}">See recap</button>`;
   else cta = `<button class="btn primary" data-a="nav" data-x="ticket/${id}">${r.status === 'pending' ? 'View request' : 'View pass'}</button>`;
   return `<header class="bar float"><button class="icon-btn" data-a="back">${ICON.back}</button><span></span><button class="icon-btn" data-a="toast" data-x="Link copied">${ICON.share}</button></header>
@@ -242,7 +243,7 @@ V.event = (id) => {
         <li>${e.mode === 'online' ? ICON.globe : ICON.pin}<span><b>${e.mode === 'online' ? 'Online' : e.venue}</b><small>${e.mode === 'online' ? e.platform + (e.recording ? ' · recording available' : '') : e.distance + ' away · step-free access'}</small></span></li>
         <li>${ICON.ticket}<span><b>${e.cost}</b><small>${e.going}/${e.capacity} spots · ${e.approval ? 'host approves each request' : 'instant confirmation'}</small></span></li>
       </ul>
-      <button class="host" data-a="nav" data-x="person/${host.id}">${av(host, 40, 'round')}<span><small>Hosted by</small><b>${host.name}</b></span></button>
+      <button class="host" data-a="nav" data-x="${isHost(e) ? 'me' : 'person/' + host.id}">${av(host, 40, 'round')}<span><small>Hosted by</small><b>${isHost(e) ? 'You' : host.name}</b></span></button>
       <h3>About this event</h3>
       <p class="muted">${esc(e.audience)}</p>
       <div class="card-soft" style="margin-top:18px"><div style="display:flex;align-items:center"><div style="flex:1"><b>${e.going + (r ? 1 : 0)} / ${e.capacity}</b> <span class="muted small">spots filled</span></div>${e.badges ? '<i class="chip chip-going" style="margin:0">EventBuddy</i>' : ''}</div><div class="progress" style="margin-top:8px"><i style="width:${Math.min(100, ((e.going + (r ? 1 : 0)) / e.capacity) * 100)}%"></i></div></div>
@@ -257,6 +258,40 @@ V.event = (id) => {
       <div class="spacer"></div>
     </section>
     <footer class="sticky">${cta}</footer>`;
+};
+
+/* ------------------------------------------------------------ create event (teammate flow + our event model) */
+const COVER_PAIRS = [['#D7FF3A', '#1E3A2F'], ['#E7A6FF', '#2A1838'], ['#FF9E7A', '#3A1E14'], ['#8FB8FF', '#14223A'], ['#FFD166', '#3A2E10'], ['#7CE0C3', '#123A30']];
+const hostOf = (e) => (e.host === 'me' ? me() || { name: 'You', short: 'You', id: 'me' } : PEOPLE[e.host]);
+const isHost = (e) => e.host === 'me';
+// Created events live in S.myEvents and join the shared EVENTS list at start-up.
+function loadMyEvents() { (S.myEvents || []).forEach((e) => { if (!ev(e.id)) EVENTS.push(e); }); }
+const fmtDate = (d) => d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '');
+
+V.createEvent = () => {
+  if (!S.profile) return V.me();
+  const mine = circlesJoined();
+  const d = ui.ce || (ui.ce = { cover: 0, name: '', date: '', time: '18:00', online: false, place: '', cap: '20', wait: true, approval: false, badges: true, desc: '', circle: mine[0] || '' });
+  const pair = COVER_PAIRS[d.cover % COVER_PAIRS.length];
+  const tg = (k, label, sub) => `<label class="toggle"><span>${label}${sub ? `<small>${sub}</small>` : ''}</span><input type="checkbox" data-a="ce-toggle" data-x="${k}" ${d[k] ? 'checked' : ''}></label>`;
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><b>Create event</b><span></span></header>
+    <section class="pad">
+      <button class="ce-cover" data-a="ce-cover" style="--c1:${pair[0]};--c2:${pair[1]}"><span class="cover cover-art" style="--c1:${pair[0]};--c2:${pair[1]}"><span class="cover-title">${esc(d.name || 'Your event')}</span></span><small>${ICON.image} Tap to change cover</small></button>
+      <h3>Event name</h3><input class="field" data-model="ce.name" placeholder="e.g. Ikebana + Career exchange" value="${esc(d.name)}" maxlength="48">
+      <h3>Date &amp; time</h3><div style="display:flex;gap:8px"><input class="field" type="date" data-model="ce.date" value="${esc(d.date)}"><input class="field" style="width:130px" type="time" data-model="ce.time" value="${esc(d.time)}"></div>
+      ${tg('online', 'Online event')}
+      ${d.online ? '' : `<h3>Location</h3><input class="field" data-model="ce.place" placeholder="Venue name & address" value="${esc(d.place)}">`}
+      <h3>Capacity</h3><input class="field" type="number" min="2" data-model="ce.cap" value="${esc(d.cap)}">
+      ${tg('wait', 'Allow waitlist')}
+      ${tg('approval', 'Approve each request', 'Otherwise people are confirmed instantly')}
+      ${d.online ? '' : tg('badges', 'Lend EventBuddy devices', 'Attendees can tap devices to start conversations')}
+      <h3>Circle</h3><p class="muted small" style="margin-bottom:10px">Attendees join this circle and can see its members-only stories.</p>
+      <div class="pills">${mine.map((c) => `<button class="pill ${d.circle === c ? 'on' : ''}" data-a="ce-circle" data-x="${esc(c)}">${esc(c)}</button>`).join('')}<button class="pill ${d.circle === '' ? 'on' : ''}" data-a="ce-circle" data-x="">New circle</button></div>
+      <h3>Description</h3><textarea class="field area" style="min-height:120px" data-model="ce.desc" placeholder="What’s this event about? What should people expect?">${esc(d.desc)}</textarea>
+      <p class="note">${ICON.info} Attendees can choose to appear on this event’s discovery list at RSVP.</p>
+      <div class="spacer"></div>
+    </section>
+    <footer class="sticky"><button class="btn primary" data-a="ce-publish">Publish event</button></footer>`;
 };
 
 V.auth = () => `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><span></span><span></span></header>
@@ -339,7 +374,7 @@ V.ticket = (id) => {
   const steps = off ? [['Requested', e.approval], ['Approved', true], ['Checked in', true], ['Attended', true]].filter((s) => s[1]).map((s) => s[0]) : ['Registered', 'Joined'];
   const idx = off ? { pending: 0, declined: 0, going: e.approval ? 1 : 0, checkedin: e.approval ? 2 : 1, attended: 9 }[r.status] : { going: 0, attended: 9 }[r.status];
   let body = '';
-  if (r.status === 'pending') body = `<div class="state-box"><b>Waiting for ${PEOPLE[e.host].short} to approve</b><small>Most hosts reply within 2 days. We’ll notify you.</small></div>
+  if (r.status === 'pending') body = `<div class="state-box"><b>Waiting for ${hostOf(e).short} to approve</b><small>Most hosts reply within 2 days. We’ll notify you.</small></div>
       ${demo('Host approves request', 'approve', id)}${demo('Host declines request', 'decline', id)}`;
   else if (r.status === 'declined') body = `<div class="state-box warn"><b>This one’s full</b><small>The host couldn’t fit everyone. Similar events:</small></div>${EVENTS.filter((x) => x.id !== id && x.mode === e.mode).slice(0, 2).map(eventRow).join('')}`;
   else if (off) body = `<div class="pass">${fakeQR(id + S.profile.name)}<b>${esc(S.profile.name)}</b><small>Show this at the check-in desk</small></div>
@@ -374,7 +409,7 @@ V.checkin = (id) => {
       <ol class="steps">
         <li class="${checked ? 'done' : 'now'}"><b>Check in at the desk</b>
           ${checked ? '<small>Checked in 17:42 ✓</small>' : `<small>Show your pass. Staff scan it — this confirms you actually came.</small><div class="pass mini">${fakeQR(id + S.profile.name)}</div>${demo('Staff scans your pass', 'checkin', id)}`}</li>
-        <li class="${hasBadge ? 'done' : checked ? 'now' : ''}"><b>Collect a EventBuddy</b>
+        <li class="${hasBadge ? 'done' : checked ? 'now' : ''}"><b>Collect an EventBuddy</b>
           ${hasBadge ? `<small>EventBuddy ${BADGE_ID} is yours for tonight ✓</small>` : checked ? `<small>Staff hand you an EventBuddy wearable. Check the number on its back.</small>${demo('Staff hands you EventBuddy ' + BADGE_ID, 'give-badge', id)}<button class="link" data-a="no-badge" data-x="${id}">Continue without an EventBuddy</button>` : '<small>Optional loan device</small>'}</li>
         <li class="${hasBadge ? 'now' : ''}"><b>Pair it with your app</b><small>Takes 10 seconds</small></li>
       </ol>
@@ -476,7 +511,7 @@ V.lobby = (id) => {
 };
 
 V.room = (id) => {
-  const e = ev(id); const host = PEOPLE[e.host];
+  const e = ev(id); const host = hostOf(e);
   if (!reg(id)) return V.event(id);
   const people = e.attendees.filter((p) => p !== e.host).map((p) => PEOPLE[p]);
   const mine = S.encounters.filter((x) => x.eventId === id);
@@ -501,7 +536,7 @@ V.room = (id) => {
 
 /* ---------------------------------------------------------------- recap */
 V.recap = (id) => {
-  const e = ev(id); const host = PEOPLE[e.host];
+  const e = ev(id); const host = hostOf(e);
   if (!S.profile) return V.event(id);
   const mine = S.encounters.filter((x) => x.eventId === id);
   const nextUp = EVENTS.filter((x) => x.id !== id && !reg(x.id) && x.tags.some((t) => e.tags.includes(t) || S.profile.interests.includes(t)));
@@ -1230,6 +1265,29 @@ const A = {
   'growth-help-close': () => { ui.growthHelp = false; render(); },
   circle: (x) => { ui.circle = x || null; render(); },
   cmode: (x) => { ui.cmode = x; render(); },
+  'ce-new': () => { if (!S.profile) { go('onboarding'); return; } ui.ce = null; go('createEvent'); },
+  'ce-cover': () => { ui.ce.cover++; render(); },
+  'ce-toggle': (k, el) => { ui.ce[k] = el.checked; render(); },
+  'ce-circle': (x) => { ui.ce.circle = x; render(); },
+  'ce-publish': () => {
+    const d = ui.ce;
+    if (!d.name.trim() || !d.date) { toast('Add an event name and date'); return; }
+    if (!d.online && !d.place.trim()) { toast('Add a location'); return; }
+    const start = new Date(d.date + 'T' + (d.time || '18:00')); const end = new Date(start.getTime() + 2 * 36e5);
+    const hm = (t) => t.toTimeString().slice(0, 5);
+    const days = Math.round((start - new Date()) / 864e5);
+    const e = {
+      id: 'my-' + Date.now(), mode: d.online ? 'online' : 'offline', title: d.name.trim(), circle: d.circle || `${me().short}’s circle`,
+      date: fmtDate(start), time: `${hm(start)} – ${hm(end)}`, when: days <= 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days} days`,
+      ...(d.online ? { platform: 'Zoom (link in app)' } : { venue: d.place.trim(), distance: 'Near you' }),
+      cost: 'Free', capacity: Math.max(2, +d.cap || 20), going: 0, approval: d.approval, waitlist: d.wait, badges: !d.online && d.badges, host: 'me',
+      cover: COVER_PAIRS[d.cover % COVER_PAIRS.length], audience: d.desc.trim() || 'No description yet.',
+      agenda: [[hm(start), 'Doors & intros'], [hm(end), 'Wrap up']], attendees: [], tags: [...(me().interests || []).slice(0, 2)]
+    };
+    S.myEvents = [...(S.myEvents || []), e]; if (!(S.circles || []).includes(e.circle)) S.circles = [...(S.circles || []), e.circle];
+    EVENTS.push(e); ui.ce = null; save(); toast('Event published 🎉');
+    history.replaceState(null, '', '#/event/' + e.id); render();
+  },
   'pod-open': (x) => { ui.chatPlus = null; ui.podTab = 'Chat'; go('pod/' + x); setTimeout(scrollEnd, 50); },
   'pod-tab': (x) => { ui.podTab = x; ui.chatPlus = null; render(); if (x === 'Chat') scrollEnd(); },
   'pod-todo': (x) => { const [id, i] = x.split('|'); const t = pod(id).todos[+i]; t.done = !t.done; save(); render(); },
@@ -1296,7 +1354,7 @@ const A = {
 };
 
 /* =============================================================== RENDER */
-const NO_NAV = ['pod', 'podnew', 'welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'cv', 'mock', 'event', 'recap', 'circle', 'chat'];
+const NO_NAV = ['createEvent', 'pod', 'podnew', 'welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'cv', 'mock', 'event', 'recap', 'circle', 'chat'];
 const TABS = [['home', 'Event', 'var(--t-event)'], ['community', 'Community', 'var(--t-comm)'], ['messages', 'Messages', 'var(--t-msg)'], ['me', 'Account', 'var(--t-acc)']];
 const scrollEnd = () => { const a = $('#app'); a.scrollTop = a.scrollHeight; };
 
@@ -1370,6 +1428,7 @@ setInterval(tickBadge, 650);
   if (q.get('theme')) { localStorage.setItem(THEME_KEY, q.get('theme')); applyTheme(); }
   if (q.get('demo') && !S.onboarded) { S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; seedAccount(140); save(); }
 }
+loadMyEvents();
 render();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').catch(() => {});

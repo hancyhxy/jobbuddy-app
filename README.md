@@ -70,6 +70,7 @@ All data is fictional and stays in the browser's `localStorage`. **Account → R
 Tabs follow the teammate prototype: **Event** (home + Event Explorer; search via the round button), **Community** (Community / Networks), **Messages** (chat with connections) and **Account**. The event device is called **EventBuddy** (URL path stays `tappy/`). Visual design and copy follow the teammate version; the interaction logic below is unchanged.
 
 - **Community → Networks:** Connections, Requests (people who follow you but you have not followed back: *Not now* / *Follow back*), Explore who else was there, Event Circles (members-only circle pages with Stories and Attendees).
+- **Create event:** ＋ next to “Hi, Emma” on the Event tab (search moved next to Event Explorer). Cover, name, date & time, online toggle, location, capacity, waitlist, approval, EventBuddy devices, circle, description → Publish. Hosted events show “Hosting” in Your events and “Hosted by You” with a Share invite link CTA. Saved locally.
 - **Pods:** small invite-only groups (Networks → Pods, + to create). Only connections can be invited. Each pod has Chat and To-do tabs. Chats (pods and direct) share one component: Enter sends; ⊕ opens Event (share an event card), Album and Camera (mocked). Member replies are simulated.
 - **Messages:** Pods (group chats) and Direct chats; direct messages only between connections (mutual follows). Unread counts show on the Messages tab.
 
