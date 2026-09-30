@@ -566,7 +566,10 @@ function seedAccount(points) {
   S.circles = ['Harbour Builders', 'UTS Design Crowd'];
   S.points = points; S.lifetime = points; S.ledger = points ? [{ n: 15, why: 'Shared an event takeaway', at: Date.now() - 864e5 }, { n: 20, why: 'Checked in at an event', at: Date.now() - 9e7 }, { n: 5, why: 'New connection · Leo', at: Date.now() - 2e8 }] : [];
 }
-const lvChip = () => { const l = level(); return `<button class="lv-chip" data-a="nav" data-x="rewards">Lv ${l.n} · ${l.name}<span>${S.points || 0} pts</span></button>`; };
+const wallet = () => S.points || 0;            // spendable: goes down when you redeem
+const earned = () => S.lifetime ?? S.points ?? 0; // lifetime: only goes up, sets your level
+const lvChip = () => { const l = level(); return `<button class="lv-chip" data-a="nav" data-x="rewards">Lv ${l.n} · ${l.name}<span>${wallet()} pts to spend</span></button>`; };
+const ptsPair = () => `<div class="pts-pair"><div><b>${wallet()}</b><small>pts to spend</small><i>Redeeming uses these</i></div><div><b>${earned()}</b><small>earned in total</small><i>Sets your level · never goes down</i></div></div>`;
 
 /* ------------------------------------------------------------ community */
 const comments = (id) => [...(SEED_COMMENTS[id] || []), ...((S.myComments || {})[id] || []).map((t) => ['me', t])];
@@ -706,7 +709,8 @@ V.rewards = () => {
   return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>Growth & points</b><button class="icon-btn help-btn" data-a="growth-help" aria-label="How growth works">${ICON.help}</button></header>
   <section class="pad">
     <div class="lv-hero"><small>LEVEL ${l.n}</small><b>${l.name}</b><div class="lvbar"><i style="width:${l.pct}%"></i></div>
-      <span>${S.points || 0} pts to spend · ${S.lifetime ?? S.points} earned in total${l.next ? ` · ${l.next - (S.lifetime ?? S.points)} to ${l.nextName}` : ''}</span></div>
+      <span>${l.next ? `${l.next - earned()} more earned pts to ${l.nextName}` : 'Top level'}</span></div>
+    ${ptsPair()}
     <h3>Levels</h3>
     <ol class="levels">${LEVELS.map(([min, name], i) => `<li class="${i + 1 === l.n ? 'now' : i + 1 < l.n ? 'done' : ''}"><span>${i + 1}</span><b>${name}</b><small>${min} pts</small></li>`).join('')}</ol>
     <h3>How you earn</h3>
@@ -715,7 +719,7 @@ V.rewards = () => {
     <h3>Redeem</h3>
     ${REDEEM.map((r) => `<div class="enc"><span class="reward-ico">${ICON.spark}</span><div><b>${r.title}</b><small>${r.desc}${(S.credits || {})[r.id] ? ` · you have ${S.credits[r.id]}` : ''}</small></div><button class="btn small ${(S.points || 0) >= r.cost ? 'primary' : ''}" data-a="redeem" data-x="${r.id}" ${(S.points || 0) >= r.cost ? '' : 'disabled'}>${r.cost} pts</button></div>`).join('')}
     <h3>Recent</h3>
-    ${(S.ledger || []).slice(0, 6).map((x) => `<div class="ledger"><span>${esc(x.why)}</span><b class="${x.n < 0 ? 'neg' : ''}">${x.n > 0 ? '+' : ''}${x.n}</b></div>`).join('') || '<p class="empty">No points yet.</p>'}
+    ${(S.ledger || []).slice(0, 6).map((x) => `<div class="ledger"><span>${esc(x.why)}${x.n < 0 ? '<small>Spent · level unchanged</small>' : ''}</span><b class="${x.n < 0 ? 'neg' : ''}">${x.n > 0 ? '+' : ''}${x.n}</b></div>`).join('') || '<p class="empty">No points yet.</p>'}
     <div class="spacer"></div>
   </section>`;
 };
@@ -762,7 +766,7 @@ function growthHelp() {
 
       <h3>What you can redeem</h3>
       ${REDEEM.map((r) => `<div class="enc"><span class="reward-ico">${ICON.spark}</span><div><b>${r.title}</b><small>${r.desc}</small></div><b>${r.cost} pts</b></div>`).join('')}
-      <p class="note">${ICON.spark} You have ${S.points || 0} pts to spend. Redeem them on the Growth & points page.</p>
+      <p class="note">${ICON.spark} You have ${wallet()} pts to spend. Redeeming only uses these — your ${earned()} earned pts and your level stay the same.</p>
       <button class="btn primary" data-a="nav" data-x="rewards">Go to redeem</button>
 
       <h3>Fair play</h3>
@@ -825,7 +829,7 @@ V.me = () => {
     <section class="pad">
       <p class="muted">Hi, I’m ${esc(p.short)} — ${p.stage.toLowerCase()} in ${p.field.toLowerCase()}. ${p.fact ? esc(p.fact) + '.' : ''}</p>
       <div class="namecard"><small>Your name card · No. 0001</small><b>${esc(p.name)}</b><small style="color:#bbb">${p.field} · Sydney, AU</small><small style="color:#bbb;margin-top:4px">${p.interests.map((t) => '#' + t).join(' ')}</small></div>
-      <div class="lv-card" data-a="nav" data-x="rewards" role="button"><div><small>LEVEL ${l.n}</small><b>${l.name}</b></div><span>${S.points || 0} pts<button class="icon-btn help-btn sm" data-a="growth-help" aria-label="How growth works">${ICON.help}</button></span><div class="lvbar"><i style="width:${l.pct}%"></i></div><small>${l.next ? `${l.next - (S.lifetime ?? S.points)} pts to ${l.nextName}` : 'Top level'} · See how to earn & redeem</small></div>
+      <div class="lv-card" data-a="nav" data-x="rewards" role="button"><div><small>LEVEL ${l.n}</small><b>${l.name}</b></div><span>${wallet()} pts<small style="display:inline;margin-left:4px;color:#bbb;letter-spacing:0">to spend</small><button class="icon-btn help-btn sm" data-a="growth-help" aria-label="How growth works">${ICON.help}</button></span><div class="lvbar"><i style="width:${l.pct}%"></i></div><small>${earned()} earned in total · ${l.next ? `${l.next - earned()} to ${l.nextName}` : 'Top level'} · Redeeming never lowers your level</small></div>
       <div class="stats four">${[['connections', connections().length, 'connections'], ['followers', S.followers.length, 'followers'], ['following', S.following.length, 'following'], ['met', metIds.length, 'met']].map(([t, n, lbl]) => `<button data-a="people-tab" data-x="${t}"><b>${n}</b><small>${lbl}</small></button>`).join('')}</div>
       <button class="list-item" data-a="nav" data-x="messages"><span class="lead-ico">${ICON.chat}</span><div class="grow"><b>Messages</b><small>View your chatbox</small></div>${ICON.chev}</button>
       <h3>Career tools</h3>
@@ -1141,8 +1145,8 @@ const A = {
   'compose-circle': (x) => { ui.compose.circle = x; render(); },
   redeem: (x) => {
     const r = REDEEM.find((y) => y.id === x); if ((S.points || 0) < r.cost) { toast('Not enough points yet'); return; }
-    if (!confirm(`Redeem ${r.cost} pts for “${r.title}”?`)) return;
-    S.credits = S.credits || {}; S.credits[x] = (S.credits[x] || 0) + 1; earn(-r.cost, `Redeemed · ${r.title}`, true); toast(`Redeemed · ${r.title}`); render();
+    if (!confirm(`Redeem ${r.cost} pts for “${r.title}”?\n\nPoints to spend: ${wallet()} → ${wallet() - r.cost}\nYour level stays ${level().name} (${earned()} earned in total).`)) return;
+    S.credits = S.credits || {}; S.credits[x] = (S.credits[x] || 0) + 1; earn(-r.cost, `Redeemed · ${r.title}`, true); toast(`Redeemed · ${wallet()} pts left · level unchanged`); render();
   },
   'cv-role': (x) => { ui.cvRole = x; render(); },
   'cv-run': () => {
