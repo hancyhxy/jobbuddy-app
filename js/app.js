@@ -663,7 +663,7 @@ const POD_SEED = [{
   members: ['sofia', 'leo', 'priya'], status: 'In progress',
   todos: [{ t: 'Post one case study draft each', who: 'Everyone', done: false }, { t: 'Book a crit slot for Thursday', who: 'Leo', done: true }, { t: 'Share interview question bank', who: 'Sofia', done: false }],
   events: ['crit-circle'],
-  chat: [['sofia', 'Crit circle is on Thursday — who’s bringing a case study?'], ['leo', 'Me! Still fixing the intro though 😅'], ['priya', 'Happy to review it tonight if you send it over'], ['sofia', { ev: 'crit-circle' }]]
+  chat: [['sofia', 'Crit circle is on Thursday — who’s bringing a case study?'], ['leo', 'Me! Still fixing the intro though 😅'], ['priya', 'Happy to review it tonight if you send it over'], ['sofia', { ev: 'crit-circle' }], ['leo', { todo: 1 }], ['sofia', { todo: 2 }]]
 }];
 const pods = () => { if (!S.pods) { S.pods = JSON.parse(JSON.stringify(POD_SEED)); S.podUnread = { 'pod-portfolio': 2 }; save(); } return S.pods; };
 const pod = (id) => pods().find((p) => p.id === id);
@@ -676,33 +676,33 @@ function podsSection() {
     ${pods().map((p) => `<button class="list-item" data-a="nav" data-x="pod/${p.id}" style="flex-wrap:wrap">${podFaces(p)}<div class="grow"><h3>${esc(p.name)}</h3><small style="margin:3px 0 6px">${p.members.length + 1} members · ${p.todos.filter((t) => !t.done).length} to-dos open</small><i class="chip chip-pending" style="margin:0">${p.status}</i></div>${S.podUnread?.[p.id] ? `<i class="unread">${S.podUnread[p.id]}</i>` : ICON.chev}<p class="muted small" style="width:100%;margin-top:8px">${esc(p.desc)}</p></button>`).join('') || '<div class="empty">No pods yet. Start one with people you’ve met.</div>'}`;
 }
 
-function podMsg(m) {
+function podMsg(m, p) {
   const mine = m[0] === 'me';
-  const name = mine ? '' : `<b>${PEOPLE[m[0]].short}</b><br>`;
+  const who_ = mine ? 'You' : PEOPLE[m[0]].short;
+  const name = mine ? '' : `<b>${who_}</b><br>`;
   if (typeof m[1] === 'string') return `<div class="bub ${mine ? 'me' : ''}">${name}${esc(m[1])}</div>`;
+  if (m[1].todo != null) {
+    const t = p.todos[m[1].todo]; if (!t) return '';
+    return `<div class="bub card-bub ${mine ? 'me' : ''}"><small>${mine ? 'You' : '<b>' + who_ + '</b>'} added a to-do</small><button class="todo ${t.done ? 'on' : ''}" data-a="pod-todo" data-x="${p.id}|${m[1].todo}" aria-pressed="${t.done}"><span class="box">${t.done ? ICON.check : ''}</span><span class="t">${esc(t.t)}</span></button></div>`;
+  }
   const e = ev(m[1].ev);
-  return `<div class="bub ev-bub ${mine ? 'me' : ''}">${name}<small>${mine ? 'You' : PEOPLE[m[0]].short} shared an event</small><button class="ev-share" data-a="nav" data-x="event/${e.id}">${cover(e, 'sm')}<span><b>${esc(e.title)}</b><small>${e.date} · ${e.mode === 'online' ? 'Online' : e.venue.split(',')[0]}</small></span></button></div>`;
+  return `<div class="bub card-bub ${mine ? 'me' : ''}"><small>${mine ? 'You' : '<b>' + who_ + '</b>'} shared an event</small><button class="ev-share" data-a="nav" data-x="event/${e.id}">${cover(e, 'sm')}<span><b>${esc(e.title)}</b><small>${e.date} · ${e.mode === 'online' ? 'Online' : e.venue.split(',')[0]}</small></span></button></div>`;
 }
 
 V.pod = (id) => {
   const p = pod(id); if (!p || !S.profile) return V.community();
   if (S.podUnread?.[id]) { S.podUnread[id] = 0; save(); }
-  const t = ['Chat', 'To-do', 'Events'].includes(ui.podTab) ? ui.podTab : 'Chat';
-  let body = '';
-  if (t === 'Chat') body = `<div class="bubbles">${p.chat.map(podMsg).join('')}${ui.typing === id ? '<div class="bub small">typing…</div>' : ''}</div>`;
-  if (t === 'To-do') body = `${p.todos.map((x, i) => `<button class="todo ${x.done ? 'on' : ''}" data-a="pod-todo" data-x="${id}|${i}" aria-pressed="${x.done}"><span class="box">${x.done ? ICON.check : ''}</span><span class="t">${esc(x.t)}</span><small>${esc(x.who)}</small></button>`).join('') || '<div class="empty">No to-dos yet.</div>'}
-      <div style="display:flex;gap:8px;margin-top:14px"><input class="field" data-model="todoText" id="todoIn" placeholder="Add a to-do" value="${esc(ui.todoText || '')}"><button class="btn small primary" style="height:50px" data-a="pod-add-todo" data-x="${id}">Add</button></div>`;
-  if (t === 'Events') body = `${p.events.map((eid) => lumaRow(ev(eid))).join('') || '<div class="empty">No shared events yet.</div>'}
-      <button class="btn primary" style="margin-top:14px" data-a="pod-share" data-x="${id}">+ Share an event</button>
-      <p class="note">${ICON.info} Going together keeps the pod active — shared events also appear in the chat.</p>`;
-  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>${esc(p.name)}</b><button class="btn small" data-a="pod-invite" data-x="${id}">+ Invite</button></header>
+  const open = ui.podPlus === id;
+  const tiles = [['event', ICON.cal, 'Event'], ['todo', ICON.check, 'To-do'], ['album', ICON.file, 'Album'], ['camera', ICON.qr, 'Camera']];
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>${esc(p.name)} (${p.members.length + 1})</b><button class="btn small" data-a="pod-invite" data-x="${id}">+ Invite</button></header>
     <section class="pad">
-      <p class="muted">${esc(p.desc)}</p>
-      <div class="pod-members">${p.members.map((m) => `<button class="plain" data-a="nav" data-x="person/${m}">${av(PEOPLE[m], 40)}<small>${PEOPLE[m].short}</small></button>`).join('')}<span>${av(me(), 40)}<small>You</small></span></div>
-      <div class="seg2">${['Chat', 'To-do', 'Events'].map((x) => `<button class="${t === x ? 'on' : ''}" data-a="pod-tab" data-x="${x}">${x}${x === 'To-do' ? ` · ${p.todos.filter((y) => !y.done).length}` : x === 'Events' ? ` · ${p.events.length}` : ''}</button>`).join('')}</div>
-      ${body}
+      <div class="pod-members">${p.members.map((m) => `<button class="plain" data-a="nav" data-x="person/${m}">${av(PEOPLE[m], 36)}<small>${PEOPLE[m].short}</small></button>`).join('')}<span>${av(me(), 36)}<small>You</small></span></div>
+      <div class="bubbles ${open ? 'with-panel' : ''}">${p.chat.map((m) => podMsg(m, p)).join('')}${ui.typing === id ? '<div class="bub small">typing…</div>' : ''}</div>
     </section>
-    ${t === 'Chat' ? `<div class="composer"><button class="plain share-btn" data-a="pod-share" data-x="${id}" aria-label="Share an event">${ICON.cal}</button><input data-model="msgText" id="msgIn" placeholder="Message the pod..." aria-label="Message pod" value="${esc(ui.msgText || '')}"><button data-a="pod-send" data-x="${id}" aria-label="Send">${ICON.share}</button></div>` : '<div class="spacer"></div>'}`;
+    <div class="composer-wrap">
+      <div class="composer"><input data-model="msgText" id="msgIn" placeholder="Message the pod..." aria-label="Message pod" value="${esc(ui.msgText || '')}"><button class="plain plus-btn ${open ? 'on' : ''}" data-a="pod-plus" data-x="${id}" aria-label="More">${ICON.plus}</button><button data-a="pod-send" data-x="${id}" aria-label="Send">${ICON.share}</button></div>
+      ${open ? `<div class="plus-panel">${tiles.map(([k, ic, l]) => `<button data-a="pod-plus-pick" data-x="${id}|${k}"><span>${ic}</span><small>${l}</small></button>`).join('')}</div>` : ''}
+    </div>`;
 };
 
 V.podnew = () => {
@@ -722,6 +722,7 @@ V.podnew = () => {
 
 function podSheet() {
   const s = ui.sheet; const p = pod(s.id);
+  if (s.type === 'pod-todo-new') return `<h2 class="sheet-title">Add a to-do</h2><div class="cinput"><input class="field" data-model="todoText" id="todoIn" placeholder="e.g. Send case study by Friday" value="${esc(ui.todoText || '')}"><button class="btn small primary" data-a="pod-add-todo" data-x="${p.id}">Add</button></div><p class="muted small">It’s posted in the chat so anyone can tick it off.</p>`;
   if (s.type === 'pod-share') {
     const list = EVENTS.filter((e) => !p.events.includes(e.id));
     return `<h2 class="sheet-title">Share an event with ${esc(p.name)}</h2><div class="clist">${list.map((e) => `<button class="ev-share" data-a="pod-share-pick" data-x="${p.id}|${e.id}">${cover(e, 'sm')}<span><b>${esc(e.title)}</b><small>${e.date} · ${e.mode === 'online' ? 'Online' : e.venue.split(',')[0]}</small></span></button>`).join('') || '<p class="muted small">All events are already shared.</p>'}</div>`;
@@ -994,8 +995,8 @@ function sheetHTML() {
       <div class="clist">${cs.map(([a, t]) => { const u = who(a); return `<div class="cmt">${av(u, 30)}<div><b>${esc(u.name)}</b><p>${esc(t)}</p></div></div>`; }).join('') || '<p class="muted small">Be the first to reply.</p>'}${p.comments > cs.length ? `<p class="muted small">+ ${p.comments - cs.length} earlier comments</p>` : ''}</div>
       <div class="cinput"><input class="field" data-model="commentText" placeholder="Add a helpful reply… (+3 pts)" value="${esc(ui.commentText || '')}"><button class="btn small primary" data-a="send-comment" data-x="${s.id}">Send</button></div>`;
   }
-  if (s.type === 'pod-share' || s.type === 'pod-invite') inner = podSheet();
-  return `<div class="scrim" data-a="sheet-close"></div><div class="sheet ${['comments', 'pod-share', 'pod-invite'].includes(s.type) ? 'left' : ''}"><i class="grab"></i>${inner}</div>`;
+  if (['pod-share', 'pod-invite', 'pod-todo-new'].includes(s.type)) inner = podSheet();
+  return `<div class="scrim" data-a="sheet-close"></div><div class="sheet ${['comments', 'pod-share', 'pod-invite', 'pod-todo-new'].includes(s.type) ? 'left' : ''}"><i class="grab"></i>${inner}</div>`;
 }
 
 /* ================================================================ BADGE */
@@ -1211,13 +1212,20 @@ const A = {
   'growth-help-close': () => { ui.growthHelp = false; render(); },
   circle: (x) => { ui.circle = x || null; render(); },
   cmode: (x) => { ui.cmode = x; render(); },
-  'pod-open': (x) => { ui.podTab = 'Chat'; go('pod/' + x); setTimeout(scrollEnd, 50); },
-  'pod-tab': (x) => { ui.podTab = x; render(); if (x === 'Chat') scrollEnd(); },
-  'pod-todo': (x) => { const [id, i] = x.split('|'); const t = pod(id).todos[+i]; t.done = !t.done; save(); render(); },
-  'pod-add-todo': (x) => { const t = (ui.todoText || '').trim(); if (!t) return; pod(x).todos.push({ t, who: 'You', done: false }); ui.todoText = ''; save(); render(); },
+  'pod-open': (x) => { ui.podPlus = null; go('pod/' + x); setTimeout(scrollEnd, 50); },
+  'pod-plus': (x) => { ui.podPlus = ui.podPlus === x ? null : x; render(); scrollEnd(); },
+  'pod-plus-pick': (x) => {
+    const [id, k] = x.split('|'); ui.podPlus = null;
+    if (k === 'event') ui.sheet = { type: 'pod-share', id };
+    else if (k === 'todo') ui.sheet = { type: 'pod-todo-new', id };
+    else { toast(k === 'album' ? 'Photo picker (mocked)' : 'Camera (mocked)'); }
+    render(); setTimeout(() => $('#todoIn')?.focus(), 50);
+  },
+  'pod-todo': (x) => { const [id, i] = x.split('|'); const t = pod(id).todos[+i]; t.done = !t.done; save(); const top = $('#app').scrollTop; render(); $('#app').scrollTop = top; if (t.done) toast('Ticked off ✓'); },
+  'pod-add-todo': (x) => { const t = (ui.todoText || '').trim(); if (!t) return; const p = pod(x); p.todos.push({ t, who: 'You', done: false }); p.chat.push(['me', { todo: p.todos.length - 1 }]); ui.todoText = ''; ui.sheet = null; save(); render(); scrollEnd(); },
   'pod-send': (x) => { const t = (ui.msgText || '').trim(); if (!t) return; pod(x).chat.push(['me', t]); ui.msgText = ''; save(); render(); scrollEnd(); podReply(x); },
   'pod-share': (x) => { ui.sheet = { type: 'pod-share', id: x }; render(); },
-  'pod-share-pick': (x) => { const [id, eid] = x.split('|'); const p = pod(id); p.events.push(eid); p.chat.push(['me', { ev: eid }]); ui.sheet = null; ui.podTab = 'Chat'; save(); toast('Shared with ' + p.name); render(); scrollEnd(); podReply(id); },
+  'pod-share-pick': (x) => { const [id, eid] = x.split('|'); const p = pod(id); p.events.push(eid); p.chat.push(['me', { ev: eid }]); ui.sheet = null; save(); toast('Shared with ' + p.name); render(); scrollEnd(); podReply(id); },
   'pod-invite': (x) => { ui.sheet = { type: 'pod-invite', id: x }; render(); },
   'pod-invite-pick': (x) => { const [id, pid] = x.split('|'); const p = pod(id); p.members.push(pid); p.chat.push([pid, 'Hi all, thanks for the invite 👋']); ui.sheet = null; save(); toast(`${PEOPLE[pid].short} joined ${p.name}`); render(); },
   'podnew-member': (x) => { const m = ui.newPod.members; ui.newPod.members = m.includes(x) ? m.filter((y) => y !== x) : [...m, x]; render(); },
@@ -1225,7 +1233,7 @@ const A = {
     const d = ui.newPod; if (!d.name.trim()) { toast('Give your pod a name'); return; }
     const id = 'pod' + Date.now();
     pods().unshift({ id, name: d.name.trim(), desc: d.desc.trim() || 'Just getting started', members: d.members, status: 'In progress', todos: [], events: [], chat: d.members.length ? [[d.members[0], 'Excited for this! 🙌']] : [] });
-    ui.newPod = null; ui.podTab = 'Chat'; save(); toast('Pod created'); history.replaceState(null, '', '#/pod/' + id); render();
+    ui.newPod = null; ui.podPlus = null; save(); toast('Pod created'); history.replaceState(null, '', '#/pod/' + id); render();
   },
   nsub: (x) => { ui.nsub = x; render(); },
   ctab: (x) => { ui.ctab = x; render(); },

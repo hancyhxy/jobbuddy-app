@@ -14,7 +14,7 @@ Install each app from its URL, ideally on two different phones.
 - iPhone: open it in Safari, tap Share, then Add to Home Screen.
 - Android: open it in Chrome, tap ⋮, then Install app (or Add to Home screen).
 
-Once opened, it launches full-screen from the home-screen icon and works offline. To publish local edits, run `./deploy.command` (public repo `hancyhxy/jobbuddy-app`).
+Once opened, it launches full-screen from the home-screen icon and works offline. To publish local edits, run `./deploy.command` (public repo `hancyhxy/jobbuddy-app`; it syncs into the standalone clone at `education/2026-spring/jobbuddy-app/` and pushes only the changes).
 
 ### Two-phone demo: presentation mode (recommended)
 
