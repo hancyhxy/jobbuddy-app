@@ -696,3 +696,10 @@ i.pill { height: 30px; }
   .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
   .toast { position: fixed; }
 }
+
+/* Event/recap hero: let the gradient run up under the status bar (no white strip) */
+@media (max-width: 860px) {
+  .hero { margin-top: calc(-1 * env(safe-area-inset-top)); padding-top: calc(76px + env(safe-area-inset-top)); }
+  .bar.float { top: env(safe-area-inset-top); }
+}
+.hero { background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 50%, #fff) 0%, color-mix(in srgb, var(--c1) 22%, #fff) 45%, #fff 100%) !important; }
