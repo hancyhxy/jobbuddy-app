@@ -1299,8 +1299,17 @@ function route() {
   return [V[name] ? name : 'notfound', arg];
 }
 
+// Status bar colour follows the page: event/recap heroes tint it to the top of their gradient.
+const mixWhite = (hex, k) => '#' + [1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * k + 255 * (1 - k)).toString(16).padStart(2, '0')).join('');
+function statusBar(name, arg) {
+  const e = ['event', 'recap'].includes(name) && ev(arg);
+  const c = e ? mixWhite(e.cover[0], 0.5) : '#ffffff';
+  const m = document.querySelector('meta[name="theme-color"]'); if (m && m.content !== c) m.content = c;
+  document.body.style.background = e ? c : '';
+}
 function render() {
   const [name, arg] = route();
+  statusBar(name, arg);
   const app = $('#app');
   const prev = app.dataset.view;
   app.innerHTML = V[name](arg) + sheetHTML() + (ui.growthHelp ? growthHelp() : '') + scannerHTML();

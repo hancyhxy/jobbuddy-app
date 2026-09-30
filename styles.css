@@ -748,3 +748,5 @@ i.pill { height: 30px; }
 .card-bub .todo { background: #fff; color: var(--tx); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
 .pod-members { margin: 4px 0 14px; } .pod-members small { font-size: 11px; }
 .card-bub small b { color: var(--tx); }
+
+.hero { background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 50%, #fff) 0%, color-mix(in srgb, var(--c1) 22%, #fff) 45%, #fff 100%) !important; }
