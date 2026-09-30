@@ -760,6 +760,11 @@ function growthHelp() {
       </div>
       <p class="note">${ICON.info} Redeeming points (for extra AI CV reviews or mock interviews) never lowers your level.</p>
 
+      <h3>What you can redeem</h3>
+      ${REDEEM.map((r) => `<div class="enc"><span class="reward-ico">${ICON.spark}</span><div><b>${r.title}</b><small>${r.desc}</small></div><b>${r.cost} pts</b></div>`).join('')}
+      <p class="note">${ICON.spark} You have ${S.points || 0} pts to spend. Redeem them on the Growth & points page.</p>
+      <button class="btn primary" data-a="nav" data-x="rewards">Go to redeem</button>
+
       <h3>Fair play</h3>
       <ul class="checklist"><li>Up to 60 pts a day from posts and comments</li><li>Each person’s “helpful” counts once per post</li><li>Self-votes and vote swapping don’t count</li><li>Points are never shown as a ranking or leaderboard</li></ul>
       <div class="spacer"></div>
