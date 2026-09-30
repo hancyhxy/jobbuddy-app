@@ -42,7 +42,7 @@ const esc = (s = '') => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<'
 const ev = (id) => EVENTS.find((e) => e.id === id);
 const reg = (id) => S.regs[id];
 const ME_FACE = { emoji: '👩🏻', tint: '#8e9bd6' }; // Emma's avatar from the teammate prototype
-const me = () => S.profile && { ...ME_FACE, ...S.profile, photo: null, id: 'me', short: S.profile.name.split(' ')[0], headline: `${S.profile.field} · ${S.profile.stage}` };
+const me = () => S.profile && { photo: 'people/me.jpg', ...S.profile, id: 'me', short: S.profile.name.split(' ')[0], headline: `${S.profile.field} · ${S.profile.stage}` };
 const who = (id) => (id === 'me' ? me() : PEOPLE[id]);
 // Two avatar systems: real profile photo (app, online) and ASCII EventBuddy avatar (in-person device & wall).
 const av = (p, size = 40) => (p.emoji && !p.photo ? `<span class="ph emo" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.56)}px;background:${p.tint}33;box-shadow:inset 0 0 0 1.5px ${p.tint}66">${p.emoji}</span>` : p.photo ? `<span class="ph" style="width:${size}px;height:${size}px"><img src="${p.photo}" alt="" loading="lazy"></span>` : avatar(p.avatar, p.color, size, 0, 'round'));
@@ -142,7 +142,7 @@ V.onboarding = () => {
   }).join('');
   const steps = [
     `${S.onboarded ? '' : '<p class="eyebrow">New account · 2 quick steps</p>'}<h2>Hi. What should people call you?</h2>
-     <div class="photo-row">${av(ME_FACE, 64)}<div><b>Profile photo</b><small>Shown in the app and at online events. Your EventBuddy avatar is chosen per in-person event.</small><button class="linkish" data-a="toast" data-x="Photo picker (mocked)">Change photo</button></div></div>
+     <div class="photo-row"><span class="ph" style="width:64px;height:64px"><img src="people/me.jpg" alt=""></span><div><b>Profile photo</b><small>Shown in the app and at online events. Your EventBuddy avatar is chosen per in-person event.</small><button class="linkish" data-a="toast" data-x="Photo picker (mocked)">Change photo</button></div></div>
      <input class="field" data-model="ob.name" placeholder="Display name" value="${esc(o.name)}" maxlength="24">
      <h3>Your field</h3><div class="pills">${chips(FIELDS, 'field')}</div>
      <h3>Where you are right now</h3><div class="pills">${chips(STAGES, 'stage')}</div>
