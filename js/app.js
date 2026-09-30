@@ -554,8 +554,8 @@ function postCard(p) {
 }
 
 V.community = () => {
-  const seg = ['public', 'circles', 'connections'].includes(ui.seg) ? ui.seg : 'public';
-  const tabs = [['public', 'Public'], ['circles', 'My circles'], ['connections', 'Connections']];
+  const seg = ['circles', 'connections'].includes(ui.seg) ? 'circles' : 'public';
+  const tabs = [['public', 'Public'], ['circles', 'My circles']];
   let body;
   if (seg !== 'public' && !S.profile) body = `<p class="empty">Log in to see your circles and connections.</p><button class="btn primary" data-a="login-demo">Log in</button>`;
   else if (seg === 'public') {
@@ -563,11 +563,15 @@ V.community = () => {
   } else if (seg === 'circles') {
     const mine = circlesJoined(); const c = mine.includes(ui.circle) ? ui.circle : null;
     const list = allPosts().filter((p) => p.aud === 'circle' && mine.includes(p.circle) && (!c || p.circle === c));
-    body = `<div class="pills scroll flush"><button class="pill ${!c ? 'on' : ''}" data-a="circle" data-x="">All circles</button>${mine.map((x) => `<button class="pill ${c === x ? 'on' : ''}" data-a="circle" data-x="${x}">${x}</button>`).join('')}</div>
-      <p class="note">${ICON.lock} Members only. You join a circle by attending its events; posts stay inside it.</p>` + (list.map(postCard).join('') || '<p class="empty">No posts in this circle yet.</p>');
-  } else {
-    const list = allPosts().filter((p) => isConn(p.author));
-    body = `<div class="conn-strip">${connections().map((id) => `<button data-a="nav" data-x="person/${id}">${av(PEOPLE[id], 52)}<small>${PEOPLE[id].short}</small></button>`).join('')}</div>` + (list.map(postCard).join('') || '<p class="empty">Posts from your connections show up here.</p>');
+    // Circle posts remain members-only; the connections feed shows public posts only.
+    const connectionPosts = allPosts().filter((p) => p.aud === 'public' && isConn(p.author));
+    body = `<section aria-labelledby="my-circles-heading"><h3 id="my-circles-heading">My circles</h3>
+      <div class="pills scroll flush"><button class="pill ${!c ? 'on' : ''}" data-a="circle" data-x="">All circles</button>${mine.map((x) => `<button class="pill ${c === x ? 'on' : ''}" data-a="circle" data-x="${x}">${x}</button>`).join('')}</div>
+      <p class="note">${ICON.lock} Members only. You join a circle by attending its events; posts stay inside it.</p>
+      ${list.map(postCard).join('') || `<p class="empty">${mine.length ? 'No posts in this circle yet.' : 'Attend an event to join your first circle.'}</p>`}</section>
+      <section aria-labelledby="connections-heading"><h3 id="connections-heading">Connections</h3>
+      <div class="conn-strip">${connections().map((id) => `<button data-a="nav" data-x="person/${id}">${av(PEOPLE[id], 52)}<small>${PEOPLE[id].short}</small></button>`).join('')}</div>
+      ${connectionPosts.map(postCard).join('') || '<p class="empty">Posts from your connections show up here.</p>'}</section>`;
   }
   return `<header class="top"><h1>Community</h1>${S.profile ? lvChip() : ''}</header>
     <div class="pad"><div class="seg3">${tabs.map(([k, l]) => `<button class="${seg === k ? 'on' : ''}" data-a="seg" data-x="${k}">${l}</button>`).join('')}</div></div>

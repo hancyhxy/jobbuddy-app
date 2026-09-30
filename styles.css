@@ -30,8 +30,8 @@ h3 { font-size: 17px; font-weight: 700; margin: 26px 0 12px; }
 .app::-webkit-scrollbar { display: none; }
 @media (max-width: 860px) {
   body { background: var(--bg); }
-  .stage-wrap { display: block; }
-  .phone { width: 100%; height: 100%; border-radius: 0; box-shadow: none; }
+  .stage-wrap { display: block; height: 100dvh; }
+  .phone, [data-theme="light"] .phone { width: 100%; height: 100%; border-radius: 0; box-shadow: none; }
   .app { padding-top: env(safe-area-inset-top); }
 }
 
@@ -44,7 +44,7 @@ h3 { font-size: 17px; font-weight: 700; margin: 26px 0 12px; }
 .bar .btn.small { justify-self: end; grid-column: 3; width: auto; }
 .icon-btn { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--chip-bg); }
 .plain { padding: 0; }
-.spacer { height: 110px; }
+.spacer { height: calc(110px + env(safe-area-inset-bottom, 0px)); }
 .sticky { position: sticky; bottom: 0; padding: 16px var(--pad) calc(18px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--bg) 30%); display: grid; gap: 6px; z-index: 4; }
 .sec { margin: 28px var(--pad) 14px; font-size: 22px; }
 .eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ac-tx); font-weight: 700; }
@@ -141,6 +141,7 @@ h3 { font-size: 17px; font-weight: 700; margin: 26px 0 12px; }
 .toggle input:checked { background: var(--ac); }
 .toggle input:checked::after { left: 21px; background: var(--ac-ink); }
 .seg3 { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--s2); border-radius: 8px; padding: 4px; }
+.seg3:has(> button:nth-child(2):last-child) { grid-template-columns: repeat(2, 1fr); }
 .seg3 button { padding: 10px 4px; text-align: center; border-radius: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .seg3 button.on { background: var(--s3); color: var(--ac-tx); }
 .linked { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
@@ -252,7 +253,7 @@ kbd { font: inherit; background: var(--ac); color: var(--ac-ink); border-radius:
 .person-actions { display: grid; gap: 8px; }
 
 /* ---------- nav, toast, sheet */
-.nav { display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 6px calc(10px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--nav-fade) 40%); position: absolute; bottom: 0; left: 0; right: 0; z-index: 6; }
+.nav { display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 6px calc(10px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line); position: absolute; bottom: 0; left: 0; right: 0; z-index: 6; }
 .nav[hidden] { display: none; }
 .nav button { display: grid; justify-items: center; gap: 4px; font-size: 11px; color: var(--mu); padding-top: 14px; }
 .nav button.on { color: var(--tx); }
