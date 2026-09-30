@@ -712,3 +712,22 @@ i.pill { height: 30px; }
 .pts-pair i { font-style: normal; font-size: 12px; color: var(--mu); display: block; margin-top: 4px; }
 .ledger small { font-size: 11px; }
 .lv-chip span { white-space: nowrap; }
+
+/* pods */
+.pod-faces { position: relative; flex: 0 0 auto; display: block; }
+.pod-faces > span { position: absolute; } .pod-faces .ph { box-shadow: 0 0 0 2px #fff; }
+.pod-members { display: flex; gap: 12px; overflow-x: auto; margin: 14px 0 0; scrollbar-width: none; }
+.pod-members > * { display: grid; justify-items: center; gap: 4px; }
+.todo { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); width: 100%; text-align: left; }
+.todo .t { flex: 1; font-size: 15px; } .todo small { font-size: 12px; }
+.box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--tx2); display: grid; place-items: center; flex: 0 0 auto; }
+.box .ic { width: 14px; height: 14px; }
+.todo.on .box { background: var(--tx); color: #fff; border-color: var(--tx); }
+.todo.on .t { text-decoration: line-through; color: var(--mu); }
+.ev-share { display: flex; gap: 12px; align-items: center; width: 100%; padding: 10px; border-radius: 14px; background: #fff; border: 1px solid var(--line); text-align: left; color: var(--tx); }
+.ev-share span { min-width: 0; } .ev-share b { display: block; font-size: 14px; }
+.ev-bub { max-width: 86%; } .ev-bub small { margin-bottom: 6px; } .bub.me.ev-bub small { color: #ccc; }
+.composer .share-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--s1); color: var(--tx); display: grid; place-items: center; flex: 0 0 auto; }
+.bar:has(> .btn.small) { grid-template-columns: 44px 1fr auto; }
+.bar .btn.small { white-space: nowrap; }
+.composer { position: fixed; left: 0; right: 0; bottom: 0; }

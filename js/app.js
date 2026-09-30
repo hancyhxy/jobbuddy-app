@@ -632,7 +632,8 @@ function networkView() {
     <p class="muted small" style="margin-bottom:14px">Members only — you join a circle by attending its events.</p>
     ${circles.map((c) => { const posts = allPosts().filter((p) => p.aud === 'circle' && p.circle === c).length; const evs = EVENTS.filter((e) => e.circle === c);
       const went = evs.some((e) => reg(e.id)?.status === 'attended');
-      return `<button class="list-item" data-a="nav" data-x="circle/${encodeURIComponent(c)}"><div style="width:68px;height:68px;border-radius:12px;overflow:hidden;flex:0 0 auto">${art(seedOf(c), '', 'width:100%;height:100%')}</div><div class="grow"><h3>${esc(c)}</h3><small style="margin:4px 0">${evs.map((e) => e.date).join(' · ') || 'Circle'}</small><small style="color:var(--ac-tx);margin-bottom:6px">${posts} stories shared</small><i class="chip ${went ? 'chip-attended' : 'chip-going'}" style="margin:0">${went ? 'Past' : 'Member'}</i></div>${ICON.chev}</button>`; }).join('') || '<div class="empty">Attend an event to join your first circle.</div>'}`;
+      return `<button class="list-item" data-a="nav" data-x="circle/${encodeURIComponent(c)}"><div style="width:68px;height:68px;border-radius:12px;overflow:hidden;flex:0 0 auto">${art(seedOf(c), '', 'width:100%;height:100%')}</div><div class="grow"><h3>${esc(c)}</h3><small style="margin:4px 0">${evs.map((e) => e.date).join(' · ') || 'Circle'}</small><small style="color:var(--ac-tx);margin-bottom:6px">${posts} stories shared</small><i class="chip ${went ? 'chip-attended' : 'chip-going'}" style="margin:0">${went ? 'Past' : 'Member'}</i></div>${ICON.chev}</button>`; }).join('') || '<div class="empty">Attend an event to join your first circle.</div>'}
+    ${podsSection()}`;
 }
 
 V.circle = (arg) => {
@@ -655,6 +656,85 @@ V.circle = (arg) => {
     </section>`;
 };
 
+/* ------------------------------------------------------------ pods
+   Small invite-only groups (teammate design). Logic: you can only invite connections (mutual follows). */
+const POD_SEED = [{
+  id: 'pod-portfolio', name: 'Portfolio Buddies', desc: 'Keeping each other on track with case studies before grad applications',
+  members: ['sofia', 'leo', 'priya'], status: 'In progress',
+  todos: [{ t: 'Post one case study draft each', who: 'Everyone', done: false }, { t: 'Book a crit slot for Thursday', who: 'Leo', done: true }, { t: 'Share interview question bank', who: 'Sofia', done: false }],
+  events: ['crit-circle'],
+  chat: [['sofia', 'Crit circle is on Thursday — who’s bringing a case study?'], ['leo', 'Me! Still fixing the intro though 😅'], ['priya', 'Happy to review it tonight if you send it over'], ['sofia', { ev: 'crit-circle' }]]
+}];
+const pods = () => { if (!S.pods) { S.pods = JSON.parse(JSON.stringify(POD_SEED)); S.podUnread = { 'pod-portfolio': 2 }; save(); } return S.pods; };
+const pod = (id) => pods().find((p) => p.id === id);
+const podFaces = (p, size = 32) => `<span class="pod-faces" style="width:${size + 22}px;height:${size + 14}px">${p.members.slice(0, 2).map((m, i) => `<span style="top:${i ? 14 : 0}px;left:${i ? 22 : 0}px">${av(PEOPLE[m], size)}</span>`).join('')}</span>`;
+const podLast = (p) => { const m = p.chat[p.chat.length - 1]; if (!m) return 'Say hi to the pod 👋'; const n = m[0] === 'me' ? 'You' : PEOPLE[m[0]].short; return `${n}: ${typeof m[1] === 'string' ? m[1] : 'shared an event'}`; };
+
+function podsSection() {
+  return `<div style="display:flex;align-items:center;margin-top:28px"><div style="flex:1"><h2 style="margin:0">Pods</h2><p class="muted small" style="margin-top:4px">Your people, your project — invite-only (:</p></div><button class="icon-btn dark" data-a="nav" data-x="podnew" aria-label="Create pod">${ICON.plus}</button></div>
+    <div style="height:14px"></div>
+    ${pods().map((p) => `<button class="list-item" data-a="nav" data-x="pod/${p.id}" style="flex-wrap:wrap">${podFaces(p)}<div class="grow"><h3>${esc(p.name)}</h3><small style="margin:3px 0 6px">${p.members.length + 1} members · ${p.todos.filter((t) => !t.done).length} to-dos open</small><i class="chip chip-pending" style="margin:0">${p.status}</i></div>${S.podUnread?.[p.id] ? `<i class="unread">${S.podUnread[p.id]}</i>` : ICON.chev}<p class="muted small" style="width:100%;margin-top:8px">${esc(p.desc)}</p></button>`).join('') || '<div class="empty">No pods yet. Start one with people you’ve met.</div>'}`;
+}
+
+function podMsg(m) {
+  const mine = m[0] === 'me';
+  const name = mine ? '' : `<b>${PEOPLE[m[0]].short}</b><br>`;
+  if (typeof m[1] === 'string') return `<div class="bub ${mine ? 'me' : ''}">${name}${esc(m[1])}</div>`;
+  const e = ev(m[1].ev);
+  return `<div class="bub ev-bub ${mine ? 'me' : ''}">${name}<small>${mine ? 'You' : PEOPLE[m[0]].short} shared an event</small><button class="ev-share" data-a="nav" data-x="event/${e.id}">${cover(e, 'sm')}<span><b>${esc(e.title)}</b><small>${e.date} · ${e.mode === 'online' ? 'Online' : e.venue.split(',')[0]}</small></span></button></div>`;
+}
+
+V.pod = (id) => {
+  const p = pod(id); if (!p || !S.profile) return V.community();
+  if (S.podUnread?.[id]) { S.podUnread[id] = 0; save(); }
+  const t = ['Chat', 'To-do', 'Events'].includes(ui.podTab) ? ui.podTab : 'Chat';
+  let body = '';
+  if (t === 'Chat') body = `<div class="bubbles">${p.chat.map(podMsg).join('')}${ui.typing === id ? '<div class="bub small">typing…</div>' : ''}</div>`;
+  if (t === 'To-do') body = `${p.todos.map((x, i) => `<button class="todo ${x.done ? 'on' : ''}" data-a="pod-todo" data-x="${id}|${i}" aria-pressed="${x.done}"><span class="box">${x.done ? ICON.check : ''}</span><span class="t">${esc(x.t)}</span><small>${esc(x.who)}</small></button>`).join('') || '<div class="empty">No to-dos yet.</div>'}
+      <div style="display:flex;gap:8px;margin-top:14px"><input class="field" data-model="todoText" id="todoIn" placeholder="Add a to-do" value="${esc(ui.todoText || '')}"><button class="btn small primary" style="height:50px" data-a="pod-add-todo" data-x="${id}">Add</button></div>`;
+  if (t === 'Events') body = `${p.events.map((eid) => lumaRow(ev(eid))).join('') || '<div class="empty">No shared events yet.</div>'}
+      <button class="btn primary" style="margin-top:14px" data-a="pod-share" data-x="${id}">+ Share an event</button>
+      <p class="note">${ICON.info} Going together keeps the pod active — shared events also appear in the chat.</p>`;
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>${esc(p.name)}</b><button class="btn small" data-a="pod-invite" data-x="${id}">+ Invite</button></header>
+    <section class="pad">
+      <p class="muted">${esc(p.desc)}</p>
+      <div class="pod-members">${p.members.map((m) => `<button class="plain" data-a="nav" data-x="person/${m}">${av(PEOPLE[m], 40)}<small>${PEOPLE[m].short}</small></button>`).join('')}<span>${av(me(), 40)}<small>You</small></span></div>
+      <div class="seg2">${['Chat', 'To-do', 'Events'].map((x) => `<button class="${t === x ? 'on' : ''}" data-a="pod-tab" data-x="${x}">${x}${x === 'To-do' ? ` · ${p.todos.filter((y) => !y.done).length}` : x === 'Events' ? ` · ${p.events.length}` : ''}</button>`).join('')}</div>
+      ${body}
+    </section>
+    ${t === 'Chat' ? `<div class="composer"><button class="plain share-btn" data-a="pod-share" data-x="${id}" aria-label="Share an event">${ICON.cal}</button><input data-model="msgText" id="msgIn" placeholder="Message the pod..." aria-label="Message pod" value="${esc(ui.msgText || '')}"><button data-a="pod-send" data-x="${id}" aria-label="Send">${ICON.share}</button></div>` : '<div class="spacer"></div>'}`;
+};
+
+V.podnew = () => {
+  if (!S.profile) return V.community();
+  const d = ui.newPod || (ui.newPod = { name: '', desc: '', members: [] });
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>Create pod</b><span></span></header>
+    <section class="pad">
+      <p class="muted">Pods are small, invite-only groups for people you’ve met — to keep a project or conversation going.</p>
+      <h3>Pod name</h3><input class="field" data-model="newPod.name" placeholder="e.g. Portfolio Buddies" value="${esc(d.name)}" maxlength="32">
+      <h3>What are you working on?</h3><input class="field" data-model="newPod.desc" placeholder="Describe the goal in a sentence" value="${esc(d.desc)}" maxlength="90">
+      <h3>Invite connections</h3>
+      <div class="pills">${connections().map((id) => `<button class="pill ${d.members.includes(id) ? 'on' : ''}" data-a="podnew-member" data-x="${id}">${PEOPLE[id].name}</button>`).join('') || '<p class="muted small">Connect with people first — you can only invite connections.</p>'}</div>
+      <p class="note">${ICON.lock} Only people you’re connected with (you follow each other) can be invited.</p>
+    </section>
+    <footer class="sticky"><button class="btn primary" data-a="podnew-create">Create pod</button></footer>`;
+};
+
+function podSheet() {
+  const s = ui.sheet; const p = pod(s.id);
+  if (s.type === 'pod-share') {
+    const list = EVENTS.filter((e) => !p.events.includes(e.id));
+    return `<h2 class="sheet-title">Share an event with ${esc(p.name)}</h2><div class="clist">${list.map((e) => `<button class="ev-share" data-a="pod-share-pick" data-x="${p.id}|${e.id}">${cover(e, 'sm')}<span><b>${esc(e.title)}</b><small>${e.date} · ${e.mode === 'online' ? 'Online' : e.venue.split(',')[0]}</small></span></button>`).join('') || '<p class="muted small">All events are already shared.</p>'}</div>`;
+  }
+  const list = connections().filter((id) => !p.members.includes(id));
+  return `<h2 class="sheet-title">Invite to ${esc(p.name)}</h2><div class="clist">${list.map((id) => `<div class="enc">${av(PEOPLE[id], 44)}<div><b>${PEOPLE[id].name}</b><small>${esc(PEOPLE[id].headline)}</small></div><button class="btn small primary" data-a="pod-invite-pick" data-x="${p.id}|${id}">Invite</button></div>`).join('') || '<p class="muted small">All your connections are already here. Follow people you meet at events to invite more.</p>'}</div>`;
+}
+function podReply(id) {
+  const p = pod(id); const who_ = p.members[Math.floor(Math.random() * p.members.length)]; if (!who_) return;
+  ui.typing = id; render(); scrollEnd();
+  setTimeout(() => { const r = ['Love this!', 'Count me in 🙌', 'Nice, adding it to my calendar', 'On it!', 'Let’s do it (:']; p.chat.push([who_, r[Math.floor(Math.random() * r.length)]]); ui.typing = null; save(); if (location.hash === '#/pod/' + id) { render(); scrollEnd(); } }, 1500);
+}
+
 /* ------------------------------------------------------------ messages */
 const CHAT_SEED = {
   priya: [['priya', 'The agent-eval checklist is pinned in the circle btw!'], ['me', 'Amazing, thank you 🙏']],
@@ -662,13 +742,16 @@ const CHAT_SEED = {
   leo: [['leo', 'Thanks for the Figma tips yesterday!']]
 };
 const chats = () => { if (!S.chats) { S.chats = JSON.parse(JSON.stringify(CHAT_SEED)); S.unread = { leo: 1, sofia: 1 }; save(); } return S.chats; };
-const unreadTotal = () => (S.profile ? Object.values(chats() && S.unread || {}).reduce((a, b) => a + b, 0) : 0);
+const unreadTotal = () => (S.profile ? [...Object.values(chats() && S.unread || {}), ...Object.values(pods() && S.podUnread || {})].reduce((a, b) => a + b, 0) : 0);
 
 V.messages = () => {
   if (!S.profile) return `<header class="top"><h1>Messages</h1></header><section class="pad"><div class="empty">Log in to message your connections.</div><div style="height:12px"></div><button class="btn primary" data-a="login-demo">Log in</button></section>`;
   const c = chats(); const ids = Object.keys(c).filter((id) => PEOPLE[id]);
   return `<header class="top"><div><h1>Messages</h1><p class="muted" style="margin-top:4px">Your chatbox</p></div></header>
     <section class="pad">
+      <h3 style="margin-top:6px">Pods</h3>
+      ${pods().map((p) => `<button class="list-item" data-a="pod-open" data-x="${p.id}">${podFaces(p)}<div class="grow"><h3>${esc(p.name)}</h3><small style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(podLast(p))}</small></div>${S.podUnread?.[p.id] ? `<i class="unread">${S.podUnread[p.id]}</i>` : ''}</button>`).join('') || '<div class="empty">No pods yet. Create one from Community → Networks.</div>'}
+      <h3>Direct</h3>
       ${ids.map((id) => { const m = c[id][c[id].length - 1]; return `<button class="list-item" data-a="nav" data-x="chat/${id}">${av(PEOPLE[id], 48)}<div class="grow"><h3>${PEOPLE[id].name}</h3><small style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m ? (m[0] === 'me' ? 'You: ' : '') + esc(m[1]) : 'Say hi 👋'}</small></div>${S.unread?.[id] ? `<i class="unread">${S.unread[id]}</i>` : ''}</button>`; }).join('') || '<div class="empty">No messages yet. Connect with someone to start chatting.</div>'}
       <p class="note">${ICON.lock} You can message people once you’re connected (you follow each other).</p>
       <div class="spacer"></div>
@@ -911,7 +994,8 @@ function sheetHTML() {
       <div class="clist">${cs.map(([a, t]) => { const u = who(a); return `<div class="cmt">${av(u, 30)}<div><b>${esc(u.name)}</b><p>${esc(t)}</p></div></div>`; }).join('') || '<p class="muted small">Be the first to reply.</p>'}${p.comments > cs.length ? `<p class="muted small">+ ${p.comments - cs.length} earlier comments</p>` : ''}</div>
       <div class="cinput"><input class="field" data-model="commentText" placeholder="Add a helpful reply… (+3 pts)" value="${esc(ui.commentText || '')}"><button class="btn small primary" data-a="send-comment" data-x="${s.id}">Send</button></div>`;
   }
-  return `<div class="scrim" data-a="sheet-close"></div><div class="sheet ${s.type === 'comments' ? 'left' : ''}"><i class="grab"></i>${inner}</div>`;
+  if (s.type === 'pod-share' || s.type === 'pod-invite') inner = podSheet();
+  return `<div class="scrim" data-a="sheet-close"></div><div class="sheet ${['comments', 'pod-share', 'pod-invite'].includes(s.type) ? 'left' : ''}"><i class="grab"></i>${inner}</div>`;
 }
 
 /* ================================================================ BADGE */
@@ -1127,6 +1211,22 @@ const A = {
   'growth-help-close': () => { ui.growthHelp = false; render(); },
   circle: (x) => { ui.circle = x || null; render(); },
   cmode: (x) => { ui.cmode = x; render(); },
+  'pod-open': (x) => { ui.podTab = 'Chat'; go('pod/' + x); setTimeout(scrollEnd, 50); },
+  'pod-tab': (x) => { ui.podTab = x; render(); if (x === 'Chat') scrollEnd(); },
+  'pod-todo': (x) => { const [id, i] = x.split('|'); const t = pod(id).todos[+i]; t.done = !t.done; save(); render(); },
+  'pod-add-todo': (x) => { const t = (ui.todoText || '').trim(); if (!t) return; pod(x).todos.push({ t, who: 'You', done: false }); ui.todoText = ''; save(); render(); },
+  'pod-send': (x) => { const t = (ui.msgText || '').trim(); if (!t) return; pod(x).chat.push(['me', t]); ui.msgText = ''; save(); render(); scrollEnd(); podReply(x); },
+  'pod-share': (x) => { ui.sheet = { type: 'pod-share', id: x }; render(); },
+  'pod-share-pick': (x) => { const [id, eid] = x.split('|'); const p = pod(id); p.events.push(eid); p.chat.push(['me', { ev: eid }]); ui.sheet = null; ui.podTab = 'Chat'; save(); toast('Shared with ' + p.name); render(); scrollEnd(); podReply(id); },
+  'pod-invite': (x) => { ui.sheet = { type: 'pod-invite', id: x }; render(); },
+  'pod-invite-pick': (x) => { const [id, pid] = x.split('|'); const p = pod(id); p.members.push(pid); p.chat.push([pid, 'Hi all, thanks for the invite 👋']); ui.sheet = null; save(); toast(`${PEOPLE[pid].short} joined ${p.name}`); render(); },
+  'podnew-member': (x) => { const m = ui.newPod.members; ui.newPod.members = m.includes(x) ? m.filter((y) => y !== x) : [...m, x]; render(); },
+  'podnew-create': () => {
+    const d = ui.newPod; if (!d.name.trim()) { toast('Give your pod a name'); return; }
+    const id = 'pod' + Date.now();
+    pods().unshift({ id, name: d.name.trim(), desc: d.desc.trim() || 'Just getting started', members: d.members, status: 'In progress', todos: [], events: [], chat: d.members.length ? [[d.members[0], 'Excited for this! 🙌']] : [] });
+    ui.newPod = null; ui.podTab = 'Chat'; save(); toast('Pod created'); history.replaceState(null, '', '#/pod/' + id); render();
+  },
   nsub: (x) => { ui.nsub = x; render(); },
   ctab: (x) => { ui.ctab = x; render(); },
   dismiss: (x) => { S.dismissed = [...(S.dismissed || []), x]; save(); toast('Request removed'); render(); },
@@ -1181,7 +1281,7 @@ const A = {
 };
 
 /* =============================================================== RENDER */
-const NO_NAV = ['welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'cv', 'mock', 'event', 'recap', 'circle', 'chat'];
+const NO_NAV = ['pod', 'podnew', 'welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'cv', 'mock', 'event', 'recap', 'circle', 'chat'];
 const TABS = [['home', 'Event', 'var(--t-event)'], ['community', 'Community', 'var(--t-comm)'], ['messages', 'Messages', 'var(--t-msg)'], ['me', 'Account', 'var(--t-acc)']];
 const scrollEnd = () => { const a = $('#app'); a.scrollTop = a.scrollHeight; };
 
@@ -1219,7 +1319,8 @@ document.addEventListener('click', (e) => {
   if (el.tagName !== 'INPUT') e.preventDefault();
   fn(el.dataset.x, el);
 });
-document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'msgIn') { e.preventDefault(); $('[data-a="send-msg"]')?.click(); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'msgIn') { e.preventDefault(); ($('[data-a="send-msg"]') || $('[data-a="pod-send"]'))?.click(); }
+  if (e.key === 'Enter' && e.target.id === 'todoIn') { e.preventDefault(); $('[data-a="pod-add-todo"]')?.click(); } });
 document.addEventListener('input', (e) => {
   const m = e.target.dataset.model; if (!m) return;
   const v = e.target.value;
@@ -1227,6 +1328,7 @@ document.addEventListener('input', (e) => {
   if (m === 'pairInput') { ui.pairInput = v; return; }
   if (m === 'commentText') { ui.commentText = v; return; }
   if (m === 'msgText') { ui.msgText = v; return; }
+  if (m === 'todoText') { ui.todoText = v; return; }
   if (m === 'cq' || m === 'nq') { ui[m] = v; const pos = e.target.selectionStart; const top = $('#app').scrollTop; render(); $('#app').scrollTop = top; const n = document.querySelector(`[data-model="${m}"]`); n.focus(); n.setSelectionRange(pos, pos); return; }
   const [obj, key] = m.split('.');
   ui[obj][key] = v;
