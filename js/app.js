@@ -17,7 +17,9 @@ let S = load();
 const ui = { q: '', filter: 'all', seg: 'foryou', meSeg: 'upcoming', liveTab: 'here', roomTab: 'people', sheet: null, ob: null, compose: null, frame: 0, waved: {} };
 
 function load() {
-  try { return { ...fresh(), ...JSON.parse(localStorage.getItem(KEY)) }; } catch { return fresh(); }
+  let st; try { st = { ...fresh(), ...JSON.parse(localStorage.getItem(KEY)) }; } catch { st = fresh(); }
+  if (st.profile?.name === 'Xinyi Han') st.profile.name = 'Emma C.';
+  return st;
 }
 function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
 window.addEventListener('storage', (e) => { if (e.key === KEY) { S = load(); render(); } });
@@ -39,10 +41,11 @@ const $ = (s) => document.querySelector(s);
 const esc = (s = '') => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ev = (id) => EVENTS.find((e) => e.id === id);
 const reg = (id) => S.regs[id];
-const me = () => S.profile && { photo: 'people/me.jpg', ...S.profile, id: 'me', short: S.profile.name.split(' ')[0], headline: `${S.profile.field} · ${S.profile.stage}` };
+const ME_FACE = { emoji: '👩🏻', tint: '#8e9bd6' }; // Emma's avatar from the teammate prototype
+const me = () => S.profile && { ...ME_FACE, ...S.profile, photo: null, id: 'me', short: S.profile.name.split(' ')[0], headline: `${S.profile.field} · ${S.profile.stage}` };
 const who = (id) => (id === 'me' ? me() : PEOPLE[id]);
 // Two avatar systems: real profile photo (app, online) and ASCII EventBuddy avatar (in-person device & wall).
-const av = (p, size = 40) => (p.photo ? `<span class="ph" style="width:${size}px;height:${size}px"><img src="${p.photo}" alt="" loading="lazy"></span>` : avatar(p.avatar, p.color, size, 0, 'round'));
+const av = (p, size = 40) => (p.emoji && !p.photo ? `<span class="ph emo" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.56)}px;background:${p.tint}33;box-shadow:inset 0 0 0 1.5px ${p.tint}66">${p.emoji}</span>` : p.photo ? `<span class="ph" style="width:${size}px;height:${size}px"><img src="${p.photo}" alt="" loading="lazy"></span>` : avatar(p.avatar, p.color, size, 0, 'round'));
 const asc = (p, size = 40, extra = '') => avatar(p.avatar, p.color, size, 0, extra);
 const go = (path) => { location.hash = '#/' + path; };
 const demo = (label, a, x = '') => `<button class="demo" data-a="${a}" data-x="${x}"><span>DEMO</span>${label}</button>`;
@@ -139,7 +142,7 @@ V.onboarding = () => {
   }).join('');
   const steps = [
     `${S.onboarded ? '' : '<p class="eyebrow">New account · 2 quick steps</p>'}<h2>Hi. What should people call you?</h2>
-     <div class="photo-row"><span class="ph" style="width:64px;height:64px"><img src="people/me.jpg" alt=""></span><div><b>Profile photo</b><small>Shown in the app and at online events. Your EventBuddy avatar is chosen per in-person event.</small><button class="linkish" data-a="toast" data-x="Photo picker (mocked)">Change photo</button></div></div>
+     <div class="photo-row">${av(ME_FACE, 64)}<div><b>Profile photo</b><small>Shown in the app and at online events. Your EventBuddy avatar is chosen per in-person event.</small><button class="linkish" data-a="toast" data-x="Photo picker (mocked)">Change photo</button></div></div>
      <input class="field" data-model="ob.name" placeholder="Display name" value="${esc(o.name)}" maxlength="24">
      <h3>Your field</h3><div class="pills">${chips(FIELDS, 'field')}</div>
      <h3>Where you are right now</h3><div class="pills">${chips(STAGES, 'stage')}</div>
@@ -261,7 +264,7 @@ V.auth = () => `<header class="bar"><button class="icon-btn" data-a="back">${ICO
     <span class="brand-dot big">${ICON.badge}</span>
     <h2>Log in to register</h2>
     <p class="muted">Registering needs a JobBuddy account, so hosts know who’s coming and you keep the people you meet.</p>
-    <input class="field" type="email" placeholder="Email" value="xinyi@student.uts.edu.au">
+    <input class="field" type="email" placeholder="Email" value="emma@student.uts.edu.au">
     <button class="btn primary" data-a="login-demo">Continue with email</button>
     <div class="or"><span>or</span></div>
     <button class="btn" data-a="login-demo">Continue with Apple</button>
@@ -269,7 +272,7 @@ V.auth = () => `<header class="bar"><button class="icon-btn" data-a="back">${ICO
     <p class="muted center small">New here? <button class="linkish" data-a="signup">Create an account</button></p>
   </section>`;
 
-const DEFAULT_PROFILE = { name: 'Xinyi Han', field: 'Design', stage: 'Studying', interests: ['AI tools', 'UX', 'Portfolio'], fact: 'Built a badge from scratch', avatar: 'female_2_1', color: '#D7FF3A', showStage: false };
+const DEFAULT_PROFILE = { name: 'Emma C.', field: 'Design', stage: 'Studying', interests: ['AI tools', 'UX', 'Portfolio'], fact: 'Built a badge from scratch', avatar: 'female_2_1', color: '#D7FF3A', showStage: false };
 
 function badgeLook(eventId) {
   const p = S.profile || DEFAULT_PROFILE;
@@ -781,7 +784,7 @@ V.cv = () => {
       <h3>Strengths</h3><ul class="checklist"><li>Clear project structure</li><li>Real research methods, named</li></ul>
       <p class="note">${ICON.info} AI suggestions are a starting point. Ask someone in your circle to sanity-check.</p>
       <button class="btn" data-a="cv-again">Review another version</button>`
-    : `<div class="upload">${ICON.file}<b>Xinyi_Han_CV.pdf</b><small>Uploaded · 2 pages</small></div>
+    : `<div class="upload">${ICON.file}<b>Emma_C_CV.pdf</b><small>Uploaded · 2 pages</small></div>
       <h3>Target role</h3><div class="pills">${['UX designer', 'Product designer', 'Design intern'].map((t) => `<button class="pill ${(ui.cvRole || 'UX designer') === t ? 'on' : ''}" data-a="cv-role" data-x="${t}">${t}</button>`).join('')}</div>
       <p class="note">${ICON.lock} Your CV is private and never shown in the community.</p>`}
     <div class="spacer"></div>
@@ -1009,7 +1012,7 @@ const A = {
   back: () => history.length > 1 ? history.back() : go('home'),
   toast: (x) => toast(x),
   browse: () => { S.browsing = true; save(); go('home'); },
-  'login-demo': () => { S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; if (!S.following.length) seedAccount(140); const next = S.afterOnboard || 'home'; S.afterOnboard = null; save(); toast('Logged in as Xinyi'); go(next); render(); },
+  'login-demo': () => { S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; if (!S.following.length) seedAccount(140); const next = S.afterOnboard || 'home'; S.afterOnboard = null; save(); toast('Logged in as Emma'); go(next); render(); },
   signup: () => { ui.authNew = true; ui.ob = null; render(); },
   'bd-pick': (x) => { const [k, v] = x.split('|'); ui.regDraft[k] = v; render(); },
   'badge-save': (id) => { const d = ui.regDraft; S.regs[id].badge = { avatar: d.avatar, color: d.color, tag: d.tag }; S.lastBadge = S.regs[id].badge; save(); toast('EventBuddy updated'); history.back(); },

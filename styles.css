@@ -703,3 +703,5 @@ i.pill { height: 30px; }
   .bar.float { top: env(safe-area-inset-top); }
 }
 .hero { background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 50%, #fff) 0%, color-mix(in srgb, var(--c1) 22%, #fff) 45%, #fff 100%) !important; }
+
+.ph.emo { display: inline-grid; place-items: center; line-height: 1; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }

@@ -8,7 +8,7 @@ const KEY = 'jobbuddy-proto-v1';
 const BADGE_ID = 'EB-07';
 const PAIR_CODE = '4812';
 const EVENT_ID = 'build-night';
-const DEMO_OWNER = { id: 'demo', name: 'Xinyi', short: 'Xinyi', field: 'Design', interests: ['AI tools', 'UX'], avatar: 'female_2_1', color: '#D7FF3A' };
+const DEMO_OWNER = { id: 'demo', name: 'Emma', short: 'Emma', field: 'Design', interests: ['AI tools', 'UX'], avatar: 'female_2_1', color: '#D7FF3A' };
 const PARTNERS = ['marcus', 'david', 'priya', 'sofia', 'ahmed'];
 
 let S = load();
@@ -74,7 +74,7 @@ function sheetHTML() {
       <button class="opt" data-a="reset">Reset EventBuddy</button>
       <button class="opt" data-a="to-script">▶ Presentation mode (scripted)</button>
       <small class="lbl">SHOWN ON BADGE</small>
-      <div class="owners">${[hasProfile ? ['me', S.profile.name.split(' ')[0]] : null, ['demo', 'Xinyi (demo)'], ...['leo', 'marcus', 'sofia'].map((id) => [id, PEOPLE[id].short])].filter(Boolean)
+      <div class="owners">${[hasProfile ? ['me', S.profile.name.split(' ')[0]] : null, ['demo', 'Emma (demo)'], ...['leo', 'marcus', 'sofia'].map((id) => [id, PEOPLE[id].short])].filter(Boolean)
         .map(([id, l]) => `<button class="pill ${(S.badge.owner || (hasProfile ? 'me' : 'demo')) === id ? 'on' : ''}" data-a="owner" data-x="${id}">${l}</button>`).join('')}</div>`;
   }
   return `<div class="scrim" data-a="close"></div><div class="sheet">${inner}</div>`;
@@ -150,7 +150,7 @@ const MODE_KEY = 'tappy-mode'; const STEP_KEY = 'tappy-step'; const LOOK_KEY = '
 let mode = localStorage.getItem(MODE_KEY) || 'script';
 let step = +(localStorage.getItem(STEP_KEY) || 0);
 let notes = localStorage.getItem(NOTES_KEY) !== 'off';
-let look = (() => { try { return { name: 'Xinyi', avatar: 'female_2_1', color: '#D7FF3A', tag: 'AI tools', ...JSON.parse(localStorage.getItem(LOOK_KEY)) }; } catch { return { name: 'Xinyi', avatar: 'female_2_1', color: '#D7FF3A', tag: 'AI tools' }; } })();
+let look = (() => { try { return { name: 'Emma', avatar: 'female_2_1', color: '#D7FF3A', tag: 'AI tools', ...JSON.parse(localStorage.getItem(LOOK_KEY)) }; } catch { return { name: 'Emma', avatar: 'female_2_1', color: '#D7FF3A', tag: 'AI tools' }; } })();
 let flash = null; // temporary screen (e.g. "Maybe later")
 const MARCUS = PEOPLE.marcus;
 const TAGS = ['AI tools', 'UX', 'Portfolio', 'Interviews', 'Career change', 'Data viz'];
@@ -250,7 +250,7 @@ Object.assign(A, {
   's-mode': () => { mode = 'free'; localStorage.setItem(MODE_KEY, mode); sheet = null; render(); },
   'to-script': () => { mode = 'script'; localStorage.setItem(MODE_KEY, mode); sheet = null; render(); }
 });
-document.addEventListener('input', (e) => { if (e.target.dataset.look) { look[e.target.dataset.look] = e.target.value || 'Xinyi'; localStorage.setItem(LOOK_KEY, JSON.stringify(look)); } });
+document.addEventListener('input', (e) => { if (e.target.dataset.look) { look[e.target.dataset.look] = e.target.value || 'Emma'; localStorage.setItem(LOOK_KEY, JSON.stringify(look)); } });
 document.addEventListener('click', () => { if (!window.__wake && navigator.wakeLock) { window.__wake = true; navigator.wakeLock.request('screen').catch(() => { window.__wake = false; }); } }, { capture: true });
 
 document.addEventListener('click', (e) => {
