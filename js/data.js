@@ -23,7 +23,7 @@ export const EVENTS = [
     date: 'Sat 19 Sep', time: '17:30 – 20:30', when: 'This Saturday', venue: 'Harbour Commons, Surry Hills', distance: '2.1 km',
     cost: 'Free', capacity: 60, going: 47, approval: true, badges: true, host: 'maya', cover: ['#D7FF3A', '#1E3A2F'],
     audience: 'Builders, designers and career changers curious about AI agents. No experience needed.',
-    agenda: [['17:30', 'Check-in & collect Tappys'], ['18:00', 'Lightning talks · 3 × 7 min'], ['18:30', 'Build & chat — open floor'], ['20:15', 'Demos & Tappy return']],
+    agenda: [['17:30', 'Check-in & collect EventBuddy devices'], ['18:00', 'Lightning talks · 3 × 7 min'], ['18:30', 'Build & chat — open floor'], ['20:15', 'Demos & EventBuddy return']],
     attendees: ['marcus', 'david', 'priya', 'sofia', 'ahmed', 'hannah', 'leo'], tags: ['AI tools', 'Startups']
   },
   {

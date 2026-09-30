@@ -4,7 +4,7 @@ import { ICON } from './icons.js';
 
 /* ------------------------------------------------------------------ state */
 const KEY = 'jobbuddy-proto-v1';
-const BADGE_ID = 'JB-07';
+const BADGE_ID = 'EB-07';
 const PAIR_CODE = '4812';
 
 const fresh = () => ({
@@ -27,7 +27,7 @@ const THEME_KEY = 'jobbuddy-theme';
 const themePref = () => localStorage.getItem(THEME_KEY) || 'system';
 const mq = matchMedia('(prefers-color-scheme: light)');
 function applyTheme() {
-  const t = themePref() === 'system' ? (mq.matches ? 'light' : 'dark') : themePref();
+  const t = 'light'; // JoBuddy visual language is light-only
   document.documentElement.dataset.theme = t;
   document.querySelector('meta[name="theme-color"]').content = t === 'light' ? '#ffffff' : '#121212';
 }
@@ -41,12 +41,32 @@ const ev = (id) => EVENTS.find((e) => e.id === id);
 const reg = (id) => S.regs[id];
 const me = () => S.profile && { photo: 'people/me.jpg', ...S.profile, id: 'me', short: S.profile.name.split(' ')[0], headline: `${S.profile.field} · ${S.profile.stage}` };
 const who = (id) => (id === 'me' ? me() : PEOPLE[id]);
-// Two avatar systems: real profile photo (app, online) and ASCII Tappy avatar (in-person device & wall).
+// Two avatar systems: real profile photo (app, online) and ASCII EventBuddy avatar (in-person device & wall).
 const av = (p, size = 40) => (p.photo ? `<span class="ph" style="width:${size}px;height:${size}px"><img src="${p.photo}" alt="" loading="lazy"></span>` : avatar(p.avatar, p.color, size, 0, 'round'));
 const asc = (p, size = 40, extra = '') => avatar(p.avatar, p.color, size, 0, extra);
 const go = (path) => { location.hash = '#/' + path; };
 const demo = (label, a, x = '') => `<button class="demo" data-a="${a}" data-x="${x}"><span>DEMO</span>${label}</button>`;
 const allPosts = () => [...S.posts, ...SEED_POSTS];
+
+/* Grainy gradient art (teammate visual language) */
+const PALETTES = [
+  ['#f6e36b', '#f25c7a', '#5b7bf0', '#fbe8f0'], ['#6fbf5a', '#e8f2c8', '#3f8a3b', '#f7f3a1'],
+  ['#7fb6f2', '#c8e6ff', '#3a6fb8', '#ffffff'], ['#b58be0', '#f2b0c9', '#6b8af0', '#f8e0a8'],
+  ['#e58a5b', '#f7d3a8', '#b34a3a', '#ffe9d2'], ['#9fd6c0', '#f4f1c9', '#5aa38a', '#dff0ff'],
+  ['#2b2b2b', '#6b6b6b', '#d6f36b', '#111111'], ['#f2c14e', '#f78154', '#4d9078', '#b4436c']
+];
+function art(seed, cls = '', st = '') {
+  const p = PALETTES[seed % PALETTES.length];
+  const bg = `radial-gradient(circle at ${20 + seed * 13 % 60}% ${25 + seed * 7 % 50}%, ${p[0]} 0 18%, transparent 42%),radial-gradient(circle at ${70 - seed * 11 % 40}% ${70 - seed * 5 % 30}%, ${p[1]} 0 22%, transparent 50%),radial-gradient(ellipse at 50% 110%, ${p[2]} 0 30%, transparent 65%),linear-gradient(${seed * 40}deg, ${p[3]}, ${p[1]})`;
+  return `<div class="art ${cls}" style="background:${bg};${st}"></div>`;
+}
+const seedOf = (s) => [...String(s)].reduce((a, c) => a + c.charCodeAt(0), 0);
+const TAB_ICON = {
+  home: '<svg viewBox="0 0 40 40"><path d="M20 3l4.9 10.6 11.6 1.3-8.6 7.9 2.4 11.4L20 28.4 9.7 34.2l2.4-11.4-8.6-7.9 11.6-1.3z" fill="var(--t-event)" stroke="var(--t-event)" stroke-width="3" stroke-linejoin="round"/></svg>',
+  community: '<svg viewBox="0 0 40 40"><g fill="var(--t-comm)"><circle cx="20" cy="10" r="8.5"/><circle cx="20" cy="30" r="8.5"/><circle cx="10" cy="20" r="8.5"/><circle cx="30" cy="20" r="8.5"/></g><circle cx="20" cy="20" r="4" fill="#fff"/></svg>',
+  messages: '<svg viewBox="0 0 40 40"><path d="M6 6h28a4 4 0 014 4v16a4 4 0 01-4 4H16l-8 6v-6H6a4 4 0 01-4-4V10a4 4 0 014-4z" fill="var(--t-msg)"/><g fill="#fff"><circle cx="13" cy="18" r="2.2"/><circle cx="20" cy="18" r="2.2"/><circle cx="27" cy="18" r="2.2"/></g></svg>',
+  me: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="var(--t-acc)"/></svg>'
+};
 
 let toastTimer;
 function toast(msg) {
@@ -119,7 +139,7 @@ V.onboarding = () => {
   }).join('');
   const steps = [
     `${S.onboarded ? '' : '<p class="eyebrow">New account · 2 quick steps</p>'}<h2>Hi. What should people call you?</h2>
-     <div class="photo-row"><span class="ph" style="width:64px;height:64px"><img src="people/me.jpg" alt=""></span><div><b>Profile photo</b><small>Shown in the app and at online events. Your Tappy avatar is chosen per in-person event.</small><button class="linkish" data-a="toast" data-x="Photo picker (mocked)">Change photo</button></div></div>
+     <div class="photo-row"><span class="ph" style="width:64px;height:64px"><img src="people/me.jpg" alt=""></span><div><b>Profile photo</b><small>Shown in the app and at online events. Your EventBuddy avatar is chosen per in-person event.</small><button class="linkish" data-a="toast" data-x="Photo picker (mocked)">Change photo</button></div></div>
      <input class="field" data-model="ob.name" placeholder="Display name" value="${esc(o.name)}" maxlength="24">
      <h3>Your field</h3><div class="pills">${chips(FIELDS, 'field')}</div>
      <h3>Where you are right now</h3><div class="pills">${chips(STAGES, 'stage')}</div>
@@ -148,7 +168,7 @@ function lumaRow(e) {
     <span class="lrow-main">
       <span class="lrow-host">${av(host, 20)}<span>${esc(e.circle)}</span>${r ? `<i class="chip chip-${r.status}">${statusLabel(e, r)}</i>` : e.cost !== 'Free' ? `<i class="price">${e.cost}</i>` : ''}</span>
       <b>${esc(e.title)}</b>
-      <span class="lrow-meta"><span>${ICON.clock}${e.time.split(' ')[0]}</span><span>${e.mode === 'online' ? ICON.globe : ICON.pin}${esc(place)}</span>${e.mode === 'offline' && e.badges ? `<span class="badge-tag">${ICON.badge}Tappy</span>` : ''}</span>
+      <span class="lrow-meta"><span>${ICON.clock}${e.time.split(' ')[0]}</span><span>${e.mode === 'online' ? ICON.globe : ICON.pin}${esc(place)}</span>${e.mode === 'offline' && e.badges ? `<span class="badge-tag">${ICON.badge}EventBuddy</span>` : ''}</span>
       ${connLine(e)}
     </span></button>`;
 }
@@ -165,19 +185,22 @@ V.home = () => {
     if (day !== last) { groups += `<h3 class="day">${day} <span>/ ${wd}</span></h3>`; last = day; }
     groups += lumaRow(e);
   });
-  const hint = { all: '', offline: `<p class="note">${ICON.badge} In-person events can lend you a badge. You pair it with your account when you arrive.</p>`, online: `<p class="note">${ICON.globe} Online events run in the app. No Tappy needed — wave at people instead.</p>` }[mode];
+  const hint = { all: '', offline: `<p class="note">${ICON.badge} In-person events can lend you an EventBuddy device. You connect it to your account when you arrive.</p>`, online: `<p class="note">${ICON.globe} Online events run in the app. No EventBuddy needed — wave at people instead.</p>` }[mode];
+  const past = EVENTS.filter((e) => reg(e.id)?.status === 'attended');
   return `<header class="top home-top">
-      <span class="brand">${p ? `<button class="plain" data-a="nav" data-x="me">${av(p, 36, 'round')}</button>` : `<span class="brand-dot">${ICON.badge}</span>`}<b>JobBuddy</b></span>
-      <span class="top-actions"><button class="icon-btn theme-btn" data-a="theme-cycle" aria-label="Switch theme">${document.documentElement.dataset.theme === 'light' ? ICON.moon : ICON.sun}</button>
-      ${p ? '' : `<button class="btn small" data-a="login-demo">Log in</button>`}</span></header>
+      <div class="hi"><h1>Hi, ${p ? esc(p.short) : 'there'}</h1><p class="sub">${p ? `${esc(p.stage)} /<br>${esc(p.field)}` : 'Find career events and the people at them.'}</p></div>
+      <span class="top-actions">${p ? `<button class="icon-btn dark" data-a="nav" data-x="events" aria-label="Search events">${ICON.search}</button>` : `<button class="btn small primary" data-a="login-demo">Log in</button>`}</span></header>
     <section class="pad">
+      ${p ? `<div class="pills" style="gap:6px">${p.interests.map((t) => `<i class="tag">${esc(t)}</i>`).join('')}</div>` : ''}
+      <div style="height:22px"></div>
       ${liveE ? `<button class="live-card flush" data-a="nav" data-x="${liveE.mode === 'online' ? 'room' : 'live'}/${liveE.id}"><span class="dot"></span><div><small>HAPPENING NOW</small><b>${esc(liveE.title)}</b></div>${ICON.chev}</button>` : ''}
       <button class="h2link" data-a="nav" data-x="me"><h2>Your events</h2>${ICON.chev}</button>
-      ${mine.length ? mine.map(lumaRow).join('') : `<div class="empty-your"><span>${ICON.ticket}</span><p>You have a clear schedule ahead. Explore events below and register for one.</p></div>`}
-      <h2 class="picked">Picked for you</h2>
+      ${mine.length ? mine.map(lumaRow).join('') : `<div class="empty">No upcoming events. Explore events below and RSVP to one.</div>`}
+      <h2 class="explorer">Event Explorer</h2>
       <div class="seg3 mode-seg">${[['all', 'All'], ['offline', 'In person'], ['online', 'Online']].map(([k, l]) => `<button class="${mode === k ? 'on' : ''}" data-a="home-mode" data-x="${k}">${l}</button>`).join('')}</div>
       ${hint}
       ${groups}
+      ${past.length ? `<h2>Recent views</h2>${past.map((e) => `<div class="card-white" style="display:flex;gap:14px;align-items:flex-start"><div style="width:74px;height:74px;flex:0 0 auto;border-radius:50%;overflow:hidden">${art(seedOf(e.circle), '', 'width:100%;height:100%')}</div><div style="flex:1"><h3 style="margin:0">${esc(e.title)}</h3><p class="muted small" style="margin:6px 0 10px">Attended ${e.date}. Revisit the shared stories and see who else showed up.</p><button class="btn small primary" data-a="nav" data-x="circle/${encodeURIComponent(e.circle)}">See more</button></div></div>`).join('')}` : ''}
       <div class="spacer"></div>
     </section>`;
 };
@@ -187,7 +210,7 @@ function filteredEvents() {
 }
 
 V.events = () => `
-  <header class="top"><h1>Events</h1></header>
+  <header class="top"><h1>Search events</h1></header>
   <div class="search">${ICON.search}<input data-model="q" placeholder="Topics, circles, hosts" value="${esc(ui.q)}"></div>
   <div class="pills scroll">${[['all', 'All'], ['offline', 'In person'], ['online', 'Online'], ['free', 'Free']].map(([k, l]) => `<button class="pill ${ui.filter === k ? 'on' : ''}" data-a="filter" data-x="${k}">${l}</button>`).join('')}</div>
   <p class="note">${ICON.pin} Near Ultimo, Sydney · <u>change area</u></p>
@@ -199,10 +222,10 @@ V.event = (id) => {
   const e = ev(id); if (!e) return V.notfound();
   const r = reg(id); const host = PEOPLE[e.host];
   const how = e.mode === 'offline'
-    ? [['Check in', 'Show your pass at the desk'], ['Collect a Tappy', 'Optional loan device'], ['Pair it', 'Link the Tappy to your app'], ['Tap to talk', 'Both say yes, get a shared prompt'], ['Return it', 'Your encounters stay in the app']]
+    ? [['Check in', 'Show your pass at the desk'], ['Collect a EventBuddy', 'Optional loan device'], ['Pair it', 'Link the EventBuddy to your app'], ['Tap to talk', 'Both say yes, get a shared prompt'], ['Return it', 'Your encounters stay in the app']]
     : [['Join the lobby', 'Choose what others see'], ['Watch the stream', 'Camera & mic stay in Zoom'], ['Wave at people', 'Both say yes, get a shared prompt'], ['Save & follow', 'Only if you want to']];
   let cta;
-  if (!r || r.status === 'cancelled') cta = `<button class="btn primary" data-a="nav" data-x="register/${id}">${e.approval ? 'Request to join' : 'Register'} · ${e.cost}</button>`;
+  if (!r || r.status === 'cancelled') cta = `<button class="btn primary" data-a="nav" data-x="register/${id}">${e.approval ? 'Request to join' : 'RSVP'}${e.cost === 'Free' ? '' : ' · ' + e.cost}</button>`;
   else if (r.status === 'attended') cta = `<button class="btn" data-a="nav" data-x="recap/${id}">See recap</button>`;
   else cta = `<button class="btn primary" data-a="nav" data-x="ticket/${id}">${r.status === 'pending' ? 'View request' : 'View pass'}</button>`;
   return `<header class="bar float"><button class="icon-btn" data-a="back">${ICON.back}</button><span></span><button class="icon-btn" data-a="toast" data-x="Link copied">${ICON.share}</button></header>
@@ -217,13 +240,15 @@ V.event = (id) => {
         <li>${ICON.ticket}<span><b>${e.cost}</b><small>${e.going}/${e.capacity} spots · ${e.approval ? 'host approves each request' : 'instant confirmation'}</small></span></li>
       </ul>
       <button class="host" data-a="nav" data-x="person/${host.id}">${av(host, 40, 'round')}<span><small>Hosted by</small><b>${host.name}</b></span></button>
-      <p>${esc(e.audience)}</p>
-      <h3>Who’s going</h3>
+      <h3>About this event</h3>
+      <p class="muted">${esc(e.audience)}</p>
+      <div class="card-soft" style="margin-top:18px"><div style="display:flex;align-items:center"><div style="flex:1"><b>${e.going + (r ? 1 : 0)} / ${e.capacity}</b> <span class="muted small">spots filled</span></div>${e.badges ? '<i class="chip chip-going" style="margin:0">EventBuddy</i>' : ''}</div><div class="progress" style="margin-top:8px"><i style="width:${Math.min(100, ((e.going + (r ? 1 : 0)) / e.capacity) * 100)}%"></i></div></div>
+      <h3>See who’s going</h3>
       ${connsGoing(e).length ? `<div class="conn-going">${faces(connsGoing(e), 36)}<div><b>${connsGoing(e).length} connection${connsGoing(e).length > 1 ? 's' : ''} going</b><small>${connsGoing(e).map((pid) => PEOPLE[pid].short).join(', ')}</small></div></div>` : ''}
       <div class="stack">${e.attendees.filter((pid) => !isConn(pid)).map((pid) => av(PEOPLE[pid], 32)).join('')}<small>${e.going} going · ${Math.round(e.going * 0.6)} visible</small></div>
       <h3>How it works</h3>
       <ol class="how">${how.map(([a, b]) => `<li><b>${a}</b><small>${b}</small></li>`).join('')}</ol>
-      ${e.badges ? `<p class="note">${ICON.badge} Tappy is optional. No phone or rather not use one? You can still join everything.</p>` : ''}
+      ${e.badges ? `<p class="note">${ICON.badge} EventBuddy is optional. Tap devices with another attendee to get a career question you can talk about together.</p>` : ''}
       <h3>Agenda</h3>
       <ul class="agenda">${e.agenda.map(([t, a]) => `<li><time>${t}</time>${a}</li>`).join('')}</ul>
       <div class="spacer"></div>
@@ -256,20 +281,20 @@ function badgePicker(d) {
   const p = me();
   const tags = [...new Set([...p.interests, p.field])];
   return `<div class="badge-preview"><div class="mini-screen"><div class="bs idle">${avatar(d.avatar, d.color, 84)}<b>${esc(p.short)}</b><small>#${esc(d.tag)}</small></div></div>
-      <small>Shown on your loan Tappy and the participant wall at this event only.</small></div>
+      <small>Shown on your loan EventBuddy and the participant wall at this event only.</small></div>
     <h3>Pick an avatar</h3>
     <div class="avatar-grid">${AVATAR_CHOICES.map((k) => `<button class="${d.avatar === k ? 'on' : ''}" data-a="bd-pick" data-x="avatar|${k}">${avatar(k, d.color, 60)}</button>`).join('')}</div>
     <div class="swatches">${AVATAR_COLORS.map((c) => `<button class="${d.color === c ? 'on' : ''}" style="background:${c}" data-a="bd-pick" data-x="color|${c}" aria-label="colour ${c}"></button>`).join('')}</div>
-    <h3>Tag on your Tappy</h3><p class="muted small">A conversation hook for this crowd.</p>
+    <h3>Tag on your EventBuddy</h3><p class="muted small">A conversation hook for this crowd.</p>
     <div class="pills" style="margin-top:10px">${tags.map((t) => `<button class="pill ${d.tag === t ? 'on' : ''}" data-a="bd-pick" data-x="tag|${t}">#${t}</button>`).join('')}</div>`;
 }
 
 V.badgeedit = (id) => {
   const e = ev(id); if (!reg(id)) return V.event(id);
   if (!ui.regDraft || ui.regDraft.id !== id) ui.regDraft = { id, ...badgeLook(id) };
-  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><b>Your Tappy</b><span></span></header>
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><b>Your EventBuddy</b><span></span></header>
     <section class="pad"><p class="muted">${esc(e.title)}</p>${badgePicker(ui.regDraft)}<div class="spacer"></div></section>
-    <footer class="sticky"><button class="btn primary" data-a="badge-save" data-x="${id}">Save Tappy</button></footer>`;
+    <footer class="sticky"><button class="btn primary" data-a="badge-save" data-x="${id}">Save EventBuddy</button></footer>`;
 };
 
 V.register = (id) => {
@@ -280,7 +305,7 @@ V.register = (id) => {
   return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><b>${e.approval ? 'Request to join' : 'Register'}</b><span></span></header>
     <section class="pad">
       <div class="next-card static">${cover(e, 'sm')}<div><b>${esc(e.title)}</b><small>${e.date} · ${e.time}</small></div></div>
-      ${e.badges ? `<h3>Your Tappy for this event</h3>${badgePicker(d)}` : ''}
+      ${e.badges ? `<h3>Your EventBuddy for this event</h3>${badgePicker(d)}` : ''}
       <h3>${e.badges ? 'In the attendee list' : 'What attendees will see'}</h3>
       <div class="public-card">${e.badges ? asc({ ...p, ...d }, 56) : av(p, 56)}<div><b>${esc(p.name)}</b><small>${p.field}${p.showStage ? ' · ' + p.stage : ''}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
       <label class="toggle"><input type="checkbox" data-a="reg-toggle" data-x="list" ${d.list ? 'checked' : ''}><span>Show me in the attendee list</span></label>
@@ -315,8 +340,8 @@ V.ticket = (id) => {
       ${demo('Host approves request', 'approve', id)}${demo('Host declines request', 'decline', id)}`;
   else if (r.status === 'declined') body = `<div class="state-box warn"><b>This one’s full</b><small>The host couldn’t fit everyone. Similar events:</small></div>${EVENTS.filter((x) => x.id !== id && x.mode === e.mode).slice(0, 2).map(eventRow).join('')}`;
   else if (off) body = `<div class="pass">${fakeQR(id + S.profile.name)}<b>${esc(S.profile.name)}</b><small>Show this at the check-in desk</small></div>
-      <div class="info-grid"><div>${ICON.pin}<b>${e.venue}</b><small>Get directions</small></div><div>${ICON.badge}<b>Tappy on loan</b><small>Collect → pair → return</small></div></div>
-      ${e.badges ? `<button class="row badge-link" data-a="nav" data-x="badgeedit/${id}">${avatar(badgeLook(id).avatar, badgeLook(id).color, 44)}<span class="row-main"><b>Your Tappy look</b><small>#${esc(badgeLook(id).tag)} · only for this event</small></span><span class="small muted">Change</span></button>` : ''}
+      <div class="info-grid"><div>${ICON.pin}<b>${e.venue}</b><small>Get directions</small></div><div>${ICON.badge}<b>EventBuddy on loan</b><small>Collect → pair → return</small></div></div>
+      ${e.badges ? `<button class="row badge-link" data-a="nav" data-x="badgeedit/${id}">${avatar(badgeLook(id).avatar, badgeLook(id).color, 44)}<span class="row-main"><b>Your EventBuddy look</b><small>#${esc(badgeLook(id).tag)} · only for this event</small></span><span class="small muted">Change</span></button>` : ''}
       <h3>Before you go</h3><ul class="checklist"><li>Arrive by 17:45 — first 30 get a drink token</li><li>Bring your phone charged (or pair with staff help)</li><li>Nothing to prepare. Just come curious.</li></ul>`;
   else body = `<div class="pass online"><div>${ICON.globe}</div><b>${e.date} · ${e.time}</b><small>Lobby opens 10 min before</small></div>
       <h3>Before you join</h3><ul class="checklist"><li>Stream runs in Zoom. Camera optional.</li><li>Waves and chats happen here in JobBuddy</li><li>${e.recording ? 'Recording shared afterwards' : 'Not recorded'}</li></ul>`;
@@ -330,7 +355,7 @@ V.ticket = (id) => {
       <h2 class="title sm">${esc(e.title)}</h2><p class="muted">${e.date} · ${e.time}</p>
       <ol class="timeline">${steps.map((s, i) => `<li class="${i < idx ? 'done' : i === idx ? 'now' : ''}">${s}</li>`).join('')}</ol>
       ${body}
-      ${['pending', 'going'].includes(r.status) ? `<button class="link" data-a="cancel" data-x="${id}">Cancel ${r.status === 'pending' ? 'request' : 'registration'}</button>` : ''}
+      ${['pending', 'going'].includes(r.status) ? `<button class="link danger" data-a="cancel" data-x="${id}">Cancel ${r.status === 'pending' ? 'request' : 'RSVP'}</button>` : ''}
     </section>
     ${cta ? `<footer class="sticky">${cta}</footer>` : ''}`;
 };
@@ -346,12 +371,12 @@ V.checkin = (id) => {
       <ol class="steps">
         <li class="${checked ? 'done' : 'now'}"><b>Check in at the desk</b>
           ${checked ? '<small>Checked in 17:42 ✓</small>' : `<small>Show your pass. Staff scan it — this confirms you actually came.</small><div class="pass mini">${fakeQR(id + S.profile.name)}</div>${demo('Staff scans your pass', 'checkin', id)}`}</li>
-        <li class="${hasBadge ? 'done' : checked ? 'now' : ''}"><b>Collect a Tappy</b>
-          ${hasBadge ? `<small>Tappy ${BADGE_ID} is yours for tonight ✓</small>` : checked ? `<small>Staff hand you a badge. Check the number on its back.</small>${demo('Staff hands you Tappy ' + BADGE_ID, 'give-badge', id)}<button class="link" data-a="no-badge" data-x="${id}">Continue without a Tappy</button>` : '<small>Optional loan device</small>'}</li>
+        <li class="${hasBadge ? 'done' : checked ? 'now' : ''}"><b>Collect a EventBuddy</b>
+          ${hasBadge ? `<small>EventBuddy ${BADGE_ID} is yours for tonight ✓</small>` : checked ? `<small>Staff hand you an EventBuddy wearable. Check the number on its back.</small>${demo('Staff hands you EventBuddy ' + BADGE_ID, 'give-badge', id)}<button class="link" data-a="no-badge" data-x="${id}">Continue without an EventBuddy</button>` : '<small>Optional loan device</small>'}</li>
         <li class="${hasBadge ? 'now' : ''}"><b>Pair it with your app</b><small>Takes 10 seconds</small></li>
       </ol>
     </section>
-    ${hasBadge ? `<footer class="sticky"><button class="btn primary" data-a="nav" data-x="pair/${id}">Pair Tappy</button></footer>` : ''}`;
+    ${hasBadge ? `<footer class="sticky"><button class="btn primary" data-a="nav" data-x="pair/${id}">Pair EventBuddy</button></footer>` : ''}`;
 };
 
 V.pair = (id) => {
@@ -360,26 +385,27 @@ V.pair = (id) => {
   if (L.paired) return `<header class="bar"><span></span><b>Paired</b><span></span></header>
     <section class="pad center">
       <div class="big-check">${ICON.check}</div>
-      <h2>Tappy ${BADGE_ID} is yours</h2>
-      <p class="muted">Your Tappy now shows your avatar. Put your phone away — tap Tappys with someone when you both want to talk.</p>
+      <h2>You’re connected!</h2>
+      <p class="muted">Your EventBuddy wearable (${BADGE_ID}) is paired and live for ${esc(ev(id).title)}.</p>
+      <div class="card-soft" style="text-align:left;margin-top:16px"><h3 style="margin:0 0 8px">How it works</h3><p class="muted small" style="font-size:14px">Tap your device with another attendee’s to see a career question you can talk about together. Save the moment if you both want to — you decide later whether to follow.</p></div>
       <div class="rules"><div><b>Tap</b><small>asks to talk</small></div><div><b>Both say yes</b><small>shared prompt appears</small></div><div><b>Save</b><small>keeps it in your app</small></div></div>
       <p class="note">${ICON.lock} Tapping never adds a friend or shares contact details.</p>
     </section>
-    <footer class="sticky"><button class="btn primary" data-a="nav" data-x="live/${id}">Go to event</button></footer>`;
-  if (L.pairing) return `<header class="bar"><button class="icon-btn" data-a="pair-cancel">${ICON.back}</button><b>Confirm on Tappy</b><span></span></header>
+    <footer class="sticky"><button class="btn primary" data-a="nav" data-x="live/${id}">Back to event</button></footer>`;
+  if (L.pairing) return `<header class="bar"><button class="icon-btn" data-a="pair-cancel">${ICON.back}</button><b>Confirm on EventBuddy</b><span></span></header>
     <section class="pad center">
-      <p class="muted">Does your Tappy show this code?</p>
+      <p class="muted">Does your EventBuddy show this code?</p>
       <div class="code">${PAIR_CODE.split('').map((d) => `<span>${d}</span>`).join('')}</div>
-      <p>Press <i class="kdot"></i> on the Tappy to confirm.</p>
-      <p class="note">${ICON.info} Code doesn’t match? You may have someone else’s Tappy — go back and check the number.</p>
-      ${demo('Tappy shows ✓ — continue', 'pair-confirm')}
+      <p>Press <i class="kdot"></i> on the EventBuddy to confirm.</p>
+      <p class="note">${ICON.info} Code doesn’t match? You may have someone else’s EventBuddy — go back and check the number.</p>
+      ${demo('EventBuddy shows ✓ — continue', 'pair-confirm')}
     </section>`;
-  return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="checkin/${id}">${ICON.back}</button><b>Pair Tappy</b><span></span></header>
+  return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="checkin/${id}">${ICON.back}</button><b>Pair EventBuddy</b><span></span></header>
     <section class="pad">
-      <h2>Scan the QR code on your Tappy</h2>
+      <h2>Scan your EventBuddy</h2><p class="muted">Point your camera at the QR code on the device</p>
       <button class="scan" data-a="scan">${ICON.qr}<span>Tap to scan</span></button>
-      <p class="muted center">or type the Tappy number</p>
-      <input class="field code-in" data-model="pairInput" placeholder="JB-00" value="${esc(ui.pairInput || '')}" maxlength="5">
+      <p class="muted center">Can’t scan? Enter code manually</p>
+      <input class="field code-in" data-model="pairInput" placeholder="EB-00" value="${esc(ui.pairInput || '')}" maxlength="5">
       ${ui.pairError ? `<p class="error">${ui.pairError}</p>` : ''}
     </section>
     <footer class="sticky"><button class="btn primary" data-a="pair-start">Pair</button><button class="link" data-a="toast" data-x="Staff can pair it for you at the desk">No phone signal? Ask staff</button></footer>`;
@@ -393,20 +419,20 @@ V.live = (id) => {
   const mine = S.encounters.filter((x) => x.eventId === id);
   const tabs = [['here', 'Who’s here'], ['agenda', 'Agenda'], ['saved', `Saved · ${mine.length}`]];
   let body = '';
-  if (ui.liveTab === 'here') body = `<p class="muted small">${here.length + 1} people chose to show on the wall. Spot their avatar on a Tappy.</p>
+  if (ui.liveTab === 'here') body = `<p class="muted small">${here.length + 1} people chose to show on the wall. Spot their avatar on a EventBuddy.</p>
       <div class="wall">${(reg(id).wall ? [{ ...me(), ...badgeLook(id), headline: '#' + badgeLook(id).tag }, ...here] : here).map((p) => `<button class="wall-tile" data-a="sheet-person" data-x="${p.id}">${asc(p, 64)}<b>${esc(p.short)}${p.id === 'me' ? ' (you)' : ''}</b><small>${esc(p.headline)}</small></button>`).join('')}</div>`;
   if (ui.liveTab === 'agenda') body = `<ul class="agenda">${e.agenda.map(([t, a], i) => `<li class="${i === 2 ? 'now' : ''}"><time>${t}</time>${a}${i === 2 ? ' <i class="chip">Now</i>' : ''}</li>`).join('')}</ul>`;
-  if (ui.liveTab === 'saved') body = (mine.length ? mine.map(encounterRow).join('') : `<p class="empty">Nobody saved yet. When you and someone both say yes on your Tappys, you can save the moment here.</p>`)
-    + (L.noBadge ? '' : here.filter((p) => !mine.some((x) => x.person === p.id)).slice(0, 2).map((p) => demo(`Tappy on another device saved ${p.short}`, 'demo-enc', p.id)).join(''));
+  if (ui.liveTab === 'saved') body = (mine.length ? mine.map(encounterRow).join('') : `<p class="empty">Nobody saved yet. When you and someone both say yes on your devices, you can save the moment here.</p>`)
+    + (L.noBadge ? '' : here.filter((p) => !mine.some((x) => x.person === p.id)).slice(0, 2).map((p) => demo(`EventBuddy on another device saved ${p.short}`, 'demo-enc', p.id)).join(''));
   return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="home">${ICON.back}</button><span class="live-pill"><span class="dot"></span>Live</span>
-      ${L.noBadge ? '<span class="muted small">No Tappy</span>' : `<button class="badge-pill" data-a="badge-open">${ICON.badge}${BADGE_ID}</button>`}</header>
+      ${L.noBadge ? '<span class="muted small">No EventBuddy</span>' : `<button class="badge-pill" data-a="badge-open">${ICON.badge}${BADGE_ID}</button>`}</header>
     <section class="pad">
       <h2 class="title sm">${esc(e.title)}</h2>
-      ${L.noBadge ? `<p class="note">${ICON.info} No Tappy? Tap someone on the wall to send a hi request instead.</p>` : `<p class="note">${ICON.badge} Your Tappy does the work. Tap Tappys with someone when you both want to talk.</p>`}
+      ${L.noBadge ? `<p class="note">${ICON.info} No EventBuddy? Tap someone on the wall to send a hi request instead.</p>` : `<p class="note">${ICON.badge} Your EventBuddy does the work. Tap devices with someone when you both want to talk.</p>`}
       <div class="tabs">${tabs.map(([k, l]) => `<button class="${ui.liveTab === k ? 'on' : ''}" data-a="live-tab" data-x="${k}">${l}</button>`).join('')}</div>
       ${body}<div class="spacer"></div>
     </section>
-    <footer class="sticky"><button class="btn" data-a="nav" data-x="leave/${id}">Leaving? ${L.noBadge ? 'Wrap up' : 'Return Tappy'}</button></footer>`;
+    <footer class="sticky"><button class="btn" data-a="nav" data-x="leave/${id}">Leaving? ${L.noBadge ? 'Wrap up' : 'Return EventBuddy'}</button></footer>`;
 };
 
 function encounterRow(x) {
@@ -421,12 +447,12 @@ V.leave = (id) => {
     <section class="pad"><ol class="steps"><li class="done"><b>${mine.length} encounter${mine.length === 1 ? '' : 's'} saved</b><small>Stored in your app</small></li></ol></section>
     <footer class="sticky"><button class="btn primary" data-a="finish" data-x="${id}">Finish & see recap</button></footer>`;
   const returned = L.returned;
-  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>Return your Tappy</b><span></span></header>
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>Return your EventBuddy</b><span></span></header>
     <section class="pad">
       <ol class="steps">
-        <li class="done"><b>${mine.length} encounter${mine.length === 1 ? '' : 's'} synced to your app</b><small>Safe to hand the Tappy back ✓</small></li>
-        <li class="${returned ? 'done' : 'now'}"><b>Hand ${BADGE_ID} to the desk</b>${returned ? '<small>Returned 20:21 ✓</small>' : `<small>Staff confirm it’s back.</small>${demo('Staff confirms return', 'return-badge', id)}<button class="link" data-a="toast" data-x="We’ll remind you. Tappys can be dropped at any Harbour Commons desk.">Leaving in a hurry?</button>`}</li>
-        <li class="${returned ? 'done' : ''}"><b>Tappy wiped</b><small>${returned ? 'Your name and avatar are erased from the device ✓' : 'Your data is erased before the next person uses it'}</small></li>
+        <li class="done"><b>${mine.length} encounter${mine.length === 1 ? '' : 's'} synced to your app</b><small>Safe to hand the EventBuddy back ✓</small></li>
+        <li class="${returned ? 'done' : 'now'}"><b>Hand ${BADGE_ID} to the desk</b>${returned ? '<small>Returned 20:21 ✓</small>' : `<small>Staff confirm it’s back.</small>${demo('Staff confirms return', 'return-badge', id)}<button class="link" data-a="toast" data-x="We’ll remind you. EventBuddy devices can be dropped at any Harbour Commons desk.">Leaving in a hurry?</button>`}</li>
+        <li class="${returned ? 'done' : ''}"><b>EventBuddy wiped</b><small>${returned ? 'Your name and avatar are erased from the device ✓' : 'Your data is erased before the next person uses it'}</small></li>
       </ol>
     </section>
     ${returned ? `<footer class="sticky"><button class="btn primary" data-a="finish" data-x="${id}">See your recap</button></footer>` : ''}`;
@@ -554,30 +580,105 @@ function postCard(p) {
 }
 
 V.community = () => {
-  const seg = ['circles', 'connections'].includes(ui.seg) ? 'circles' : 'public';
-  const tabs = [['public', 'Public'], ['circles', 'My circles']];
-  let body;
-  if (seg !== 'public' && !S.profile) body = `<p class="empty">Log in to see your circles and connections.</p><button class="btn primary" data-a="login-demo">Log in</button>`;
-  else if (seg === 'public') {
-    body = `<p class="note">${ICON.globe} Open to everyone on JobBuddy: questions, takeaways, referrals, and people looking for someone to go with.</p>` + allPosts().filter((p) => p.aud === 'public').map(postCard).join('');
-  } else if (seg === 'circles') {
-    const mine = circlesJoined(); const c = mine.includes(ui.circle) ? ui.circle : null;
-    const list = allPosts().filter((p) => p.aud === 'circle' && mine.includes(p.circle) && (!c || p.circle === c));
-    // Circle posts remain members-only; the connections feed shows public posts only.
-    const connectionPosts = allPosts().filter((p) => p.aud === 'public' && isConn(p.author));
-    body = `<section aria-labelledby="my-circles-heading"><h3 id="my-circles-heading">My circles</h3>
-      <div class="pills scroll flush"><button class="pill ${!c ? 'on' : ''}" data-a="circle" data-x="">All circles</button>${mine.map((x) => `<button class="pill ${c === x ? 'on' : ''}" data-a="circle" data-x="${x}">${x}</button>`).join('')}</div>
-      <p class="note">${ICON.lock} Members only. You join a circle by attending its events; posts stay inside it.</p>
-      ${list.map(postCard).join('') || `<p class="empty">${mine.length ? 'No posts in this circle yet.' : 'Attend an event to join your first circle.'}</p>`}</section>
-      <section aria-labelledby="connections-heading"><h3 id="connections-heading">Connections</h3>
-      <div class="conn-strip">${connections().map((id) => `<button data-a="nav" data-x="person/${id}">${av(PEOPLE[id], 52)}<small>${PEOPLE[id].short}</small></button>`).join('')}</div>
-      ${connectionPosts.map(postCard).join('') || '<p class="empty">Posts from your connections show up here.</p>'}</section>`;
-  }
-  return `<header class="top"><h1>Community</h1>${S.profile ? lvChip() : ''}</header>
-    <div class="pad"><div class="seg3">${tabs.map(([k, l]) => `<button class="${seg === k ? 'on' : ''}" data-a="seg" data-x="${k}">${l}</button>`).join('')}</div></div>
-    <section class="pad feed">${body}</section>
-    <button class="fab" data-a="compose" data-x="">${ICON.plus}</button>
+  const mode = ui.cmode === 'Networks' ? 'Networks' : 'Community';
+  return `<header class="top"><h1 style="font-size:${mode === 'Community' ? 26 : 28}px">${mode === 'Community' ? 'Community Explorer' : 'Network'}</h1>${S.profile ? lvChip() : ''}</header>
+    <section class="pad">
+      <div class="seg ${mode === 'Networks' ? 'net' : ''}">${['Community', 'Networks'].map((m) => `<button class="${mode === m ? 'on' : ''}" data-a="cmode" data-x="${m}">${m}</button>`).join('')}</div>
+      ${mode === 'Community' ? communityView() : networkView()}
+    </section>
     <div class="spacer"></div>`;
+};
+
+function communityView() {
+  const q = (ui.cq || '').toLowerCase();
+  const list = allPosts().filter((p) => p.aud === 'public' && (!q || (p.text + p.circle + p.type + (who(p.author)?.name || '')).toLowerCase().includes(q)));
+  return `${art(3, 'heroart')}
+    <div class="search" style="margin-top:14px">${ICON.search}<input data-model="cq" placeholder="Search" aria-label="Search posts" value="${esc(ui.cq || '')}"></div>
+    <button class="btn primary" style="margin-bottom:18px" data-a="compose" data-x="">+ Create post</button>
+    <p class="note">${ICON.globe} Open to everyone on JobBuddy: questions, takeaways, referrals, and people looking for someone to go with.</p>
+    ${list.map(postCard).join('') || '<div class="empty">No posts match that search</div>'}`;
+}
+
+const requests = () => S.followers.filter((id) => !S.following.includes(id) && !(S.dismissed || []).includes(id));
+function metAt(id) { const x = S.encounters.find((y) => y.person === id); return x ? ev(x.eventId).title : ''; }
+
+function networkView() {
+  if (!S.profile) return `<div class="empty">Log in to see your connections and event circles.</div><div style="height:12px"></div><button class="btn primary" data-a="login-demo">Log in</button>`;
+  const sub = ui.nsub === 'Requests' ? 'Requests' : 'Connections';
+  const q = (ui.nq || '').toLowerCase();
+  const conns = connections().filter((id) => !q || PEOPLE[id].name.toLowerCase().includes(q));
+  const reqs = requests();
+  const seen = [...new Set([...S.encounters.map((x) => x.person), ...EVENTS.filter((e) => reg(e.id)).flatMap((e) => e.attendees)])]
+    .filter((id) => !S.following.includes(id) && !reqs.includes(id)).slice(0, 4);
+  const person = (id, right) => `<div class="list-item"><button class="plain" data-a="nav" data-x="person/${id}">${av(PEOPLE[id], 48)}</button><div class="grow"><h3>${PEOPLE[id].name}</h3><small>${esc(PEOPLE[id].headline)}</small></div>${right}</div>`;
+  let body;
+  if (sub === 'Connections') body = conns.map((id) => `<button class="list-item" data-a="nav" data-x="person/${id}">${av(PEOPLE[id], 48)}<div class="grow"><h3>${PEOPLE[id].name}</h3><small>${esc(PEOPLE[id].headline)}</small></div>${ICON.chev}</button>`).join('')
+    || '<div class="empty">No connections yet — tap devices at your next event, then follow each other.</div>';
+  else body = (reqs.map((id) => `<div class="card-soft"><div style="display:flex;gap:14px;align-items:center">${av(PEOPLE[id], 48)}<div class="grow" style="flex:1"><h3 style="margin:0">${PEOPLE[id].name}</h3><small>${esc(PEOPLE[id].headline)}</small>${metAt(id) ? `<small>Met at ${esc(metAt(id))}</small>` : ''}</div></div>
+      <p class="muted" style="margin:12px 0;font-size:14px">${PEOPLE[id].short} follows you. Follow back to connect.</p>
+      <div style="display:flex;gap:10px"><button class="btn" style="height:42px" data-a="dismiss" data-x="${id}">Not now</button><button class="btn primary" style="height:42px" data-a="follow" data-x="${id}">Follow back</button></div></div>`).join('')
+    || '<div class="empty">You’re all caught up. New follows from events will show up here.</div>')
+    + (seen.length ? `<h3>Explore who else was there</h3>${seen.map((id) => person(id, followBtn(id))).join('')}` : '');
+  const circles = circlesJoined();
+  return `<div class="search">${ICON.search}<input data-model="nq" placeholder="Search connections" aria-label="Search connections" value="${esc(ui.nq || '')}"></div>
+    ${art(1, 'banner')}
+    <div class="seg2"><button class="${sub === 'Connections' ? 'on' : ''}" data-a="nsub" data-x="Connections">Connections</button><button class="${sub === 'Requests' ? 'on' : ''}" data-a="nsub" data-x="Requests">Requests${reqs.length ? `<i class="cnt">${reqs.length}</i>` : ''}</button></div>
+    ${body}
+    <h2 style="margin:28px 0 6px">Event Circles</h2>
+    <p class="muted small" style="margin-bottom:14px">Members only — you join a circle by attending its events.</p>
+    ${circles.map((c) => { const posts = allPosts().filter((p) => p.aud === 'circle' && p.circle === c).length; const evs = EVENTS.filter((e) => e.circle === c);
+      const went = evs.some((e) => reg(e.id)?.status === 'attended');
+      return `<button class="list-item" data-a="nav" data-x="circle/${encodeURIComponent(c)}"><div style="width:68px;height:68px;border-radius:12px;overflow:hidden;flex:0 0 auto">${art(seedOf(c), '', 'width:100%;height:100%')}</div><div class="grow"><h3>${esc(c)}</h3><small style="margin:4px 0">${evs.map((e) => e.date).join(' · ') || 'Circle'}</small><small style="color:var(--ac-tx);margin-bottom:6px">${posts} stories shared</small><i class="chip ${went ? 'chip-attended' : 'chip-going'}" style="margin:0">${went ? 'Past' : 'Member'}</i></div>${ICON.chev}</button>`; }).join('') || '<div class="empty">Attend an event to join your first circle.</div>'}`;
+}
+
+V.circle = (arg) => {
+  const c = decodeURIComponent(arg || ''); const mine = circlesJoined().includes(c);
+  const evs = EVENTS.filter((e) => e.circle === c); const t = ui.ctab === 'Attendees' ? 'Attendees' : 'Stories';
+  const posts = allPosts().filter((p) => p.aud === 'circle' && p.circle === c);
+  const people = [...new Set(evs.flatMap((e) => e.attendees))];
+  const e0 = evs[0];
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><span></span><i class="chip ${mine ? 'chip-going' : ''}" style="margin:0;justify-self:end">${mine ? 'Member' : 'Members only'}</i></header>
+    <section class="pad">
+      ${art(seedOf(c), 'heroart')}
+      <h1 style="margin-top:14px">${esc(c)}</h1><p class="muted">${evs.map((e) => e.date).join(' · ')} · ${people.length + (mine ? 1 : 0)} members</p>
+      ${mine ? `<div class="seg2">${['Stories', 'Attendees'].map((x) => `<button class="${t === x ? 'on' : ''}" data-a="ctab" data-x="${x}">${x}</button>`).join('')}</div>
+        ${t === 'Stories' ? `${posts.map(postCard).join('') || '<div class="empty">No stories yet — share the first one.</div>'}
+          <p class="note">${ICON.lock} Only circle members can see these posts.</p>
+          <button class="btn primary" data-a="${e0 ? 'compose' : 'nav'}" data-x="${e0 ? e0.id : 'compose/'}">+ Add memory</button>`
+        : people.map((id) => `<div class="list-item"><button class="plain" data-a="nav" data-x="person/${id}">${av(PEOPLE[id], 48)}</button><div class="grow"><h3>${PEOPLE[id].name}</h3><small>${esc(PEOPLE[id].headline)}</small></div>${followBtn(id)}</div>`).join('')}`
+      : `<div class="empty">${ICON.lock}<br>Attend one of this circle’s events to join and see its stories.</div>${evs.map(lumaRow).join('')}`}
+      <div class="spacer"></div>
+    </section>`;
+};
+
+/* ------------------------------------------------------------ messages */
+const CHAT_SEED = {
+  priya: [['priya', 'The agent-eval checklist is pinned in the circle btw!'], ['me', 'Amazing, thank you 🙏']],
+  sofia: [['sofia', 'Are you coming to the crit circle on Thursday?'], ['me', 'Yes! Wouldn’t miss it (:'], ['sofia', 'Awesome, bring one case study']],
+  leo: [['leo', 'Thanks for the Figma tips yesterday!']]
+};
+const chats = () => { if (!S.chats) { S.chats = JSON.parse(JSON.stringify(CHAT_SEED)); S.unread = { leo: 1, sofia: 1 }; save(); } return S.chats; };
+const unreadTotal = () => (S.profile ? Object.values(chats() && S.unread || {}).reduce((a, b) => a + b, 0) : 0);
+
+V.messages = () => {
+  if (!S.profile) return `<header class="top"><h1>Messages</h1></header><section class="pad"><div class="empty">Log in to message your connections.</div><div style="height:12px"></div><button class="btn primary" data-a="login-demo">Log in</button></section>`;
+  const c = chats(); const ids = Object.keys(c).filter((id) => PEOPLE[id]);
+  return `<header class="top"><div><h1>Messages</h1><p class="muted" style="margin-top:4px">Your chatbox</p></div></header>
+    <section class="pad">
+      ${ids.map((id) => { const m = c[id][c[id].length - 1]; return `<button class="list-item" data-a="nav" data-x="chat/${id}">${av(PEOPLE[id], 48)}<div class="grow"><h3>${PEOPLE[id].name}</h3><small style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m ? (m[0] === 'me' ? 'You: ' : '') + esc(m[1]) : 'Say hi 👋'}</small></div>${S.unread?.[id] ? `<i class="unread">${S.unread[id]}</i>` : ''}</button>`; }).join('') || '<div class="empty">No messages yet. Connect with someone to start chatting.</div>'}
+      <p class="note">${ICON.lock} You can message people once you’re connected (you follow each other).</p>
+      <div class="spacer"></div>
+    </section>`;
+};
+
+V.chat = (id) => {
+  const p = PEOPLE[id]; if (!p || !S.profile) return V.messages();
+  const c = chats(); c[id] = c[id] || [];
+  if (S.unread?.[id]) { S.unread[id] = 0; save(); }
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><button class="plain" data-a="nav" data-x="person/${id}" style="display:flex;gap:10px;align-items:center;justify-self:center">${av(p, 32)}<span style="text-align:left"><b>${p.name}</b><small style="color:var(--ac-tx)">${isConn(id) ? 'Connected' : 'Not connected'}</small></span></button><span></span></header>
+    <section class="pad"><div class="bubbles">${c[id].map(([by, t]) => `<div class="bub ${by === 'me' ? 'me' : ''}">${esc(t)}</div>`).join('')}${ui.typing === id ? '<div class="bub small">typing…</div>' : ''}</div></section>
+    ${isConn(id) ? `<div class="composer"><input data-model="msgText" id="msgIn" placeholder="Type a message..." aria-label="Message" value="${esc(ui.msgText || '')}"><button data-a="send-msg" data-x="${id}" aria-label="Send">${ICON.share}</button></div>`
+    : `<div class="composer"><p class="muted small" style="flex:1">Follow each other to message ${p.short}.</p></div>`}`;
 };
 
 const PLACEHOLDER = { Question: 'What are you stuck on?', Takeaway: 'What’s one thing you’ll try this week?', Resource: 'Share a link, template or tool…', 'Offer help': 'What could you help someone with?', Referral: 'Which role, and who should reach out?', 'Going together': 'Which event? Where should people meet you?', Win: 'What happened? Who helped?' };
@@ -586,7 +687,7 @@ V.compose = (eventId) => {
   const mine = circlesJoined();
   if (!ui.compose || ui.compose.eventId !== eventId) ui.compose = { eventId, type: e ? 'Takeaway' : 'Question', text: '', audience: e || mine.length ? 'circle' : 'public', circle: e ? e.circle : mine[0] };
   const c = ui.compose;
-  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><b>New post</b><button class="btn small primary" data-a="post">Post</button></header>
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><b>Create post</b><button class="btn small primary" data-a="post">Post</button></header>
     <section class="pad">
       ${e ? `<div class="linked">${cover(e, 'sm')}<div><small>Linked to</small><b>${esc(e.title)}</b></div></div>` : ''}
       <div class="pills">${POST_TYPES.map((t) => `<button class="pill ${c.type === t ? 'on' : ''}" data-a="compose-type" data-x="${t}">${t}</button>`).join('')}</div>
@@ -709,32 +810,32 @@ V.mock = () => {
 /* ------------------------------------------------------------ me & people */
 V.me = () => {
   const p = me();
-  if (!p) return `<header class="top"><h1>Me</h1></header><section class="pad center"><p class="muted">Log in to register for events and keep the people you meet.</p><button class="btn primary" data-a="login-demo">Log in</button><button class="link" data-a="nav" data-x="onboarding">Create an account</button></section>`;
+  if (!p) return `<header class="top"><h1>Account</h1></header><section class="pad center"><p class="muted">Log in to register for events and keep the people you meet.</p><button class="btn primary" data-a="login-demo">Log in</button><button class="link" data-a="nav" data-x="onboarding">Create an account</button></section>`;
   const groups = { upcoming: ['going', 'checkedin'], pending: ['pending', 'declined'], past: ['attended'] };
   const list = EVENTS.filter((e) => groups[ui.meSeg].includes(reg(e.id)?.status));
   const l = level(); const look = badgeLook();
   const metIds = [...new Set(S.encounters.map((x) => x.person))];
-  return `<header class="top"><h1>Me</h1><button class="icon-btn" data-a="edit-profile">${ICON.edit}</button></header>
+  return `<header class="top"><div style="display:flex;gap:14px;align-items:center">${av(p, 64)}<div><h1>${esc(p.name)}</h1><p class="muted" style="margin-top:4px">${p.stage}${p.showStage ? '' : ' 🔒'} / ${p.field}</p></div></div><button class="icon-btn" data-a="edit-profile" aria-label="Edit profile">${ICON.edit}</button></header>
     <section class="pad">
-      <div class="me-hero">${av(p, 88)}<div><h2>${esc(p.name)}</h2><small>${p.field} · ${p.stage}${p.showStage ? '' : ' 🔒'}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
+      <p class="muted">Hi, I’m ${esc(p.short)} — ${p.stage.toLowerCase()} in ${p.field.toLowerCase()}. ${p.fact ? esc(p.fact) + '.' : ''}</p>
+      <div class="namecard"><small>Your name card · No. 0001</small><b>${esc(p.name)}</b><small style="color:#bbb">${p.field} · Sydney, AU</small><small style="color:#bbb;margin-top:4px">${p.interests.map((t) => '#' + t).join(' ')}</small></div>
       <div class="lv-card" data-a="nav" data-x="rewards" role="button"><div><small>LEVEL ${l.n}</small><b>${l.name}</b></div><span>${S.points || 0} pts<button class="icon-btn help-btn sm" data-a="growth-help" aria-label="How growth works">${ICON.help}</button></span><div class="lvbar"><i style="width:${l.pct}%"></i></div><small>${l.next ? `${l.next - (S.lifetime ?? S.points)} pts to ${l.nextName}` : 'Top level'} · See how to earn & redeem</small></div>
       <div class="stats four">${[['connections', connections().length, 'connections'], ['followers', S.followers.length, 'followers'], ['following', S.following.length, 'following'], ['met', metIds.length, 'met']].map(([t, n, lbl]) => `<button data-a="people-tab" data-x="${t}"><b>${n}</b><small>${lbl}</small></button>`).join('')}</div>
+      <button class="list-item" data-a="nav" data-x="messages"><span class="lead-ico">${ICON.chat}</span><div class="grow"><b>Messages</b><small>View your chatbox</small></div>${ICON.chev}</button>
       <h3>Career tools</h3>
       <button class="tool" data-a="nav" data-x="cv"><span class="tool-ico">${ICON.file}</span><span class="row-main"><b>AI CV review</b><small>${S.cvFree ?? 3} free this month${(S.credits || {}).cv ? ` · +${S.credits.cv} extra` : ''}</small></span>${ICON.chev}</button>
       <button class="tool" data-a="nav" data-x="mock"><span class="tool-ico">${ICON.people}</span><span class="row-main"><b>Mock interview with a person</b><small>${S.mockFree ?? 1} free session this month</small></span>${ICON.chev}</button>
-      <h3>My events</h3>
-      <div class="pills">${[['upcoming', 'Upcoming'], ['pending', 'Requests'], ['past', 'Past']].map(([k, lb]) => `<button class="pill ${ui.meSeg === k ? 'on' : ''}" data-a="me-seg" data-x="${k}">${lb}</button>`).join('')}</div>
+      <h3>Your events</h3>
+      <div class="pills">${[['upcoming', 'Upcoming'], ['pending', 'Requests'], ['past', 'Previous']].map(([k, lb]) => `<button class="pill ${ui.meSeg === k ? 'on' : ''}" data-a="me-seg" data-x="${k}">${lb}</button>`).join('')}</div>
       ${list.map(eventRow).join('') || '<p class="empty">Nothing here yet.</p>'}
       <h3>Two avatars</h3>
-      <div class="two-av"><div>${av(p, 56)}<small>Profile photo<br>app & online events</small></div><div>${avatar(look.avatar, look.color, 56)}<small>Tappy avatar<br>chosen per in-person event</small></div></div>
+      <div class="two-av"><div>${av(p, 56)}<small>Profile photo<br>app & online events</small></div><div>${avatar(look.avatar, look.color, 56)}<small>EventBuddy avatar<br>chosen per in-person event</small></div></div>
       <h3>Privacy</h3>
       <ul class="checklist"><li>Public: name, photo, field, interests${p.fact ? ', fun fact' : ''}</li><li>Private: ${p.showStage ? 'email, CV' : 'career stage, email, CV'}</li></ul>
-      <h3>Appearance</h3>
-      <div class="seg3">${[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([k, lb]) => `<button class="${themePref() === k ? 'on' : ''}" data-a="theme" data-x="${k}">${lb}</button>`).join('')}</div>
-      <h3>Tappy</h3>
-      <a class="row badge-link" href="./tappy/" target="_blank" rel="noopener">${ICON.badge}<span class="row-main"><b>Open the Tappy app</b><small>Install it on a second phone to act as the hardware</small></span>${ICON.chev}</a>
+      <h3>EventBuddy</h3>
+      <a class="row badge-link" href="./tappy/" target="_blank" rel="noopener">${ICON.badge}<span class="row-main"><b>Open the EventBuddy app</b><small>Install it on a second phone to act as the hardware</small></span>${ICON.chev}</a>
       <button class="link" data-a="logout">Log out</button>
-      <button class="link danger" data-a="reset">Reset demo</button>
+      <button class="btn" style="margin-top:24px" data-a="reset">Reset demo data</button><p class="muted small center" style="margin-top:10px">Prototype for IDS · data stays in this browser only</p>
       <div class="spacer"></div>
     </section>`;
 };
@@ -760,7 +861,7 @@ V.person = (id) => {
   return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><span></span><span></span></header>
     <section class="pad">
       <div class="me-hero">${av(p, 88)}<div><h2>${p.name}</h2><small>${esc(p.headline)}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
-      ${S.profile ? followBtn(id, false) : ''}
+      ${S.profile ? `<div style="display:grid;gap:8px">${followBtn(id, false)}${isConn(id) ? `<button class="btn primary" data-a="nav" data-x="chat/${id}">${ICON.chat}Message</button>` : ''}</div>` : ''}
       ${S.followers.includes(id) && !S.following.includes(id) ? `<p class="note">${ICON.info} ${p.short} follows you. Follow back to connect.</p>` : ''}
       ${met.map((x) => `<div class="msg"><div><small>You met at ${esc(ev(x.eventId).title)}</small><p>${esc(x.prompt)}</p></div></div>`).join('')}
       ${both.length ? `<h3>Also going</h3>${both.map(lumaRow).join('')}` : ''}
@@ -780,7 +881,7 @@ function sheetHTML() {
     const p = s.id === 'me' ? { ...me(), ...badgeLook(S.live?.eventId) } : who(s.id); const noBadge = S.live?.noBadge;
     inner = `${asc(p, 80)}<h2>${esc(p.name)}</h2><p class="muted">${esc(p.headline)}</p><p>“${esc(p.fact || '')}”</p>
       <div class="pills center">${p.interests.map((t) => `<i class="pill">${t}</i>`).join('')}</div>
-      ${p.id === 'me' ? '<p class="note">This is how you appear on the wall.</p>' : noBadge ? `<button class="btn primary" data-a="hi-request" data-x="${p.id}">Send a hi request</button>` : `<p class="note">${ICON.badge} Look for this avatar on a Tappy and say hi. Tap Tappys if you both want a conversation prompt.</p>`}`;
+      ${p.id === 'me' ? '<p class="note">This is how you appear on the wall.</p>' : noBadge ? `<button class="btn primary" data-a="hi-request" data-x="${p.id}">Send a hi request</button>` : `<p class="note">${ICON.badge} Look for this avatar on a EventBuddy and say hi. Tap devices if you both want a conversation prompt.</p>`}`;
   }
   if (s.type === 'match') {
     const p = PEOPLE[s.id];
@@ -829,19 +930,19 @@ function badgePanel() {
   const nearby = e && e.attendees.map((id) => PEOPLE[id]);
   const idle = S.badge.screen === 'idle';
   const hint = {
-    off: 'No Tappy assigned. Collect one at check-in.', unpaired: 'Assigned but not paired. Pair it from the phone.', pairing: 'Press ● to confirm the code matches the phone.',
-    idle: 'Showing your public avatar. Tap Tappys with someone nearby.', request: 'The other Tappy asked to talk. Press ● if you want to.', waiting: 'Waiting for the other person to press ●.',
-    declined: 'They chose “not now”. No info exchanged.', prompt: 'Shared prompt shown on both Tappys. ● saves the encounter to your app.', saved: 'Encounter synced to the app.', returned: 'Tappy unpaired and wiped.'
+    off: 'No EventBuddy assigned. Collect one at check-in.', unpaired: 'Assigned but not paired. Pair it from the phone.', pairing: 'Press ● to confirm the code matches the phone.',
+    idle: 'Showing your public avatar. Tap devices with someone nearby.', request: 'The other EventBuddy asked to talk. Press ● if you want to.', waiting: 'Waiting for the other person to press ●.',
+    declined: 'They chose “not now”. No info exchanged.', prompt: 'Shared prompt shown on both devices. ● saves the encounter to your app.', saved: 'Encounter synced to the app.', returned: 'EventBuddy unpaired and wiped.'
   }[S.badge.screen];
-  return `<div class="bp-head"><b>Tappy</b><small>Simulated hardware · ESP32 + NFC + 240×240 screen · <a href="./tappy/" target="_blank" rel="noopener">open as separate app ↗</a></small><button class="icon-btn bp-close" data-a="badge-close">${ICON.close}</button></div>
+  return `<div class="bp-head"><b>EventBuddy</b><small>Simulated hardware · ESP32 + NFC + 240×240 screen · <a href="./tappy/" target="_blank" rel="noopener">open as separate app ↗</a></small><button class="icon-btn bp-close" data-a="badge-close">${ICON.close}</button></div>
     <div class="device ${hasBadge ? '' : 'dim'}">
       <div class="nfc">NFC</div>
-      <div class="screen">${online ? '<div class="bs off"><small>Online events</small><b>No Tappy</b></div>' : badgeScreen()}</div>
+      <div class="screen">${online ? '<div class="bs off"><small>Online events</small><b>No EventBuddy</b></div>' : badgeScreen()}</div>
       <div class="hw-btns"><button class="hw a" data-a="hw" data-x="A" aria-label="Yes button">●</button><button class="hw b" data-a="hw" data-x="B" aria-label="No button">○</button></div>
       <small class="dev-id">${BADGE_ID}</small>
     </div>
     <p class="bp-hint">${online ? 'Online events use waves in the app instead.' : hint}</p>
-    ${idle && nearby ? `<div class="bp-demo"><small>DEMO · tap Tappys with someone nearby</small>${nearby.slice(0, 3).map((p) => `<button data-a="tap" data-x="${p.id}">${avatar(p.avatar, p.color, 28)}${p.short}${p.responds === 'later' ? ' <i>(will say not now)</i>' : ''}</button>`).join('')}</div>` : ''}`;
+    ${idle && nearby ? `<div class="bp-demo"><small>DEMO · tap devices with someone nearby</small>${nearby.slice(0, 3).map((p) => `<button data-a="tap" data-x="${p.id}">${avatar(p.avatar, p.color, 28)}${p.short}${p.responds === 'later' ? ' <i>(will say not now)</i>' : ''}</button>`).join('')}</div>` : ''}`;
 }
 
 function setBadge(screen, extra = {}) { S.badge = { ...S.badge, ...extra, screen }; save(); render(); }
@@ -851,7 +952,7 @@ function badgeLater(ms, fn) { clearTimeout(badgeTimer); badgeTimer = setTimeout(
 function hw(btn) {
   const b = S.badge; const L = S.live;
   if (b.screen === 'pairing') {
-    if (btn === 'A') { L.paired = true; L.pairing = false; setBadge('idle'); toast('Tappy paired ✓'); }
+    if (btn === 'A') { L.paired = true; L.pairing = false; setBadge('idle'); toast('EventBuddy paired ✓'); }
     else { L.pairing = false; setBadge('unpaired'); }
   } else if (b.screen === 'request') {
     if (btn === 'A') {
@@ -878,7 +979,7 @@ function addEncounter(person, eventId, prompt, via) {
 }
 
 /* ------------------------------------------------ camera scan (demo)
-   Opens the real rear camera as a viewfinder; “detects” the Tappy after ~2 s.
+   Opens the real rear camera as a viewfinder; “detects” the EventBuddy after ~2 s.
    No QR decoding and no network — it just makes the two-phone demo feel real. */
 let scanStream = null; let scanTimer = null;
 async function startScan() {
@@ -900,7 +1001,7 @@ function scannerHTML() {
   if (!ui.scanning) return '';
   return `<div class="scanner"><video playsinline muted autoplay></video>
     <div class="reticle ${ui.scanFound ? 'found' : ''}"><i></i><i></i><i></i><i></i>${ui.scanFound ? `<b>${BADGE_ID}</b>` : '<span class="scanline"></span>'}</div>
-    <p>${ui.scanFound ? `Tappy ${BADGE_ID} found ✓` : 'Point at the QR code on the Tappy screen'}</p>
+    <p>${ui.scanFound ? `Device ${BADGE_ID} found — pairing…` : 'Looking for device signal…'}</p>
     <button class="btn small" data-a="scan-cancel">Cancel</button></div>`;
 }
 
@@ -913,7 +1014,7 @@ const A = {
   'login-demo': () => { S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; if (!S.following.length) seedAccount(140); const next = S.afterOnboard || 'home'; S.afterOnboard = null; save(); toast('Logged in as Xinyi'); go(next); render(); },
   signup: () => { ui.authNew = true; ui.ob = null; render(); },
   'bd-pick': (x) => { const [k, v] = x.split('|'); ui.regDraft[k] = v; render(); },
-  'badge-save': (id) => { const d = ui.regDraft; S.regs[id].badge = { avatar: d.avatar, color: d.color, tag: d.tag }; S.lastBadge = S.regs[id].badge; save(); toast('Tappy updated'); history.back(); },
+  'badge-save': (id) => { const d = ui.regDraft; S.regs[id].badge = { avatar: d.avatar, color: d.color, tag: d.tag }; S.lastBadge = S.regs[id].badge; save(); toast('EventBuddy updated'); history.back(); },
   logout: () => { S.onboarded = false; S.profile = null; save(); toast('Logged out'); go('home'); },
   'home-mode': (x) => { ui.homeMode = x; render(); },
   'filter-go': (x) => { ui.filter = x; go('events'); },
@@ -960,13 +1061,13 @@ const A = {
   'scan-cancel': () => stopScan(),
   'pair-start': () => {
     const v = (ui.pairInput || '').trim().toUpperCase();
-    if (!v) { ui.pairError = 'Scan the code or type the Tappy number.'; render(); return; }
+    if (!v) { ui.pairError = 'Scan the code Can’t scan? Enter code manually.'; render(); return; }
     if (v !== BADGE_ID) { ui.pairError = `${v} isn’t assigned to you. Check the number on the back, or ask staff.`; render(); return; }
     ui.pairError = ''; S.live.pairing = true; save(); setBadge('pairing');
   },
   theme: (x) => { localStorage.setItem(THEME_KEY, x); applyTheme(); render(); },
   'theme-cycle': () => { const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; localStorage.setItem(THEME_KEY, next); applyTheme(); render(); },
-  'pair-confirm': () => { S.live.paired = true; S.live.pairing = false; setBadge('idle'); toast('Tappy paired ✓'); },
+  'pair-confirm': () => { S.live.paired = true; S.live.pairing = false; setBadge('idle'); toast('EventBuddy paired ✓'); },
   'demo-enc': (x) => { const pr = makePrompt(PEOPLE[x]); addEncounter(x, S.live.eventId, pr.text, 'tappy'); toast(`Saved · ${PEOPLE[x].short}`); render(); },
   'pair-cancel': () => { S.live.pairing = false; setBadge('unpaired'); },
   'sheet-person': (x) => { ui.sheet = { type: 'person', id: x }; render(); },
@@ -980,7 +1081,7 @@ const A = {
   'badge-open': () => { document.body.classList.add('badge-open'); },
   'badge-close': () => { document.body.classList.remove('badge-open'); },
   'return-badge': (id) => {
-    S.live.returned = true; setBadge('returned'); toast('Tappy returned ✓');
+    S.live.returned = true; setBadge('returned'); toast('EventBuddy returned ✓');
     badgeLater(2600, () => setBadge('off'));
   },
   finish: (id) => {
@@ -1015,6 +1116,15 @@ const A = {
   'growth-help': () => { ui.growthHelp = true; render(); },
   'growth-help-close': () => { ui.growthHelp = false; render(); },
   circle: (x) => { ui.circle = x || null; render(); },
+  cmode: (x) => { ui.cmode = x; render(); },
+  nsub: (x) => { ui.nsub = x; render(); },
+  ctab: (x) => { ui.ctab = x; render(); },
+  dismiss: (x) => { S.dismissed = [...(S.dismissed || []), x]; save(); toast('Request removed'); render(); },
+  'send-msg': (x) => {
+    const t = (ui.msgText || '').trim(); if (!t) return;
+    chats()[x].push(['me', t]); ui.msgText = ''; ui.typing = x; save(); render(); scrollEnd();
+    setTimeout(() => { const r = ['Haha yes!', 'Sounds good (:', 'Totally agree', 'Let me check and get back to you', 'See you there!']; chats()[x].push([x, r[Math.floor(Math.random() * r.length)]]); ui.typing = null; save(); if (location.hash === '#/chat/' + x) { render(); scrollEnd(); } }, 1400);
+  },
   comments: (x) => { ui.sheet = { type: 'comments', id: x }; render(); },
   'send-comment': (x) => {
     if (!S.profile) { ui.sheet = null; go('onboarding'); return; }
@@ -1051,7 +1161,7 @@ const A = {
     const aud = c.audience === 'circle' ? 'circle' : 'public';
     const post = { id: 'm' + Date.now(), author: 'me', anon: c.audience === 'anon', aud, circle: aud === 'circle' ? c.circle || (e && e.circle) : 'Public', type: c.type, text: c.text.trim(), helpful: 0, comments: 0, ago: 'now' };
     S.posts.unshift(post); ui.compose = null; save();
-    ui.seg = aud === 'circle' ? 'circles' : 'public'; ui.circle = null; go('community');
+    if (aud === 'circle') { ui.ctab = 'Stories'; history.replaceState(null, '', '#/circle/' + encodeURIComponent(post.circle)); render(); } else { ui.cmode = 'Community'; history.replaceState(null, '', '#/community'); render(); }
     e ? earn(15, 'Shared an event takeaway') : earn(10, 'Published a post');
     setTimeout(() => { const p = S.posts.find((y) => y.id === post.id); if (!p) return; p.helpful++; earn(5, 'Marcus marked your post helpful'); render(); }, 3500);
     setTimeout(() => { const p = S.posts.find((y) => y.id === post.id); if (!p) return; p.comments++; earn(2, 'Sofia commented on your post'); render(); }, 7000);
@@ -1061,8 +1171,9 @@ const A = {
 };
 
 /* =============================================================== RENDER */
-const NO_NAV = ['welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'cv', 'mock', 'event', 'recap'];
-const TABS = [['home', 'Home', 'home'], ['events', 'Events', 'search'], ['community', 'Community', 'people'], ['me', 'Me', 'user']];
+const NO_NAV = ['welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'cv', 'mock', 'event', 'recap', 'circle', 'chat'];
+const TABS = [['home', 'Event', 'var(--t-event)'], ['community', 'Community', 'var(--t-comm)'], ['messages', 'Messages', 'var(--t-msg)'], ['me', 'Account', 'var(--t-acc)']];
+const scrollEnd = () => { const a = $('#app'); a.scrollTop = a.scrollHeight; };
 
 function route() {
   const [name = '', arg] = location.hash.replace(/^#\/?/, '').split('/');
@@ -1080,7 +1191,8 @@ function render() {
   if (prev !== app.dataset.view) app.scrollTop = 0;
   const showNav = !NO_NAV.includes(name);
   $('#nav').hidden = !showNav;
-  $('#nav').innerHTML = TABS.map(([k, l, i]) => `<button class="${name === k ? 'on' : ''}" data-a="nav" data-x="${k}">${ICON[i]}<span>${l}</span></button>`).join('');
+  const un = unreadTotal();
+  $('#nav').innerHTML = TABS.map(([k, l, c]) => `<button class="${name === k || (k === 'home' && name === 'events') ? 'on' : ''}" data-a="nav" data-x="${k}" style="color:${c}" aria-label="${l}">${TAB_ICON[k]}<span>${l}</span>${k === 'messages' && un ? `<i class="cnt">${un}</i>` : ''}</button>`).join('');
   $('#badge').innerHTML = badgePanel();
   document.body.classList.toggle('has-badge', !!(S.live && S.live.badgeId));
 }
@@ -1097,12 +1209,15 @@ document.addEventListener('click', (e) => {
   if (el.tagName !== 'INPUT') e.preventDefault();
   fn(el.dataset.x, el);
 });
+document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'msgIn') { e.preventDefault(); $('[data-a="send-msg"]')?.click(); } });
 document.addEventListener('input', (e) => {
   const m = e.target.dataset.model; if (!m) return;
   const v = e.target.value;
   if (m === 'q') { ui.q = v; $('#event-list').innerHTML = eventListHTML(); return; }
   if (m === 'pairInput') { ui.pairInput = v; return; }
   if (m === 'commentText') { ui.commentText = v; return; }
+  if (m === 'msgText') { ui.msgText = v; return; }
+  if (m === 'cq' || m === 'nq') { ui[m] = v; const pos = e.target.selectionStart; const top = $('#app').scrollTop; render(); $('#app').scrollTop = top; const n = document.querySelector(`[data-model="${m}"]`); n.focus(); n.setSelectionRange(pos, pos); return; }
   const [obj, key] = m.split('.');
   ui[obj][key] = v;
   if (obj === 'ob') { const btn = $('[data-a="ob-next"]'); const o = ui.ob; if (btn && o.step === 0) btn.disabled = !(o.name.trim() && o.field && o.stage); }
