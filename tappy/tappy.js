@@ -53,8 +53,8 @@ function screen() {
     case 'request': return `<div class="bs">${avatar(p.avatar, p.color, 64)}<small>TALK WITH</small><b>${p.short}?</b><small>● yes · ○ not now</small></div>`;
     case 'waiting': return `<div class="bs">${avatar(p.avatar, p.color, 64)}<small>Waiting for</small><b>${p.short}…</b></div>`;
     case 'declined': return `<div class="bs"><b>Maybe later</b><small>Nothing was shared.</small></div>`;
-    case 'prompt': return `<div class="bs prompt"><small>YOU + ${p.short.toUpperCase()} · #${esc(b.tag)}</small><p>${esc(b.prompt)}</p><small>● save · ○ skip</small></div>`;
-    case 'saved': return `<div class="bs"><b class="huge">✓</b><b>Saved</b><small>Find ${p.short} in your app</small></div>`;
+    case 'prompt': return `<div class="bs prompt"><small>YOU + ${p.short.toUpperCase()} · #${esc(b.tag)}</small><p>${esc(b.prompt)}</p><small>Connect? ● accept · ○ not now</small></div>`;
+    case 'saved': return `<div class="bs"><b class="huge">✓</b><b>Accepted</b><small>Find ${p.short} in your app</small></div>`;
     case 'returned': return `<div class="bs off"><b>Thanks!</b><small>Data cleared.<br>Ready for next person.</small></div>`;
     default: return `<div class="bs off"><small>JobBuddy</small><b>${BADGE_ID}</b><small>Not assigned</small></div>`;
   }
@@ -83,7 +83,7 @@ function sheetHTML() {
 const HINT = {
   off: 'Not assigned. Open ⋯ → Staff assigns badge.', unpaired: 'Waiting for the phone to pair.', pairing: 'Press ● if the code matches the phone.',
   idle: 'Tap the NFC strip to touch EventBuddy devices with someone.', request: '● to talk · ○ not now', waiting: 'Waiting for the other EventBuddy…',
-  declined: 'No info was exchanged.', prompt: '● save to app · ○ skip', saved: 'Encounter synced to the app.', returned: 'Unpaired and wiped.'
+  declined: 'No info was exchanged.', prompt: 'Connect? ● accept · ○ not now', saved: 'Encounter synced to the app.', returned: 'Unpaired and wiped.'
 };
 
 function render() {
@@ -186,10 +186,10 @@ const STEPS = [
     note: 'A tap only asks. Press ● for yes (○ shows the quiet “not now” path).' },
   { title: 'Waiting', auto: 1600, screen: () => `<div class="bs">${avatar(MARCUS.avatar, MARCUS.color, 64)}<small>Waiting for</small><b>${MARCUS.short}…</b></div>`,
     note: 'Both people have to say yes. Nothing is shared until then.' },
-  { title: 'Shared prompt', a: 'next', b: 'skip', screen: () => `<div class="bs prompt"><small>YOU + ${MARCUS.short.toUpperCase()}</small><p>${esc(PROMPT_TEXT())}</p><small>● save · ○ skip</small></div>`,
-    note: 'Both EventBuddy devices show the same prompt. Talk! Press ● to save the encounter.' },
-  { title: 'Saved', screen: () => `<div class="bs"><b class="huge">✓</b><b>Saved</b><small>Find ${MARCUS.short} in your app</small></div>`,
-    note: 'On the phone: Live → Saved → DEMO “EventBuddy on another device saved Marcus”. Then Follow him after the event.' },
+  { title: 'Shared prompt', a: 'next', b: 'skip', screen: () => `<div class="bs prompt"><small>YOU + ${MARCUS.short.toUpperCase()}</small><p>${esc(PROMPT_TEXT())}</p><small>Connect? ● accept · ○ not now</small></div>`,
+    note: 'Both EventBuddy devices show the same prompt. Talk! Connect? Press ● to accept, ○ for not now.' },
+  { title: 'Accepted', screen: () => `<div class="bs"><b class="huge">✓</b><b>Accepted</b><small>Find ${MARCUS.short} in your app</small></div>`,
+    note: 'On the phone: Live → Met → DEMO “EventBuddy on another device accepted Marcus”. Then Follow him after the event.' },
   { title: 'Return', screen: () => `<div class="bs"><small>LEAVING?</small><b>Return me<br>at the desk</b><small>Your encounters are<br>already in the app</small></div>`,
     note: 'On the phone: “Leaving? Return EventBuddy” → DEMO Staff confirms return.' },
   { title: 'Wiped', screen: () => `<div class="bs off"><b>Thanks!</b><small>Data cleared.<br>Ready for the next person.</small></div>`,

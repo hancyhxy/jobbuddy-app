@@ -226,7 +226,7 @@ V.event = (id) => {
   const r = reg(id); const host = hostOf(e);
   const how = e.mode === 'offline'
     ? [['Check in', 'Show your pass at the desk'], ['Collect an EventBuddy', 'Optional loan device'], ['Pair it', 'Link the EventBuddy to your app'], ['Tap to talk', 'Both say yes, get a shared prompt'], ['Return it', 'Your encounters stay in the app']]
-    : [['Join the lobby', 'Choose what others see'], ['Watch the stream', 'Camera & mic stay in Zoom'], ['Wave at people', 'Both say yes, get a shared prompt'], ['Save & follow', 'Only if you want to']];
+    : [['Join the lobby', 'Choose what others see'], ['Watch the stream', 'Camera & mic stay in Zoom'], ['Wave at people', 'Both say yes, get a shared prompt'], ['Connect', 'Accept or not now — your call']];
   let cta;
   if (isHost(e)) cta = `<button class="btn primary" data-a="toast" data-x="Invite link copied">${ICON.share}Share invite link</button><p class="muted small center">You’re hosting · ${e.going} going so far</p>`;
   else if (!r || r.status === 'cancelled') cta = `<button class="btn primary" data-a="nav" data-x="register/${id}">${e.approval ? 'Request to join' : 'RSVP'}${e.cost === 'Free' ? '' : ' · ' + e.cost}</button>`;
@@ -455,13 +455,13 @@ V.live = (id) => {
   if (!reg(id)) return V.event(id);
   const here = e.attendees.map((p) => PEOPLE[p]);
   const mine = S.encounters.filter((x) => x.eventId === id);
-  const tabs = [['here', 'Who’s here'], ['agenda', 'Agenda'], ['saved', `Saved · ${mine.length}`]];
+  const tabs = [['here', 'Who’s here'], ['agenda', 'Agenda'], ['saved', `Met · ${mine.length}`]];
   let body = '';
   if (ui.liveTab === 'here') body = `<p class="muted small">${here.length + 1} people chose to show on the wall. Spot their avatar on a EventBuddy.</p>
       <div class="wall">${(reg(id).wall ? [{ ...me(), ...badgeLook(id), headline: '#' + badgeLook(id).tag }, ...here] : here).map((p) => `<button class="wall-tile" data-a="sheet-person" data-x="${p.id}">${asc(p, 64)}<b>${esc(p.short)}${p.id === 'me' ? ' (you)' : ''}</b><small>${esc(p.headline)}</small></button>`).join('')}</div>`;
   if (ui.liveTab === 'agenda') body = `<ul class="agenda">${e.agenda.map(([t, a], i) => `<li class="${i === 2 ? 'now' : ''}"><time>${t}</time>${a}${i === 2 ? ' <i class="chip">Now</i>' : ''}</li>`).join('')}</ul>`;
-  if (ui.liveTab === 'saved') body = (mine.length ? mine.map(encounterRow).join('') : `<p class="empty">Nobody saved yet. When you and someone both say yes on your devices, you can save the moment here.</p>`)
-    + (L.noBadge ? '' : here.filter((p) => !mine.some((x) => x.person === p.id)).slice(0, 2).map((p) => demo(`EventBuddy on another device saved ${p.short}`, 'demo-enc', p.id)).join(''));
+  if (ui.liveTab === 'saved') body = (mine.length ? mine.map(encounterRow).join('') : `<p class="empty">No one yet. When you and someone both say yes on your devices, choose Accept to connect and they show up here.</p>`)
+    + (L.noBadge ? '' : here.filter((p) => !mine.some((x) => x.person === p.id)).slice(0, 2).map((p) => demo(`EventBuddy on another device accepted ${p.short}`, 'demo-enc', p.id)).join(''));
   return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="home">${ICON.back}</button><span class="live-pill"><span class="dot"></span>Live</span>
       ${L.noBadge ? '<span class="muted small">No EventBuddy</span>' : `<button class="badge-pill" data-a="badge-open">${ICON.badge}${BADGE_ID}</button>`}</header>
     <section class="pad">
@@ -515,7 +515,7 @@ V.room = (id) => {
   if (!reg(id)) return V.event(id);
   const people = e.attendees.filter((p) => p !== e.host).map((p) => PEOPLE[p]);
   const mine = S.encounters.filter((x) => x.eventId === id);
-  const tabs = [['people', `People · ${people.length}`], ['agenda', 'Agenda'], ['saved', `Saved · ${mine.length}`]];
+  const tabs = [['people', `People · ${people.length}`], ['agenda', 'Agenda'], ['saved', `Met · ${mine.length}`]];
   let body = '';
   if (ui.roomTab === 'people') body = people.map((p) => {
     const w = ui.waved[p.id]; const saved = mine.some((x) => x.person === p.id);
@@ -523,7 +523,7 @@ V.room = (id) => {
       ${saved ? '<span class="muted small">Saved ✓</span>' : `<button class="btn small ${w ? '' : 'primary'}" data-a="wave" data-x="${p.id}" ${w ? 'disabled' : ''}>${w ? 'Waved' : '👋 Wave'}</button>`}</div>`;
   }).join('') + `<p class="note">${ICON.lock} Waves are private. If they don’t wave back, nothing happens.</p>` + demo('David waves at you', 'incoming-wave', 'david');
   if (ui.roomTab === 'agenda') body = `<ul class="agenda">${e.agenda.map(([t, a], i) => `<li class="${i === 1 ? 'now' : ''}"><time>${t}</time>${a}</li>`).join('')}</ul>`;
-  if (ui.roomTab === 'saved') body = mine.length ? mine.map(encounterRow).join('') : '<p class="empty">Wave at someone. If you both want to chat, you get a shared prompt and can save the encounter.</p>';
+  if (ui.roomTab === 'saved') body = mine.length ? mine.map(encounterRow).join('') : '<p class="empty">Wave at someone. If you both want to chat, you get a shared prompt and can accept to connect.</p>';
   return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="home">${ICON.back}</button><span class="live-pill"><span class="dot"></span>Live online</span><span></span></header>
     <section class="pad">
       <div class="stage" style="--c1:${e.cover[0]};--c2:${e.cover[1]}">${av(host, 72)}<div><small>ON STAGE</small><b>${host.name}</b><span>“How I switched careers into UX”</span></div>
@@ -1035,7 +1035,7 @@ function sheetHTML() {
     const online = S.live?.online;
     inner = `<div class="duo">${online ? av(me(), 64) + av(p, 64) : asc({ ...me(), ...badgeLook(S.live?.eventId) }, 64) + asc(p, 64)}</div><small class="eyebrow">You both said yes · ${esc(s.tag)}</small><h2 class="prompt">${esc(s.prompt)}</h2>
       <button class="btn" data-a="toast" data-x="Opens a 5-minute video room (mocked)">Open 5-min chat room</button>
-      <button class="btn primary" data-a="save-enc" data-x="${p.id}">Save encounter</button><button class="link" data-a="sheet-close">Skip</button>`;
+      <h3 style="margin:6px 0 0">Connect with ${p.short}?</h3><div style="display:flex;gap:10px;width:100%"><button class="btn" data-a="sheet-close">Not now</button><button class="btn primary" data-a="save-enc" data-x="${p.id}">Accept</button></div>`;
   }
   if (s.type === 'incoming') {
     const p = PEOPLE[s.id];
@@ -1064,8 +1064,8 @@ function badgeScreen() {
     case 'request': return `<div class="bs">${avatar(partner.avatar, partner.color, 64)}<small>TALK WITH</small><b>${partner.short}?</b><small>● yes · ○ not now</small></div>`;
     case 'waiting': return `<div class="bs">${avatar(partner.avatar, partner.color, 64)}<small>Waiting for</small><b>${partner.short}…</b></div>`;
     case 'declined': return `<div class="bs"><b>Maybe later</b><small>Nothing was shared.</small></div>`;
-    case 'prompt': return `<div class="bs prompt"><small>YOU + ${partner.short.toUpperCase()} · #${esc(b.tag)}</small><p>${esc(b.prompt)}</p><small>● save · ○ skip</small></div>`;
-    case 'saved': return `<div class="bs"><b class="huge">✓</b><b>Saved</b><small>Find ${partner.short} in your app</small></div>`;
+    case 'prompt': return `<div class="bs prompt"><small>YOU + ${partner.short.toUpperCase()} · #${esc(b.tag)}</small><p>${esc(b.prompt)}</p><small>Connect? ● accept · ○ not now</small></div>`;
+    case 'saved': return `<div class="bs"><b class="huge">✓</b><b>Accepted</b><small>Find ${partner.short} in your app</small></div>`;
     case 'returned': return `<div class="bs off"><b>Thanks!</b><small>Data cleared.<br>Ready for next person.</small></div>`;
     default: return '';
   }
@@ -1080,7 +1080,7 @@ function badgePanel() {
   const hint = {
     off: 'No EventBuddy assigned. Collect one at check-in.', unpaired: 'Assigned but not paired. Pair it from the phone.', pairing: 'Press ● to confirm the code matches the phone.',
     idle: 'Showing your public avatar. Tap devices with someone nearby.', request: 'The other EventBuddy asked to talk. Press ● if you want to.', waiting: 'Waiting for the other person to press ●.',
-    declined: 'They chose “not now”. No info exchanged.', prompt: 'Shared prompt shown on both devices. ● saves the encounter to your app.', saved: 'Encounter synced to the app.', returned: 'EventBuddy unpaired and wiped.'
+    declined: 'They chose “not now”. No info exchanged.', prompt: 'Shared prompt shown on both devices. Connect? ● accept · ○ not now.', saved: 'Encounter synced to the app.', returned: 'EventBuddy unpaired and wiped.'
   }[S.badge.screen];
   return `<div class="bp-head"><b>EventBuddy</b><small>Simulated hardware · ESP32 + NFC + 240×240 screen · <a href="./tappy/" target="_blank" rel="noopener">open as separate app ↗</a></small><button class="icon-btn bp-close" data-a="badge-close">${ICON.close}</button></div>
     <div class="device ${hasBadge ? '' : 'dim'}">
@@ -1114,7 +1114,7 @@ function hw(btn) {
   } else if (b.screen === 'prompt') {
     if (btn === 'A') {
       addEncounter(b.partner, L.eventId, b.prompt, 'tappy');
-      setBadge('saved'); toast(`Saved · ${PEOPLE[b.partner].short}`);
+      setBadge('saved'); toast(`Accepted · ${PEOPLE[b.partner].short}`);
       badgeLater(2200, () => setBadge('idle', { partner: null }));
     } else setBadge('idle', { partner: null });
   } else if (b.screen === 'idle' && btn === 'A') toast('Badge: showing your avatar');
@@ -1216,7 +1216,7 @@ const A = {
   theme: (x) => { localStorage.setItem(THEME_KEY, x); applyTheme(); render(); },
   'theme-cycle': () => { const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; localStorage.setItem(THEME_KEY, next); applyTheme(); render(); },
   'pair-confirm': () => { S.live.paired = true; S.live.pairing = false; setBadge('idle'); toast('EventBuddy paired ✓'); },
-  'demo-enc': (x) => { const pr = makePrompt(PEOPLE[x]); addEncounter(x, S.live.eventId, pr.text, 'tappy'); toast(`Saved · ${PEOPLE[x].short}`); render(); },
+  'demo-enc': (x) => { const pr = makePrompt(PEOPLE[x]); addEncounter(x, S.live.eventId, pr.text, 'tappy'); toast(`Accepted · ${PEOPLE[x].short}`); render(); },
   'pair-cancel': () => { S.live.pairing = false; setBadge('unpaired'); },
   'sheet-person': (x) => { ui.sheet = { type: 'person', id: x }; render(); },
   'sheet-close': () => { ui.sheet = null; render(); },
@@ -1247,7 +1247,7 @@ const A = {
   },
   'incoming-wave': (x) => { ui.sheet = { type: 'incoming', id: x }; render(); },
   'accept-wave': (x) => { const pr = makePrompt(PEOPLE[x]); ui.sheet = { type: 'match', id: x, prompt: pr.text, tag: pr.tag }; render(); },
-  'save-enc': (x) => { addEncounter(x, S.live.eventId, ui.sheet.prompt, S.live.online ? 'wave' : 'hi'); ui.sheet = null; toast(`Saved · ${PEOPLE[x].short}`); render(); },
+  'save-enc': (x) => { addEncounter(x, S.live.eventId, ui.sheet.prompt, S.live.online ? 'wave' : 'hi'); ui.sheet = null; toast(`Accepted · ${PEOPLE[x].short}`); render(); },
   follow: (x) => {
     if (!S.profile) { go('onboarding'); return; }
     const p = PEOPLE[x]; const was = S.following.includes(x);

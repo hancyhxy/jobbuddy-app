@@ -26,8 +26,8 @@ On the JobBuddy phone, **Pair EventBuddy → Tap to scan** opens the real rear c
 
 Each device keeps its own local state, so the presenter moves both sides along:
 
-- **EventBuddy ⋯ operator menu:** 1 Staff assigns EventBuddy → 2 Phone sends pair request → press ● → tap the **NFC** strip to touch EventBuddy devices with someone → ● yes → ● save → 3 Staff confirms return. It can also choose who the EventBuddy shows.
-- **Phone:** after pairing, **DEMO EventBuddy on another device: confirmed** stands in for the EventBuddy's ●. In Live → Saved, **DEMO EventBuddy on another device saved …** adds the encounter that the EventBuddy would sync.
+- **EventBuddy ⋯ operator menu:** 1 Staff assigns EventBuddy → 2 Phone sends pair request → press ● → tap the **NFC** strip to touch EventBuddy devices with someone → ● yes → ● accept (○ not now) → 3 Staff confirms return. It can also choose who the EventBuddy shows.
+- **Phone:** after pairing, **DEMO EventBuddy on another device: confirmed** stands in for the EventBuddy's ●. In Live → Met, **DEMO EventBuddy on another device accepted …** adds the encounter that the EventBuddy would sync.
 - **Same browser:** open both apps in two windows of the same browser (e.g. on a laptop) and they sync automatically through shared local storage.
 
 ## Run locally
@@ -52,7 +52,7 @@ All data is fictional and stays in the browser's `localStorage`. **Account → R
 3. I’m here → **DEMO Staff scans pass** → **DEMO Staff hands you EventBuddy EB-07**, or *Continue without a EventBuddy*.
 4. Pair: typing a wrong ID shows an error. *Tap to scan* fills EB-07. The phone and EventBuddy show the same code, and you press ● on the EventBuddy to confirm.
 5. Live: participant wall (opt-in), agenda, saved encounters.
-6. On the EventBuddy, use the DEMO chips to tap with Marcus. Press ● to say yes, then a shared prompt appears. Press ● again to save. Tap with Priya to see a “not now” decline where nothing is shared.
+6. On the EventBuddy, use the DEMO chips to tap with Marcus. Press ● to say yes, then a shared prompt appears. Press ● again to accept the connection (○ = not now). Tap with Priya to see a “not now” decline where nothing is shared.
 7. Return EventBuddy → **DEMO Staff confirms return** → the EventBuddy is wiped → recap.
 8. Recap: one-way Follow, host message, share-a-takeaway prompt, rating, next events.
 9. Post a takeaway. A few seconds later a simulated Star arrives, and the balance shows under Community → ★.
