@@ -1,14 +1,14 @@
 // JobBuddy EventBuddy — standalone simulated hardware app.
 // Shares localStorage with the phone app (same origin), so two windows in one browser stay in sync.
 // On a separate device it runs on its own; the operator menu (⋯) stands in for signals from the phone/staff.
-import { PEOPLE, PROMPTS, AVATAR_CHOICES, AVATAR_COLORS } from '../js/data.js';
+import { PEOPLE, ICEBREAKERS, AVATAR_CHOICES, AVATAR_COLORS } from '../js/data.js';
 import { avatar } from '../js/avatar.js';
 
 const KEY = 'jobbuddy-proto-v1';
 const BADGE_ID = 'EB-07';
 const PAIR_CODE = '4812';
 const EVENT_ID = 'build-night';
-const DEMO_OWNER = { id: 'demo', name: 'Emma', short: 'Emma', field: 'Design', interests: ['AI tools', 'UX'], avatar: 'female_2_1', color: '#D7FF3A' };
+const DEMO_OWNER = { id: 'demo', name: 'Emma', short: 'Emma', line: 'Design · Beginner', avatar: 'female_2_1', color: '#D7FF3A' };
 const PARTNERS = ['marcus', 'david', 'priya', 'sofia', 'ahmed'];
 
 let S = load();
@@ -30,31 +30,27 @@ function owner() {
   const o = S.badge.owner;
   if (o && PEOPLE[o]) return PEOPLE[o];
   if (o !== 'demo' && S.profile) {
-    const b = S.regs?.[S.live?.eventId]?.badge || S.lastBadge || {};
-    return { ...S.profile, short: S.profile.name.split(' ')[0], avatar: b.avatar || S.profile.avatar, color: b.color || S.profile.color, interests: [b.tag || S.profile.interests[0], ...S.profile.interests] };
+    const b = S.buddy || {}; // one EventBuddy profile reused for every event
+    return { ...S.profile, short: S.profile.name.split(' ')[0], avatar: b.avatar || S.profile.avatar, color: b.color || S.profile.color, line: b.career ? `${b.career} · ${b.level}` : S.profile.field };
   }
   return DEMO_OWNER;
 }
 
-function prompt(p) {
-  const mine = owner().interests || [];
-  const tag = p.interests.find((t) => mine.includes(t));
-  const list = tag ? PROMPTS.shared(tag) : PROMPTS.offer;
-  return { tag: tag || 'Career stories', text: list[Math.floor(Math.random() * list.length)] };
-}
+const icebreaker = (not) => { const l = ICEBREAKERS.filter((q) => q !== not); return l[Math.floor(Math.random() * l.length)]; };
+const linkCode = (pid) => String(2700 + ([...pid].reduce((a, c) => a + c.charCodeAt(0), 0) * 37) % 300);
+const lineOf = (p) => p.line || `${p.field} · ${p.headline?.split(' ')[0] || ''}`;
 
 /* ------------------------------------------------------------ screens */
 function screen() {
   const b = S.badge; const o = owner(); const p = b.partner && PEOPLE[b.partner];
   switch (b.screen) {
-    case 'unpaired': return `<div class="bs"><small>BADGE</small><b class="huge">${BADGE_ID}</b><small>Open JobBuddy<br>to pair</small></div>`;
-    case 'pairing': return `<div class="bs"><small>PAIR WITH</small><b>${esc(o.short)}?</b><div class="bcode">${PAIR_CODE}</div><small>● yes · ○ no</small></div>`;
-    case 'idle': return `<div class="bs idle"><div class="badge-av">${avatar(o.avatar, o.color, 118, frame)}</div><b>${esc(o.short)}</b><small>#${esc(o.interests?.[0] || o.field)}</small></div>`;
-    case 'request': return `<div class="bs">${avatar(p.avatar, p.color, 64)}<small>TALK WITH</small><b>${p.short}?</b><small>● yes · ○ not now</small></div>`;
+    case 'unpaired': return `<div class="bs qr-screen">${qrSVG(BADGE_ID)}<small>SCAN WITH JOBBUDDY · ${BADGE_ID}</small></div>`;
+    case 'pairing': return `<div class="bs"><small>PAIR WITH</small><b>${esc(o.short)}?</b><div class="bcode">${PAIR_CODE}</div><small>Press = yes · Hold = no</small></div>`;
+    case 'idle': return `<div class="bs idle"><div class="badge-av">${avatar(o.avatar, o.color, 104, frame)}</div><b>${esc(o.short)}</b><small>${esc(o.line)}</small><small class="dim">TAP TO MEET</small></div>`;
+    case 'request': return `<div class="bs"><small>LINK WITH ${p.short.toUpperCase()}?</small><div class="bcode">${linkCode(p.id)}</div><small>Same code on both screens?</small><small>Press to link · Hold to cancel</small></div>`;
     case 'waiting': return `<div class="bs">${avatar(p.avatar, p.color, 64)}<small>Waiting for</small><b>${p.short}…</b></div>`;
-    case 'declined': return `<div class="bs"><b>Maybe later</b><small>Nothing was shared.</small></div>`;
-    case 'prompt': return `<div class="bs prompt"><small>YOU + ${p.short.toUpperCase()} · #${esc(b.tag)}</small><p>${esc(b.prompt)}</p><small>Connect? ● accept · ○ not now</small></div>`;
-    case 'saved': return `<div class="bs"><b class="huge">✓</b><b>Accepted</b><small>Find ${p.short} in your app</small></div>`;
+    case 'declined': return `<div class="bs"><b>Saved as pending</b><small>${p ? p.short + ' can tap back later.' : ''}<br>Nothing else was shared.</small></div>`;
+    case 'prompt': return `<div class="bs prompt"><small>✓ LINKED · YOU &amp; ${p.short.toUpperCase()}</small><small class="dim">ICEBREAKER</small><p>${esc(b.prompt)}</p><small>● Saved to your event memories</small></div>`;
     case 'returned': return `<div class="bs off"><b>Thanks!</b><small>Data cleared.<br>Ready for next person.</small></div>`;
     default: return `<div class="bs off"><small>JobBuddy</small><b>${BADGE_ID}</b><small>Not assigned</small></div>`;
   }
@@ -64,7 +60,7 @@ function sheetHTML() {
   if (!sheet) return '';
   let inner = '';
   if (sheet === 'nfc') inner = `<b>Touch EventBuddy devices with…</b><small>Simulates holding this EventBuddy against another attendee’s badge.</small>
-    ${PARTNERS.map((id) => { const p = PEOPLE[id]; return `<button class="opt" data-a="tap" data-x="${id}">${avatar(p.avatar, p.color, 32)}<span>${p.name}${p.responds === 'later' ? '<i>will say “not now”</i>' : ''}</span></button>`; }).join('')}`;
+    ${PARTNERS.map((id) => { const p = PEOPLE[id]; return `<button class="opt" data-a="tap" data-x="${id}">${avatar(p.avatar, p.color, 32)}<span>${p.name}${p.responds === 'later' ? '<i>won’t press yet → saved as pending</i>' : ''}</span></button>`; }).join('')}`;
   if (sheet === 'op') {
     const hasProfile = !!S.profile;
     inner = `<b>Operator</b><small>Stands in for the phone and staff while the devices aren’t linked.</small>
@@ -81,10 +77,11 @@ function sheetHTML() {
 }
 
 const HINT = {
-  off: 'Not assigned. Open ⋯ → Staff assigns badge.', unpaired: 'Waiting for the phone to pair.', pairing: 'Press ● if the code matches the phone.',
-  idle: 'Tap the NFC strip to touch EventBuddy devices with someone.', request: '● to talk · ○ not now', waiting: 'Waiting for the other EventBuddy…',
-  declined: 'No info was exchanged.', prompt: 'Connect? ● accept · ○ not now', saved: 'Encounter synced to the app.', returned: 'Unpaired and wiped.'
+  off: 'Not assigned. Open ⋯ → Staff assigns EventBuddy.', unpaired: 'Scan this QR from the phone to pair.', pairing: 'Press Meet if the code matches the phone. Hold to cancel.',
+  idle: 'Tap the NFC strip to hold devices together with someone.', request: 'Same code on both? Press to link · hold to cancel', waiting: 'Waiting for the other EventBuddy…',
+  declined: 'They didn’t press yet. Saved as pending.', prompt: 'Take turns answering. Press for a new prompt · hold when done', returned: 'Unpaired and wiped.'
 };
+const MEET = `<div class="hw-row"><button class="hw a meet" data-meet aria-label="Meet: press = yes, hold = no">MEET</button></div><small class="meet-legend">PRESS = YES · HOLD = NO</small>`;
 
 function render() {
   if (mode === 'script') return renderScript();
@@ -93,7 +90,7 @@ function render() {
     <header class="b-top"><span class="dev">${BADGE_ID}</span><span class="state ${S.live?.paired ? 'on' : ''}">${S.live?.paired ? '● paired' : S.live?.badgeId ? '○ not paired' : '○ idle'}</span><button class="op" data-a="op" aria-label="Operator menu">⋯</button></header>
     <button class="nfc-pad" data-a="nfc" ${s === 'idle' ? '' : 'disabled'}><span>NFC</span></button>
     <div class="screen-wrap"><div class="screen">${screen()}</div></div>
-    <div class="hw-row"><button class="hw a" data-a="hw" data-x="A" aria-label="Yes">●</button><button class="hw b" data-a="hw" data-x="B" aria-label="No">○</button></div>
+    ${MEET}
     <p class="b-hint">${HINT[s] || ''}</p>
     ${sheetHTML()}`;
   fit();
@@ -105,9 +102,11 @@ function fit() {
 }
 
 /* ------------------------------------------------------------- actions */
+// btn: 'A' = press (yes), 'B' = hold (no)
 function hw(btn) {
-  navigator.vibrate?.(15);
-  const b = S.badge;
+  navigator.vibrate?.(btn === 'B' ? 40 : 15);
+  const b = S.badge; const eventId = S.live?.eventId || EVENT_ID;
+  const save1 = (person, prompt, waiting) => { if (!S.encounters.some((x) => x.person === person && x.eventId === eventId)) S.encounters.push({ id: 'x' + Date.now(), person, eventId, prompt, via: 'tappy', at: Date.now(), ...(waiting ? { waiting: true } : {}) }); };
   if (b.screen === 'pairing') {
     if (btn === 'A') { S.live = { ...(S.live || { eventId: EVENT_ID, badgeId: BADGE_ID }), paired: true, pairing: false }; set('idle'); }
     else { if (S.live) S.live.pairing = false; set('unpaired'); }
@@ -116,15 +115,11 @@ function hw(btn) {
     set('waiting');
     const p = PEOPLE[b.partner];
     later(1400, () => {
-      if (p.responds === 'later') { set('declined'); later(2400, () => set('idle', { partner: null })); }
-      else { const pr = prompt(p); set('prompt', { prompt: pr.text, tag: pr.tag }); }
+      if (p.responds === 'later') { save1(p.id, '', true); set('declined'); later(2400, () => set('idle', { partner: null })); }
+      else { const q = icebreaker(); save1(p.id, q); set('prompt', { prompt: q }); }
     });
   } else if (b.screen === 'prompt') {
-    if (btn === 'B') return set('idle', { partner: null });
-    const eventId = S.live?.eventId || EVENT_ID;
-    if (!S.encounters.some((x) => x.person === b.partner && x.eventId === eventId)) S.encounters.push({ id: 'x' + Date.now(), person: b.partner, eventId, prompt: b.prompt, via: 'tappy', at: Date.now() });
-    set('saved');
-    later(2200, () => set('idle', { partner: null }));
+    if (btn === 'A') set('prompt', { prompt: icebreaker(b.prompt) }); else set('idle', { partner: null });
   }
 }
 
@@ -150,10 +145,11 @@ const MODE_KEY = 'tappy-mode'; const STEP_KEY = 'tappy-step'; const LOOK_KEY = '
 let mode = localStorage.getItem(MODE_KEY) || 'script';
 let step = +(localStorage.getItem(STEP_KEY) || 0);
 let notes = localStorage.getItem(NOTES_KEY) !== 'off';
-let look = (() => { try { return { name: 'Emma', avatar: 'female_2_1', color: '#D7FF3A', tag: 'AI tools', ...JSON.parse(localStorage.getItem(LOOK_KEY)) }; } catch { return { name: 'Emma', avatar: 'female_2_1', color: '#D7FF3A', tag: 'AI tools' }; } })();
+let look = (() => { try { return { name: 'Emma', avatar: 'female_2_1', color: '#D7FF3A', tag: 'Design · Beginner', ...JSON.parse(localStorage.getItem(LOOK_KEY)) }; } catch { return { name: 'Emma', avatar: 'female_2_1', color: '#D7FF3A', tag: 'Design · Beginner' }; } })();
+if (!look.tag.includes('·')) look.tag = 'Design · Beginner';
 let flash = null; // temporary screen (e.g. "Maybe later")
 const MARCUS = PEOPLE.marcus;
-const TAGS = ['AI tools', 'UX', 'Portfolio', 'Interviews', 'Career change', 'Data viz'];
+const TAGS = ['Design · Beginner', 'Design · Intermediate', 'Engineering · Beginner', 'Product · Intermediate', 'Student · Beginner'];
 
 function qrSVG(seed) {
   let h = 0; for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0;
@@ -169,31 +165,30 @@ function qrSVG(seed) {
   return `<svg viewBox="-2 -2 29 29" shape-rendering="crispEdges" class="t-qr"><rect x="-2" y="-2" width="29" height="29" fill="#fff"/><g fill="#000">${cells}</g></svg>`;
 }
 
-const PROMPT_TEXT = () => (MARCUS.interests.includes(look.tag) ? `You both picked “${look.tag}”. What got you into it?` : 'One of you is further along. What do you wish you knew a year ago?');
+let promptIdx = 0;
+const PROMPT_TEXT = () => ICEBREAKERS[promptIdx % ICEBREAKERS.length];
 
 const STEPS = [
   { title: 'Ready at the desk', screen: () => `<div class="bs off"><small>JobBuddy</small><b>${BADGE_ID}</b><small>Ready for the next attendee</small></div>`,
-    note: 'On the phone: open the event → “I’m here — check in” → DEMO Staff scans your pass → DEMO Staff hands you EventBuddy EB-07.' },
+    note: 'On the phone: event → During → “Check in at the event” → DEMO Staff scans your pass → DEMO Staff hands you EventBuddy EB-07.' },
   { title: 'Scan to pair', screen: () => `<div class="bs qr-screen">${qrSVG(BADGE_ID)}<small>SCAN WITH JOBBUDDY · ${BADGE_ID}</small></div>`,
-    note: 'On the phone: “Pair EventBuddy” → “Tap to scan”, then point the camera at this QR.' },
-  { title: 'Confirm the code', a: 'next', screen: () => `<div class="bs"><small>PAIR WITH</small><b>${esc(look.name)}?</b><div class="bcode">${PAIR_CODE}</div><small>● yes · ○ no</small></div>`,
-    note: 'Phone shows 4812 too. Press ● here, then tap “EventBuddy shows ✓ — continue” on the phone.' },
+    note: 'On the phone: check the EventBuddy profile review → “Scan device”, then point the camera at this QR.' },
+  { title: 'Confirm the code', a: 'next', screen: () => `<div class="bs"><small>PAIR WITH</small><b>${esc(look.name)}?</b><div class="bcode">${PAIR_CODE}</div><small>Press = yes · Hold = no</small></div>`,
+    note: 'Phone shows 4812 too. Press Meet here, then tap “EventBuddy shows ✓ — continue” on the phone.' },
   { title: 'Paired', screen: () => `<div class="bs"><b class="huge">✓</b><b>Hi ${esc(look.name)}</b><small>EventBuddy is yours tonight</small></div>`,
-    note: 'On the phone: “Back to event”. Put the phone away — EventBuddy does the rest.' },
-  { title: 'Your avatar', nfc: true, screen: () => `<div class="bs idle"><div class="badge-av">${avatar(look.avatar, look.color, 118, frame)}</div><b>${esc(look.name)}</b><small>#${esc(look.tag)}</small></div>`,
+    note: 'On the phone: “Back to event”. The phone goes in the pocket — the device does the work.' },
+  { title: 'Idle · tap to meet', nfc: true, screen: () => `<div class="bs idle"><div class="badge-av">${avatar(look.avatar, look.color, 104, frame)}</div><b>${esc(look.name)}</b><small>${esc(look.tag)}</small><small class="dim">TAP TO MEET</small></div>`,
     note: 'Walk up to someone. Hold two EventBuddy devices together: tap the NFC strip (or Next).' },
-  { title: 'Tap: talk?', a: 'next', b: 'decline', screen: () => `<div class="bs">${avatar(MARCUS.avatar, MARCUS.color, 64)}<small>TALK WITH</small><b>${MARCUS.short}?</b><small>● yes · ○ not now</small></div>`,
-    note: 'A tap only asks. Press ● for yes (○ shows the quiet “not now” path).' },
+  { title: 'Link code', a: 'next', b: 'decline', screen: () => `<div class="bs"><small>LINK WITH ${MARCUS.short.toUpperCase()}?</small><div class="bcode">${linkCode(MARCUS.id)}</div><small>Same code on both screens?</small><small>Press to link · Hold to cancel</small></div>`,
+    note: 'Both screens show the same code. Press Meet to link (hold = cancel, nothing is shared).' },
   { title: 'Waiting', auto: 1600, screen: () => `<div class="bs">${avatar(MARCUS.avatar, MARCUS.color, 64)}<small>Waiting for</small><b>${MARCUS.short}…</b></div>`,
-    note: 'Both people have to say yes. Nothing is shared until then.' },
-  { title: 'Shared prompt', a: 'next', b: 'skip', screen: () => `<div class="bs prompt"><small>YOU + ${MARCUS.short.toUpperCase()}</small><p>${esc(PROMPT_TEXT())}</p><small>Connect? ● accept · ○ not now</small></div>`,
-    note: 'Both EventBuddy devices show the same prompt. Talk! Connect? Press ● to accept, ○ for not now.' },
-  { title: 'Accepted', screen: () => `<div class="bs"><b class="huge">✓</b><b>Accepted</b><small>Find ${MARCUS.short} in your app</small></div>`,
-    note: 'On the phone: Live → Met → DEMO “EventBuddy on another device accepted Marcus”. Then Follow him after the event.' },
-  { title: 'Return', screen: () => `<div class="bs"><small>LEAVING?</small><b>Return me<br>at the desk</b><small>Your encounters are<br>already in the app</small></div>`,
-    note: 'On the phone: “Leaving? Return EventBuddy” → DEMO Staff confirms return.' },
+    note: 'Both people have to press. If they don’t, the tap is saved as pending on the phone.' },
+  { title: 'Linked · icebreaker', a: 'prompt', b: 'skip', screen: () => `<div class="bs prompt"><small>✓ LINKED · YOU &amp; ${MARCUS.short.toUpperCase()}</small><small class="dim">ICEBREAKER</small><p>${esc(PROMPT_TEXT())}</p><small>● Saved to your event memories</small></div>`,
+    note: 'Take turns answering out loud. Press Meet for a new prompt, hold when done. No “accept” here — that happens later at home.' },
+  { title: 'Return', screen: () => `<div class="bs"><small>LEAVING?</small><b>Return me<br>at the desk</b><small>Your taps are<br>already in the app</small></div>`,
+    note: 'On the phone: “Leaving? Return EventBuddy” → DEMO Staff confirms return → Taps synced → Review in Network.' },
   { title: 'Wiped', screen: () => `<div class="bs off"><b>Thanks!</b><small>Data cleared.<br>Ready for the next person.</small></div>`,
-    note: 'EventBuddy is unpaired and wiped. The phone shows the recap. Next restarts the demo.' }
+    note: 'EventBuddy is unpaired and wiped. On the phone, accept or decline Marcus in Network → Requests. Next restarts the demo.' }
 ];
 
 function setStep(i) {
@@ -208,7 +203,8 @@ function setStep(i) {
 function scriptHW(btn) {
   const s = STEPS[step];
   if (btn === 'A' && s.a === 'next') return setStep(step + 1);
-  if (btn === 'B' && s.b === 'decline') { flash = `<div class="bs"><b>Maybe later</b><small>Nothing was shared.</small></div>`; render(); clearTimeout(timer); timer = setTimeout(() => setStep(4), 2200); return; }
+  if (btn === 'A' && s.a === 'prompt') { promptIdx++; navigator.vibrate?.(12); return render(); }
+  if (btn === 'B' && s.b === 'decline') { flash = `<div class="bs"><b>Cancelled</b><small>Nothing was shared.</small></div>`; render(); clearTimeout(timer); timer = setTimeout(() => setStep(4), 2200); return; }
   if (btn === 'B' && s.b === 'skip') return setStep(4);
   navigator.vibrate?.(8);
 }
@@ -219,11 +215,11 @@ function scriptSheet() {
     <button class="opt" data-a="s-notes">${notes ? 'Hide' : 'Show'} presenter notes</button>
     <small class="lbl">NAME ON TAPPY</small>
     <input class="field" data-look="name" value="${esc(look.name)}" maxlength="14">
-    <small class="lbl">AVATAR (match what you picked when registering)</small>
+    <small class="lbl">AVATAR (match your EventBuddy profile)</small>
     <div class="look-grid">${AVATAR_CHOICES.map((k) => `<button class="${look.avatar === k ? 'on' : ''}" data-a="s-look" data-x="avatar|${k}">${avatar(k, look.color, 44)}</button>`).join('')}</div>
     <div class="owners">${AVATAR_COLORS.map((c) => `<button class="sw ${look.color === c ? 'on' : ''}" style="background:${c}" data-a="s-look" data-x="color|${c}"></button>`).join('')}</div>
-    <small class="lbl">TAG</small>
-    <div class="owners">${TAGS.map((t) => `<button class="pill ${look.tag === t ? 'on' : ''}" data-a="s-look" data-x="tag|${t}">#${t}</button>`).join('')}</div>
+    <small class="lbl">CAREER LINE</small>
+    <div class="owners">${TAGS.map((t) => `<button class="pill ${look.tag === t ? 'on' : ''}" data-a="s-look" data-x="tag|${t}">${t}</button>`).join('')}</div>
     <button class="opt" data-a="s-mode">Switch to free play (manual operator)</button>`;
 }
 
@@ -233,7 +229,7 @@ function renderScript() {
     <header class="b-top"><span class="dev">${BADGE_ID}</span><span class="state on">${step + 1}/${STEPS.length} · ${s.title}</span><button class="op" data-a="op" aria-label="Menu">⋯</button></header>
     <button class="nfc-pad" data-a="s-nfc" ${s.nfc ? '' : 'disabled'}><span>NFC</span></button>
     <div class="screen-wrap"><div class="screen">${flash || s.screen()}</div></div>
-    <div class="hw-row"><button class="hw a" data-a="hw" data-x="A" aria-label="Yes">●</button><button class="hw b" data-a="hw" data-x="B" aria-label="No">○</button></div>
+    ${MEET}
     ${notes ? `<p class="presenter"><b>PRESENTER</b>${s.note}</p>` : '<p class="presenter"></p>'}
     <div class="player"><button data-a="s-prev" aria-label="Previous">◀</button><div class="dots">${STEPS.map((_, i) => `<i class="${i === step ? 'on' : i < step ? 'done' : ''}"></i>`).join('')}</div><button class="next" data-a="s-next">Next ▶</button></div>
     ${sheet ? `<div class="scrim" data-a="close"></div><div class="sheet">${sheet === 'op' ? scriptSheet() : ''}</div>` : ''}`;
@@ -257,12 +253,17 @@ document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-a]'); if (!el || el.disabled) return;
   A[el.dataset.a]?.(el.dataset.x);
 });
+// Meet button: short press = yes, hold ~0.6 s = no.
+let meetT = null; let held = false;
+document.addEventListener('pointerdown', (e) => { const m = e.target.closest('[data-meet]'); if (!m) return; held = false; m.classList.add('down'); meetT = setTimeout(() => { held = true; m.classList.add('held'); A.hw('B'); }, 600); });
+document.addEventListener('pointerup', (e) => { if (meetT === null) return; clearTimeout(meetT); meetT = null; document.querySelector('[data-meet]')?.classList.remove('down', 'held'); if (!held && e.target.closest('[data-meet]')) A.hw('A'); });
+document.addEventListener('pointercancel', () => { clearTimeout(meetT); meetT = null; });
 window.addEventListener('resize', fit);
 setInterval(() => {
   frame++;
   const el = document.querySelector('.badge-av');
-  if (el && mode === 'script') { el.innerHTML = avatar(look.avatar, look.color, 118, frame); return; }
-  if (el && S.badge.screen === 'idle') { const o = owner(); el.innerHTML = avatar(o.avatar, o.color, 118, frame); }
+  if (el && mode === 'script') { el.innerHTML = avatar(look.avatar, look.color, 104, frame); return; }
+  if (el && S.badge.screen === 'idle') { const o = owner(); el.innerHTML = avatar(o.avatar, o.color, 104, frame); }
 }, 650);
 render();
 

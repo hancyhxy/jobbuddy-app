@@ -759,3 +759,51 @@ i.pill { height: 30px; }
 .ce-cover .cover-title { font-size: 20px; }
 .ce-cover small { display: inline-flex; gap: 6px; align-items: center; } .ce-cover small .ic { width: 16px; height: 16px; }
 .toggle small { font-size: 12px; color: var(--mu); margin-top: 2px; }
+
+/* ---------- Week 9 revision: event phases, EventBuddy profile, single Meet button ---------- */
+.toggle span small { display: block; }
+.phase-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 16px 0; }
+.phase-steps button { height: 36px; border-radius: 99px; background: var(--s1); color: var(--mu); font-size: 13px; font-weight: 600; text-align: center; }
+.phase-steps button.done { background: color-mix(in srgb, var(--green2) 18%, #fff); color: var(--green2); }
+.phase-steps button.on { background: var(--tx); color: #fff; }
+.phase-card { background: var(--s1); border-radius: 18px; padding: 16px; margin-bottom: 12px; display: grid; gap: 4px; }
+.phase-card small { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--mu); }
+.phase-card .ok, .ok { color: var(--green2); }
+.phase-card b { font-size: 17px; }
+.phase-card p { margin: 0; font-size: 13px; color: var(--mu); line-height: 1.45; }
+.phase-card.warn { box-shadow: inset 3px 0 0 #e7a83a; }
+.phase-card .row2 { display: flex; gap: 8px; margin-top: 10px; }
+.phase-card .row2 .btn { flex: 1; height: 40px; }
+.linkrow { display: block; font-size: 13px; font-weight: 600; color: var(--green2); margin: 2px 0 14px; text-align: left; }
+.buddy-cta { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 14px 16px; border-radius: 18px; background: color-mix(in srgb, var(--green2) 14%, #fff); margin-bottom: 12px; }
+.buddy-cta span { flex: 1; } .buddy-cta b { font-size: 15px; } .buddy-cta small { display: block; color: var(--mu); font-size: 12px; margin-top: 3px; }
+.buddy-cta.done { background: var(--s1); }
+.eb-card { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 16px; border-radius: 18px; background: #111; color: #fff; margin-bottom: 12px; }
+.eb-card > span { width: 36px; height: 36px; border-radius: 50%; background: #2a2a2a; display: grid; place-items: center; }
+.eb-card > span.ok { background: var(--green2); color: #fff; }
+.eb-card div { flex: 1; } .eb-card small { display: block; color: #aaa; font-size: 12px; }
+.eb-card p { width: 100%; margin: 0; font-size: 13px; color: #ccc; }
+.ev-prog { position: relative; height: 6px; border-radius: 6px; background: #e4e4e0; margin: 10px 0 6px; }
+.ev-prog i { display: block; height: 100%; border-radius: 6px; background: var(--green2); }
+.ev-prog b { position: absolute; top: -4px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--tx); }
+.ev-times { display: flex; justify-content: space-between; }
+.stats button { display: grid; gap: 2px; }
+.mem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.mem { margin: 0; background: var(--s1); border-radius: 14px; overflow: hidden; }
+.mem-art { height: 110px; }
+.mem figcaption { padding: 10px; font-size: 12px; line-height: 1.4; font-family: "Source Code Pro", ui-monospace, monospace; }
+.mem figcaption span { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-family: var(--font); }
+.mem figcaption small { margin-left: auto; color: var(--mu); }
+.mem-pick { width: 100%; height: 130px; border-radius: 14px; border: 1.5px dashed var(--line); display: grid; place-items: center; align-content: center; gap: 6px; color: var(--mu); overflow: hidden; }
+.mem-pick.on { border: 0; display: block; } .mem-pick.on .mem-art { height: 130px; }
+.rev-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.rev-row span { flex: 1; } .rev-row small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .05em; color: var(--mu); }
+.rev-row u { font-size: 13px; color: var(--mu); }
+.eb-entry { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 16px; border-radius: 18px; background: color-mix(in srgb, var(--green2) 22%, #fff); margin: 14px 0; }
+.eb-entry > span { width: 40px; height: 40px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+.eb-entry div { flex: 1; } .eb-entry small { display: block; color: var(--mu); font-size: 12px; }
+.post footer .btn.small { height: 30px; }
+.hw.meet { width: 120px; height: 54px; border-radius: 27px; font: 800 13px ui-monospace, Menlo, monospace; letter-spacing: .2em; touch-action: none; user-select: none; -webkit-user-select: none; }
+.hw.meet.down { transform: translateY(3px); box-shadow: 0 1px 0 #0b0b0b; }
+.hw.meet.held { background: radial-gradient(circle at 40% 35%, #6a2a2a, #311); }
+.bs small.dim { color: #666; font-size: 9px; }
