@@ -170,9 +170,11 @@ const PROMPT_TEXT = () => ICEBREAKERS[promptIdx % ICEBREAKERS.length];
 
 const STEPS = [
   { title: 'Ready at the desk', screen: () => `<div class="bs off"><small>JobBuddy</small><b>${BADGE_ID}</b><small>Ready for the next attendee</small></div>`,
-    note: 'On the phone: Your events → Portfolio Crit Circle → “Check in at the event” → DEMO Staff scans pass · hands you Tappy. It is already linked: no scan, no code.' },
+    note: 'On the phone: Your events → Portfolio Crit Circle → “Check in at the event” → DEMO Staff scans pass · hands you Tappy. Then confirm on the Tappy (next step).' },
+  { title: 'Link to you', a: 'next', screen: () => `<div class="bs"><small>LINK TO</small><div class="badge-av">${avatar(look.avatar, look.color, 72, frame)}</div><b>${esc(look.name)}?</b><small>Press = it’s me · Hold = not me</small></div>`,
+    note: 'Staff scanned the pass, so this Tappy is assigned to you. Press Meet to confirm it’s yours (bind). Phone shows “Link your Tappy” — it updates when you press.' },
   { title: 'Paired', screen: () => `<div class="bs"><b class="huge">✓</b><b>Hi ${esc(look.name)}</b><small>Tappy is yours tonight</small></div>`,
-    note: 'Tappy is linked the moment staff hand it over. The phone goes in the pocket — the device does the work.' },
+    note: 'Bound to you. The phone goes in the pocket — the device does the work.' },
   { title: 'Idle · tap to meet', nfc: true, screen: () => `<div class="bs idle"><div class="badge-av">${avatar(look.avatar, look.color, 104, frame)}</div><b>${esc(look.name)}</b><small>${esc(look.tag)}</small><small class="dim">TAP TO MEET</small></div>`,
     note: 'Walk up to someone. Hold two Tappy devices together: tap the NFC strip (or Next).' },
   { title: 'Meet Marcus?', a: 'next', b: 'decline', screen: () => `<div class="bs">${avatar(MARCUS.avatar, MARCUS.color, 64)}<small>MEET</small><b>${MARCUS.short}?</b><small>Press to meet · Hold to cancel</small></div>`,
@@ -200,8 +202,8 @@ function scriptHW(btn) {
   const s = STEPS[step];
   if (btn === 'A' && s.a === 'next') return setStep(step + 1);
   if (btn === 'A' && s.a === 'prompt') { promptIdx++; navigator.vibrate?.(12); return render(); }
-  if (btn === 'B' && s.b === 'decline') { flash = `<div class="bs"><b>Cancelled</b><small>Nothing was shared.</small></div>`; render(); clearTimeout(timer); timer = setTimeout(() => setStep(2), 2200); return; }
-  if (btn === 'B' && s.b === 'skip') return setStep(2);
+  if (btn === 'B' && s.b === 'decline') { flash = `<div class="bs"><b>Cancelled</b><small>Nothing was shared.</small></div>`; render(); clearTimeout(timer); timer = setTimeout(() => setStep(3), 2200); return; }
+  if (btn === 'B' && s.b === 'skip') return setStep(3);
   navigator.vibrate?.(8);
 }
 

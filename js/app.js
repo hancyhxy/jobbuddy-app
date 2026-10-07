@@ -639,13 +639,13 @@ V.pair = (id) => {
       <p class="note">${ICON.lock} Linking never adds a connection. You accept or decline later, at home.</p>
     </section>
     <footer class="sticky"><button class="btn primary" data-a="phase-go" data-x="${id}|1">Back to event</button></footer>`;
-  if (L.pairing) return `<header class="bar"><button class="icon-btn" data-a="pair-cancel">${ICON.back}</button><b>Confirm on Tappy</b><span></span></header>
+  if (L.pairing) return `<header class="bar"><span></span><b>Link your Tappy</b><span></span></header>
     <section class="pad center">
-      <p class="muted">Does your Tappy show this code?</p>
-      <div class="code">${PAIR_CODE.split('').map((d) => `<span>${d}</span>`).join('')}</div>
-      <p>Press the <b>Meet</b> button on the Tappy to confirm. Hold it to cancel.</p>
-      <p class="note">${ICON.info} Code doesn’t match? You may have someone else’s Tappy — go back and check the number.</p>
-      ${demo('Tappy shows ✓ — continue', 'pair-confirm')}
+      <div class="big-check" style="background:var(--s1);color:var(--tx)">${ICON.badge}</div>
+      <h2>Is ${BADGE_ID} showing your name?</h2>
+      <p class="muted">Staff linked this Tappy to your pass. Press <b>Meet</b> on the Tappy to confirm it’s yours. Hold it if it shows someone else.</p>
+      <p class="note">${ICON.lock} Only you can confirm. Until you do, the Tappy shows nothing about you to others.</p>
+      ${demo('Pressed Meet on the Tappy', 'pair-confirm')}
     </section>`;
   return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="checkin/${id}">${ICON.back}</button><b>Pair Tappy</b><span></span></header>
     <section class="pad">
@@ -1358,7 +1358,7 @@ function badgeScreen() {
   switch (b.screen) {
     case 'off': return `<div class="bs off"><small>JobBuddy</small><b>${BADGE_ID}</b><small>Not assigned</small></div>`;
     case 'unpaired': return `<div class="bs"><small>EVENTBUDDY</small><b class="huge">${BADGE_ID}</b><small>Scan this device<br>with JobBuddy to pair</small></div>`;
-    case 'pairing': return `<div class="bs"><small>PAIR WITH</small><b>${esc(p.short)}?</b><div class="bcode">${PAIR_CODE}</div><small>${PRESS}</small></div>`;
+    case 'pairing': { const l = badgeLook(); return `<div class="bs"><small>LINK TO</small><div class="badge-av">${avatar(l.avatar, l.color, 72, ui.frame)}</div><b>${esc(p.short)}?</b><small>Press = it’s me · Hold = not me</small></div>`; }
     case 'idle': { const l = badgeLook(); return `<div class="bs idle"><div class="badge-av">${avatar(l.avatar, l.color, 104, ui.frame)}</div><b>${esc(p.short)}</b><small>${esc(l.tag)}</small><small class="dim">TAP TO MEET · hold devices together</small></div>`; }
     case 'request': return `<div class="bs">${avatar(partner.avatar, partner.color, 64)}<small>MEET</small><b>${partner.short}?</b><small>Press to meet · Hold to cancel</small></div>`;
     case 'waiting': return `<div class="bs">${avatar(partner.avatar, partner.color, 64)}<small>Waiting for</small><b>${partner.short}…</b></div>`;
@@ -1376,7 +1376,7 @@ function badgePanel() {
   const nearby = e && e.attendees.map((id) => PEOPLE[id]).filter((p) => !S.encounters.some((x) => x.person === p.id && x.eventId === e.id));
   const idle = S.badge.screen === 'idle';
   const hint = {
-    off: 'No Tappy assigned. Collect one at check-in.', unpaired: 'Assigned but not paired. Scan its QR from the phone.', pairing: 'Press Meet if the code matches the phone. Hold to cancel.',
+    off: 'No Tappy assigned. Collect one at check-in.', unpaired: 'Assigned but not paired. Scan its QR from the phone.', pairing: 'Staff assigned it to your pass. Press Meet to confirm it’s you; hold if it isn’t.',
     idle: 'Showing your avatar and career line. Hold devices together with someone nearby.', request: 'Shows who you just tapped. Press Meet to say yes, hold to cancel.', waiting: 'Waiting for the other person to press Meet.',
     declined: 'They didn’t press yet. The tap is saved as pending.', prompt: 'Linked. Take turns answering out loud. Press for a new prompt, hold when done.', returned: 'Tappy unpaired and wiped.'
   }[S.badge.screen];
@@ -1401,8 +1401,8 @@ function hw(btn) {
   const b = S.badge; const L = S.live;
   navigator.vibrate?.(btn === 'B' ? 40 : 15);
   if (b.screen === 'pairing') {
-    if (btn === 'A') { L.paired = true; L.pairing = false; setBadge('idle'); toast('Tappy paired ✓'); }
-    else { L.pairing = false; setBadge('unpaired'); }
+    if (btn === 'A') { L.paired = true; L.pairing = false; setBadge('idle'); toast('Tappy linked to you ✓'); }
+    else { L.pairing = false; setBadge('unpaired'); toast('Not yours? Swap it at the desk'); }
   } else if (b.screen === 'request') {
     if (btn === 'B') return setBadge('idle', { partner: null });
     setBadge('waiting');
@@ -1539,8 +1539,9 @@ const A = {
   checkin: (id) => { S.regs[id].status = 'checkedin'; S.regs[id].confirmed = true; S.live = { eventId: id }; ui.phase = { ...(ui.phase || {}), [id]: 1 }; save(); earn(20, 'Checked in at an event'); render(); },
   arrive: (id) => {
     S.regs[id].status = 'checkedin'; S.regs[id].confirmed = true;
-    S.live = { eventId: id, badgeId: BADGE_ID, paired: true }; S.badge = { screen: 'idle' }; save();
-    earn(20, 'Checked in at an event', true); toast(`Tappy ${BADGE_ID} is yours ✓`); go('event/' + id);
+    // Staff scan the pass, which assigns this Tappy to you. You still confirm on the device (press Meet) to bind it.
+    S.live = { eventId: id, badgeId: BADGE_ID, pairing: true }; S.badge = { screen: 'pairing' }; save();
+    earn(20, 'Checked in at an event', true); go('pair/' + id);
   },
   // Leaving = tap the Tappy on the return box at the exit. It unpairs, wipes and syncs in one go; no staff step.
   'exit-tap': (id) => {
@@ -1560,7 +1561,7 @@ const A = {
   },
   theme: (x) => { localStorage.setItem(THEME_KEY, x); applyTheme(); render(); },
   'theme-cycle': () => { const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; localStorage.setItem(THEME_KEY, next); applyTheme(); render(); },
-  'pair-confirm': () => { S.live.paired = true; S.live.pairing = false; setBadge('idle'); toast('Tappy paired ✓'); },
+  'pair-confirm': () => { S.live.paired = true; S.live.pairing = false; setBadge('idle'); toast('Tappy linked to you ✓'); },
   'demo-enc': (x) => { addEncounter(x, S.live.eventId, icebreaker(), 'tappy'); toast(`Linked with ${PEOPLE[x].short} · saved quietly`); render(); },
   'pair-cancel': () => { S.live.pairing = false; setBadge('unpaired'); },
   'sheet-person': (x) => { ui.sheet = { type: 'person', id: x }; render(); },
@@ -1736,7 +1737,8 @@ const DIR_PEER2 = 'david';
 const SCENES = [
   ['Before', 'Event page before the event'],
   ['Arrive', 'Show pass at the door'],
-  ['Got Tappy', 'Already linked · avatar on'],
+  ['Link Tappy', 'Tappy: Emma? press Meet to bind'],
+  ['Linked', 'Bound to you · avatar on'],
   ['Tap Marcus', 'Tappy: Meet Marcus?'],
   ['Linked Marcus', 'Icebreaker · saved'],
   ['Tap David', 'Tappy: Meet David?'],
@@ -1755,8 +1757,10 @@ function scene(n) {
   const meet = (p, q) => addEncounter(p, id, q, 'tappy');
   let to = 'event/' + id;
   if (n === 1) to = 'checkin/' + id;
+  if (n === 2) { S.regs[id].status = 'checkedin'; S.live = { eventId: id, badgeId: BADGE_ID, pairing: true }; S.badge = { screen: 'pairing' }; to = 'pair/' + id; ui.scene = n; save(); return location.hash === '#/' + to ? render() : go(to); }
+  n -= 1;   // remaining scenes keep their old numbering below
   if (n >= 2) { S.regs[id].status = 'checkedin'; S.live = { eventId: id, badgeId: BADGE_ID, paired: true }; }
-  if (n === 2) S.badge = { screen: 'idle' };
+  if (n === 2) { S.badge = { screen: 'idle' }; to = 'pair/' + id; }
   if (n === 3) S.badge = { screen: 'request', partner: DIR_PEER };
   if (n >= 4) meet(DIR_PEER, ICEBREAKERS[0]);
   if (n === 4) S.badge = { screen: 'prompt', partner: DIR_PEER, prompt: ICEBREAKERS[0] };
@@ -1769,10 +1773,10 @@ function scene(n) {
     S.badge = { screen: 'returned' };
     to = (n === 7 ? 'synced/' : 'event/') + id;
   }
-  ui.scene = n; save();
+  ui.scene = n + 1; save();
   if (location.hash === '#/' + to) render(); else go(to);
 }
-const TAPPY_DEV = [['off', 'Off'], ['idle', 'Avatar'], ['request:marcus', 'Tap Marcus'], ['request:david', 'Tap David'], ['request:priya', 'Tap Priya (no reply)'], ['prompt', 'Icebreaker'], ['returned', 'Wiped']];
+const TAPPY_DEV = [['off', 'Off'], ['pairing', 'Link (Emma?)'], ['idle', 'Avatar'], ['request:marcus', 'Tap Marcus'], ['request:david', 'Tap David'], ['request:priya', 'Tap Priya (no reply)'], ['prompt', 'Icebreaker'], ['returned', 'Wiped']];
 function tappyDev(x) {
   const [screen, who] = x.split(':');
   clearTimeout(badgeTimer);
