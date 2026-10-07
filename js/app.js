@@ -1562,6 +1562,9 @@ const A = {
     ui.sheet = null; toast(`Hi request sent to ${PEOPLE[x].short}`); render();
     setTimeout(() => { const pr = makePrompt(PEOPLE[x]); ui.sheet = { type: 'match', id: x, prompt: pr.text, tag: pr.tag }; render(); }, 1600);
   },
+  scene: (x) => scene(+x),
+  'tappy-dev': (x) => tappyDev(x),
+  'dir-reset': () => { if (confirm('Reset all demo data?')) { localStorage.removeItem(KEY); S = fresh(); ui.scene = undefined; S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; seedAccount(140); save(); go('home'); render(); } },
   tap: (x) => setBadge('request', { partner: x }),
   hw: (x) => hw(x),
   'badge-open': () => { document.body.classList.add('badge-open'); },
@@ -1717,6 +1720,72 @@ function statusBar(name, arg) {
   const m = document.querySelector('meta[name="theme-color"]'); if (m && m.content !== c) m.content = c;
   document.body.style.background = e ? c : '';
 }
+/* ---------------------------------------------------------------- demo director (desktop only)
+   One click puts BOTH the phone and the simulated Tappy into a scene, so teammates can record the in-person flow
+   without walking every step. Uses Portfolio Crit Circle (an upcoming, confirmed in-person event) and Marcus. */
+const DIR_EV = 'crit-circle'; const DIR_PEER = 'marcus';
+const SCENES = [
+  ['Before', 'Event page before the event'],
+  ['Checked in', 'Phone: During · Tappy off'],
+  ['Collect Tappy', 'Staff hands over TP-07'],
+  ['Pair · code', 'Same code on phone and Tappy'],
+  ['Paired', 'Phone: connected · Tappy: avatar'],
+  ['Tap Marcus', 'Tappy asks to link'],
+  ['Linked · icebreaker', 'Shared prompt · saved'],
+  ['Leaving', 'Return Tappy at the desk'],
+  ['Returned · synced', 'Tappy wiped · taps synced'],
+  ['After', 'Event page after the event']
+];
+function scene(n) {
+  if (!S.profile) { S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; if (!S.following.length) seedAccount(140); }
+  clearTimeout(badgeTimer); stopScan?.(true);
+  const id = DIR_EV;
+  S.regs[id] = { status: 'going', list: true, wall: true, confirmed: true };
+  S.encounters = S.encounters.filter((x) => x.eventId !== id);
+  S.followers = S.followers.filter((p) => p !== DIR_PEER || SEED_GRAPH.followers.includes(p));
+  S.live = null; S.badge = { screen: 'off' }; ui.sheet = null; ui.liveTab = 'here'; ui.pairInput = ''; ui.pairError = '';
+  const met = () => addEncounter(DIR_PEER, id, ICEBREAKERS[0], 'tappy');
+  const paired = () => { S.regs[id].status = 'checkedin'; S.live = { eventId: id, badgeId: BADGE_ID, paired: true }; };
+  let to = 'event/' + id;
+  if (n >= 1) { S.regs[id].status = 'checkedin'; S.live = { eventId: id }; }
+  if (n === 2) { S.live.badgeId = BADGE_ID; S.badge = { screen: 'unpaired' }; to = 'checkin/' + id; }
+  if (n === 3) { S.live.badgeId = BADGE_ID; S.live.pairing = true; S.badge = { screen: 'pairing' }; to = 'pair/' + id; }
+  if (n === 4) { paired(); S.badge = { screen: 'idle' }; to = 'pair/' + id; }
+  if (n === 5) { paired(); S.badge = { screen: 'request', partner: DIR_PEER }; }
+  if (n === 6) { paired(); met(); S.badge = { screen: 'prompt', partner: DIR_PEER, prompt: ICEBREAKERS[0] }; }
+  if (n === 7) { paired(); met(); S.badge = { screen: 'idle' }; to = 'leave/' + id; }
+  if (n >= 8) {
+    paired(); met(); S.live.returned = true;
+    S.regs[id].status = 'attended'; S.live = null;
+    if (!S.followers.includes(DIR_PEER)) S.followers = [...S.followers, DIR_PEER];
+    S.badge = { screen: 'returned' };
+    to = (n === 8 ? 'synced/' : 'event/') + id;
+  }
+  ui.scene = n; save();
+  if (location.hash === '#/' + to) render(); else go(to);
+}
+const TAPPY_DEV = [['off', 'Off'], ['unpaired', 'Unpaired'], ['pairing', 'Pair code'], ['idle', 'Avatar'], ['request:marcus', 'Tap Marcus'], ['request:priya', 'Tap Priya (no reply)'], ['prompt', 'Icebreaker'], ['returned', 'Wiped']];
+function tappyDev(x) {
+  const [screen, who] = x.split(':');
+  clearTimeout(badgeTimer);
+  const id = S.live?.eventId || DIR_EV;
+  if (screen !== 'off' && !S.live?.badgeId) { if (!S.profile) { S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; seedAccount(140); } S.regs[id] = { ...(S.regs[id] || {}), status: 'checkedin', confirmed: true }; S.live = { eventId: id, badgeId: BADGE_ID }; }
+  if (S.live && ['idle', 'request', 'prompt'].includes(screen)) S.live.paired = true;
+  const extra = screen === 'request' ? { partner: who } : screen === 'prompt' ? { partner: S.badge.partner || DIR_PEER, prompt: icebreaker() } : { partner: null };
+  setBadge(screen, extra);
+}
+function directorPanel() {
+  const cur = ui.scene ?? -1;
+  return `<div class="dir-head"><b>Demo director</b><small>One click sets the phone and Tappy together.<br>← / → step scenes · Space = press MEET · H = hold</small></div>
+    <ol class="dir-list">${SCENES.map(([t, d], i) => `<li><button class="${i === cur ? 'on' : ''}" data-a="scene" data-x="${i}"><i>${i + 1}</i><span><b>${t}</b><small>${d}</small></span></button></li>`).join('')}</ol>
+    <div class="dir-foot"><button data-a="scene" data-x="${Math.max(0, cur - 1)}">◀ Prev</button><button class="pri" data-a="scene" data-x="${Math.min(SCENES.length - 1, cur + 1)}">Next ▶</button></div>
+    <div class="dir-sec"><b>Tappy only</b><small>Changes the device screen, the phone stays where it is.</small></div>
+    <div class="dir-grid">${TAPPY_DEV.map(([k, l]) => `<button class="${S.badge.screen === k.split(':')[0] ? 'on' : ''}" data-a="tappy-dev" data-x="${k}">${l}</button>`).join('')}</div>
+    <div class="dir-foot"><button data-a="hw" data-x="A">● Press MEET</button><button data-a="hw" data-x="B">Hold MEET</button></div>
+    <button class="dir-reset" data-a="dir-reset">Reset demo data</button>
+    <p class="dir-note">Event: Portfolio Crit Circle · person met: Marcus. You can still click inside the phone and press MEET normally.</p>`;
+}
+
 function render() {
   const [name, arg] = route();
   statusBar(name, arg);
@@ -1731,6 +1800,7 @@ function render() {
   const un = unreadTotal();
   $('#nav').innerHTML = TABS.map(([k, l]) => `<button class="${name === k || (k === 'home' && name === 'events') ? 'on' : ''}" data-a="nav" data-x="${k}" aria-label="${l}">${TAB_ICON[k]}<span>${l}</span>${k === 'messages' && un ? `<i class="cnt">${un}</i>` : ''}</button>`).join('');
   $('#badge').innerHTML = badgePanel();
+  const dir = $('#director'); if (dir) dir.innerHTML = directorPanel();
   document.body.classList.toggle('has-badge', !!(S.live && S.live.badgeId));
 }
 
@@ -1747,6 +1817,14 @@ document.addEventListener('click', (e) => {
   fn(el.dataset.x, el);
 });
 document.addEventListener('keydown', (e) => {
+  if (!e.target.closest?.('input, textarea') && matchMedia('(min-width: 861px)').matches && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+    const cur = ui.scene ?? -1; scene(Math.max(0, Math.min(SCENES.length - 1, cur + (e.key === 'ArrowRight' ? 1 : -1)))); return;
+  }
+  // Keyboard MEET for the simulated Tappy: Space = press (yes), H = hold (no).
+  if (!e.target.closest?.('input, textarea') && matchMedia('(min-width: 861px)').matches && S.live?.badgeId && (e.key === ' ' || e.key === 'h' || e.key === 'H')) {
+    e.preventDefault(); const btn = document.querySelector('[data-meet]'); btn?.classList.add('pressed'); setTimeout(() => btn?.classList.remove('pressed'), 180);
+    hw(e.key === ' ' ? 'A' : 'B'); return;
+  }
   if (e.key !== 'Enter' || e.isComposing) return;
   if (e.target.id === 'msgIn') { e.preventDefault(); A['chat-send'](e.target.dataset.key); }
   if (e.target.id === 'todoIn') { e.preventDefault(); $('[data-a="pod-add-todo"]')?.click(); }
