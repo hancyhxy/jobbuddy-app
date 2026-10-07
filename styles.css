@@ -947,3 +947,12 @@ body.dir-open .dir-toggle span:nth-child(3) { transform: translateY(-6px) rotate
 .bs.ice .ice-card { padding: 8px 10px; border-radius: 10px; }
 .bs.ice .ice-card p { font-size: 12.5px; margin: 2px 0 3px; }
 .bs.ice .ice-saved { margin-top: 3px; }
+/* Icebreaker: dark variant (same layout) */
+.bs.ice { background: #0b0b0b; color: #fff; }
+.screen:has(.bs.ice) { background: #0b0b0b; }
+.bs.ice .ice-ok, .bs.ice .ice-saved, .bs.ice .ice-card small { color: #D7FF3A; }
+.bs.ice .ice-pair > * { box-shadow: 0 0 0 2px #0b0b0b; }
+.bs.ice .ice-who { color: #fff; }
+.bs.ice .ice-card { background: #1c1c1e; box-shadow: none; border: 1px solid #2a2a2a; }
+.bs.ice .ice-card p { color: #fff; }
+.bs.ice .ice-card i, .bs.ice .ice-hint { color: #8a8a8a; }
