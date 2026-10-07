@@ -4,7 +4,7 @@ import { ICON } from './icons.js';
 
 /* ------------------------------------------------------------------ state */
 const KEY = 'jobbuddy-proto-v1';
-const BADGE_ID = 'EB-07';
+const BADGE_ID = 'TP-07';
 const PAIR_CODE = '4812';
 
 const fresh = () => ({
@@ -656,7 +656,7 @@ V.pair = (id) => {
       <h2>Scan your Tappy</h2><p class="muted">Point your camera at the QR code on the device</p>
       <button class="scan" data-a="scan">${ICON.qr}<span>Tap to scan</span></button>
       <p class="muted center">Can’t scan? Enter code manually</p>
-      <input class="field code-in" data-model="pairInput" placeholder="EB-00" value="${esc(ui.pairInput || '')}" maxlength="5">
+      <input class="field code-in" data-model="pairInput" placeholder="TP-00" value="${esc(ui.pairInput || '')}" maxlength="5">
       ${ui.pairError ? `<p class="error">${ui.pairError}</p>` : ''}
     </section>
     <footer class="sticky"><button class="btn primary" data-a="pair-start">Pair</button><button class="link" data-a="toast" data-x="Staff can pair it for you at the desk">No phone signal? Ask staff</button></footer>`;

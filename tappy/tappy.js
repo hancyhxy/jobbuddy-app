@@ -5,7 +5,7 @@ import { PEOPLE, ICEBREAKERS, AVATAR_CHOICES, AVATAR_COLORS } from '../js/data.j
 import { avatar } from '../js/avatar.js';
 
 const KEY = 'jobbuddy-proto-v1';
-const BADGE_ID = 'EB-07';
+const BADGE_ID = 'TP-07';
 const PAIR_CODE = '4812';
 const EVENT_ID = 'build-night';
 const DEMO_OWNER = { id: 'demo', name: 'Emma', short: 'Emma', line: 'Design · Beginner', avatar: 'female_2_1', color: '#D7FF3A' };
@@ -170,7 +170,7 @@ const PROMPT_TEXT = () => ICEBREAKERS[promptIdx % ICEBREAKERS.length];
 
 const STEPS = [
   { title: 'Ready at the desk', screen: () => `<div class="bs off"><small>JobBuddy</small><b>${BADGE_ID}</b><small>Ready for the next attendee</small></div>`,
-    note: 'On the phone: event → During → “Check in at the event” → DEMO Staff scans your pass → DEMO Staff hands you Tappy EB-07.' },
+    note: 'On the phone: Your events → Portfolio Crit Circle → “Check in at the event” → DEMO Staff scans your pass → DEMO Staff hands you Tappy TP-07.' },
   { title: 'Scan to pair', screen: () => `<div class="bs qr-screen">${qrSVG(BADGE_ID)}<small>SCAN WITH JOBBUDDY · ${BADGE_ID}</small></div>`,
     note: 'On the phone: check the Tappy profile review → “Scan device”, then point the camera at this QR.' },
   { title: 'Confirm the code', a: 'next', screen: () => `<div class="bs"><small>PAIR WITH</small><b>${esc(look.name)}?</b><div class="bcode">${PAIR_CODE}</div><small>Press = yes · Hold = no</small></div>`,
