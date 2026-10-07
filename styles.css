@@ -874,3 +874,17 @@ i.pill { height: 30px; }
 .post-detail .pd-text { font-size: 17px; line-height: 1.55; margin: 16px 0; }
 .post-detail .pd-actions { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .post-detail .pd-actions .ic { width: 14px; height: 14px; vertical-align: -2px; }
+.see-all { width: 100%; padding: 16px; border-radius: 16px; background: var(--s1); font-weight: 600; text-align: center; margin-top: 6px; }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; }
+.post-detail .pd-title { font-size: 24px; line-height: 1.25; margin: 16px 0 12px; }
+.post-detail .pd-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 18px; margin: 4px 0 6px; display: block; }
+.post-detail .pd-text.more { margin-top: -4px; color: var(--tx2, #333); }
+.post-detail .tag-out { font-style: normal; font-size: 13px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 99px; color: var(--mu); }
+.post-detail .pd-tags + .pd-actions, .post-detail .pd-tags:last-of-type { margin-bottom: 14px; }
+.pd-chead { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
+.pd-chead h3 { margin: 0; }
+.seg-mini { display: flex; background: var(--s1); border-radius: 99px; padding: 3px; }
+.seg-mini button { padding: 5px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; color: var(--mu); }
+.seg-mini button.on { background: var(--tx); color: #fff; }
+.cmt-act { display: block; margin-top: 4px; font-size: 12px; }
+.cmt b small { display: inline; font-weight: 400; margin-left: 4px; }

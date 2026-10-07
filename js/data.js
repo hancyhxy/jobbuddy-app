@@ -180,7 +180,12 @@ export const SEED_POSTS = [
 export const SEED_COMMENTS = {
   p5: [['sofia', 'I’ll be there around 6:15, count me in!'], ['leo', 'Same, first time at this one.']],
   p4: [['leo', 'Knowing the format in advance. Surprise questions are the scary part.'], ['priya', 'Pair juniors with one “friendly” reviewer.']],
-  p2: [['hannah', 'Saving this. Doing the same with agency case studies.']]
+  p2: [['hannah', 'Saving this. Doing the same with agency case studies.'], ['marcus', 'Do it! Pick the three with the clearest decision at the end.'], ['priya', 'This is such a good reframe. Did you show the original lesson plans too?'], ['leo', 'Stealing this for my studio projects 🙏']],
+  p1: [['leo', 'Would love a slot — Thursday works.'], ['marcus', 'Done one of these with David, highly recommend.'], ['hannah', 'Is there room for marketing → product switchers?']],
+  p3: [['maya', 'Pinned! Thanks Priya.'], ['david', 'The logging section saved me a week.']],
+  p6: [['priya', 'Will come say hi at the mixer!'], ['leo', 'Any design-adjacent roles too?']],
+  p7: [['sofia', 'So proud of you Leo!! 🎉'], ['marcus', 'Huge. Well deserved.'], ['hannah', 'Congrats!!']],
+  p8: [['priya', 'c — evals forever'], ['david', 'b, spreadsheets are where the money is'], ['leo', 'a!']]
 };
 
 // Growth system — generic, not rank-metal names.

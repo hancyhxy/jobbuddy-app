@@ -850,6 +850,17 @@ function postCard(p) {
 }
 
 /* Post detail (teammate flow): author + Connect, full post, comments inline, reply box. */
+const POST_EXTRA = {
+  p1: { title: 'Free PM mock interviews this week', more: ['Each slot is 20 minutes: 10 on a product case, 10 on feedback. I’ll focus on how you structure your answer, not whether it’s “right”.', 'Priority for people who came to the last build night, but reply anyway if you’re switching into product.'], tags: ['Interviews', 'Product', 'Mentoring'] },
+  p2: { title: 'My teaching portfolio was a data portfolio', more: ['I spent months thinking I had nothing to show. Then I realised every lesson plan had a question, data, and a decision — exactly what a dashboard is.', 'I rebuilt three of them in Looker Studio and wrote a one-paragraph story for each. Two recruiters asked about them in the first call.', 'If you’re switching careers: look at what you already made before you start a “portfolio project”.'], tags: ['Career change', 'Data viz', 'Portfolio'] },
+  p3: { title: 'Agent-eval checklist (for first-timers)', more: ['It covers scoping the task, picking 10 real test cases, and what to log so you can debug later.', 'It’s pinned in the circle. Comments welcome — I’ll update it after the next build night.'], tags: ['AI tools', 'Resources'] },
+  p4: { title: 'How do we make crits less scary?', more: ['I’m redesigning Thursday’s format. Ideas so far: share the three questions in advance, keep groups to four, and end with one thing that works.', 'What would make you actually bring a piece you’re stuck on?'], tags: ['Portfolio', 'UX', 'Junior'] },
+  p5: { title: 'Anyone walking into the mixer together?', more: ['First time at Sydney Tech and I don’t know anyone. I’ll be at the main door at 6pm — look for the green tote bag.'], tags: ['Networking', 'Going together'] },
+  p6: { title: 'Hiring 2 grad engineers (Feb start)', more: ['We’re a small platform team. I’ll refer people I’ve actually talked to, so come say hi at the mixer or reply here with what you’ve built.'], tags: ['Referral', 'Graduate', 'Engineering'] },
+  p7: { title: 'I got my first design internship!', more: ['The interviewer asked about exactly the case study the crit circle tore apart two weeks ago. I had answers because you all asked first.', 'Thank you — I’ll be at the next crit to pay it forward.'], tags: ['Win', 'Internship', 'UX'] },
+  p8: { title: 'Vote: next build night theme', more: ['(a) voice agents, (b) agents for spreadsheets, (c) evals deep-dive. Reply with a letter — closes Friday.'], tags: ['AI tools', 'Community'] }
+};
+
 V.post = (id) => {
   const p = allPosts().find((x) => x.id === id); if (!p) return V.notfound();
   const a = p.anon ? { name: 'Anonymous member' } : who(p.author); const own = p.author === 'me';
@@ -865,10 +876,14 @@ V.post = (id) => {
       <div class="pd-author">${p.anon ? '<span class="ph anon" style="width:44px;height:44px">?</span>' : `<button class="plain" data-a="nav" data-x="${own ? 'me' : 'person/' + p.author}">${av(a, 44)}</button>`}
         <div><b>${esc(a.name)}</b><small>${p.anon ? '' : esc(a.headline || '') + ' · '}${p.ago}</small></div>${rel}</div>
       <div class="pd-tags"><i class="chip">${p.type}</i><i class="chip">${p.aud === 'circle' ? ICON.lock : ''}${esc(p.circle)}</i></div>
+      ${POST_EXTRA[id]?.title ? `<h1 class="pd-title">${esc(POST_EXTRA[id].title)}</h1>` : ''}
+      ${POST_EXTRA[id] ? `<img class="pd-img" src="posts/${id}.jpg" alt="">` : ''}
       <p class="pd-text">${esc(p.text)}</p>
+      ${(POST_EXTRA[id]?.more || []).map((t) => `<p class="pd-text more">${esc(t)}</p>`).join('')}
+      ${POST_EXTRA[id]?.tags ? `<div class="pd-tags">${POST_EXTRA[id].tags.map((t) => `<i class="tag-out">#${esc(t)}</i>`).join('')}</div>` : ''}
       <div class="pd-actions"><button class="help ${helped ? 'on' : ''}" data-a="helped" data-x="${p.id}" ${own ? 'disabled' : ''}>${ICON.spark}Helpful · ${p.helpful + (helped ? 1 : 0)}</button><span class="muted small">${ICON.chat} ${total} comments</span></div>
-      <h3>Comments · ${total}</h3>
-      <div class="clist">${cs.map(([au, t]) => { const u = who(au); return `<div class="cmt">${av(u, 30)}<div><b>${esc(u.name)}${au === p.author ? ' <i class="chip" style="margin:0 0 0 4px">Author</i>' : ''}</b><p>${esc(t)}</p></div></div>`; }).join('') || '<p class="muted small">Be the first to reply.</p>'}${p.comments > cs.length ? `<p class="muted small">+ ${p.comments - cs.length} earlier comments</p>` : ''}</div>
+      <div class="pd-chead"><h3>Comments · ${total}</h3><div class="seg-mini">${['Top', 'Newest'].map((k) => `<button class="${(ui.csort || 'Top') === k ? 'on' : ''}" data-a="csort" data-x="${k}">${k}</button>`).join('')}</div></div>
+      <div class="clist">${(ui.csort === 'Newest' ? [...cs].reverse() : cs).map(([au, t], i) => { const u = who(au); return `<div class="cmt">${av(u, 30)}<div><b>${esc(u.name)}${au === p.author ? ' <i class="chip" style="margin:0 0 0 4px">Author</i>' : ''} <small class="muted" style="font-weight:400;margin-left:4px">${['1h', '45m', '30m', '12m', '5m'][i % 5]}</small></b><p>${esc(t)}</p><small class="muted cmt-act">♡ ${[12, 7, 3, 2, 1][i % 5]} · Reply</small></div></div>`; }).join('') || '<p class="muted small">Be the first to reply.</p>'}${p.comments > cs.length ? `<p class="muted small">+ ${p.comments - cs.length} earlier comments</p>` : ''}</div>
       <div class="spacer"></div>
     </section>
     <footer class="sticky"><div class="cinput"><input class="field" data-model="commentText" placeholder="Add a comment… (+3 pts)" value="${esc(ui.commentText || '')}"><button class="btn small primary" data-a="send-comment" data-x="${id}">Send</button></div></footer>`;
@@ -906,7 +921,9 @@ function networkView() {
     .filter((id) => !S.following.includes(id) && !reqs.includes(id)).slice(0, 4);
   const person = (id, right) => `<div class="list-item"><button class="plain" data-a="nav" data-x="person/${id}">${av(PEOPLE[id], 48)}</button><div class="grow"><h3>${PEOPLE[id].name}</h3><small>${esc(PEOPLE[id].headline)}</small></div>${right}</div>`;
   let body;
-  if (sub === 'Connections') body = conns.map((id) => `<button class="list-item" data-a="nav" data-x="person/${id}">${av(PEOPLE[id], 48)}<div class="grow"><h3>${PEOPLE[id].name}</h3><small>${esc(PEOPLE[id].headline)}</small></div>${ICON.chev}</button>`).join('')
+  const connRow = (id) => `<button class="list-item" data-a="nav" data-x="person/${id}">${av(PEOPLE[id], 48)}<div class="grow"><h3>${PEOPLE[id].name}</h3><small>${esc(PEOPLE[id].headline)}</small></div>${ICON.chev}</button>`;
+  if (sub === 'Connections' && conns.length > 3) body = conns.slice(0, 3).map(connRow).join('') + `<button class="see-all" data-a="conn-sheet">See all ${conns.length} ›</button>`;
+  else if (sub === 'Connections') body = conns.map((id) => `<button class="list-item" data-a="nav" data-x="person/${id}">${av(PEOPLE[id], 48)}<div class="grow"><h3>${PEOPLE[id].name}</h3><small>${esc(PEOPLE[id].headline)}</small></div>${ICON.chev}</button>`).join('')
     || '<div class="empty">No connections yet — tap devices at your next event, then follow each other.</div>';
   else body = (reqs.map((id) => `<div class="card-soft"><div style="display:flex;gap:14px;align-items:center">${av(PEOPLE[id], 48)}<div class="grow" style="flex:1"><h3 style="margin:0">${PEOPLE[id].name}</h3><small>${esc(PEOPLE[id].headline)}</small><small style="color:var(--green2)">${metAt(id) ? `Met at ${esc(metAt(id))}` : 'Sent you a connect request'}</small></div></div>
       <p class="muted" style="margin:12px 0;font-size:14px">“${esc(AUTO_REPLY[id] || DEFAULT_AUTO_REPLY)}”</p>
@@ -1298,6 +1315,11 @@ function sheetHTML() {
     inner = `${av(p, 80)}<h2>${p.short} waved at you</h2><p class="muted">${esc(p.headline)}</p><p class="note">${ICON.lock} If you ignore it, ${p.short} won’t be told.</p>
       <button class="btn primary" data-a="accept-wave" data-x="${p.id}">Wave back</button><button class="link" data-a="sheet-close">Ignore quietly</button>`;
   }
+  if (s.type === 'conns') {
+    const ids = connections();
+    inner = `<div class="sheet-head"><h2 class="sheet-title">Connections (${ids.length})</h2><button class="icon-btn" data-a="sheet-close">${ICON.close}</button></div><p class="muted small">Tap someone to view their profile</p>
+      <div class="clist">${ids.map((id) => `<button class="list-item" data-a="nav" data-x="person/${id}">${av(PEOPLE[id], 44)}<div class="grow"><h3>${PEOPLE[id].name}</h3><small>${esc(PEOPLE[id].headline)}</small></div></button>`).join('')}</div>`;
+  }
   if (s.type === 'comments') {
     const p = allPosts().find((x) => x.id === s.id); const cs = comments(s.id);
     inner = `<h2 class="sheet-title">Comments · ${p.comments + ((S.myComments || {})[s.id] || []).length}</h2>
@@ -1327,7 +1349,7 @@ function sheetHTML() {
       <small class="muted">Up to ${max} characters</small>
       <button class="btn primary" data-a="${isMsg ? 'msg-send' : 'connect-send'}" data-x="${s.id}">${isMsg ? 'Send message request' : 'Send request'}</button>`;
   }
-  return `<div class="scrim" data-a="sheet-close"></div><div class="sheet ${['comments', 'chat-share', 'pod-invite', 'who', 'memory', 'connect', 'msgreq'].includes(s.type) ? 'left' : ''}"><i class="grab"></i>${inner}</div>`;
+  return `<div class="scrim" data-a="sheet-close"></div><div class="sheet ${['conns', 'comments', 'chat-share', 'pod-invite', 'who', 'memory', 'connect', 'msgreq'].includes(s.type) ? 'left' : ''}"><i class="grab"></i>${inner}</div>`;
 }
 
 /* ================================================================ BADGE */
@@ -1629,6 +1651,8 @@ const A = {
   nsub: (x) => { ui.nsub = x; render(); },
   ctab: (x) => { ui.ctab = x; render(); },
   dismiss: (x) => { S.dismissed = [...(S.dismissed || []), x]; save(); toast('Declined quietly — they won’t be told'); render(); },
+  csort: (x) => { ui.csort = x; render(); },
+  'conn-sheet': () => { ui.sheet = { type: 'conns' }; render(); },
   comments: (x) => { ui.sheet = { type: 'comments', id: x }; render(); },
   'send-comment': (x) => {
     if (!S.profile) { ui.sheet = null; go('onboarding'); return; }
