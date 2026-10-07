@@ -48,7 +48,7 @@ export const EVENTS = [
     cost: 'Free', capacity: 30, going: 30, approval: false, waitlist: true, waitPos: 3, badges: true, host: 'leo', cover: ['#FF9E7A', '#3A1E14'],
     audience: 'Students and juniors who want honest feedback on one portfolio piece.',
     agenda: [['18:00', 'Check-in'], ['18:15', 'Crit rounds'], ['19:40', 'Wrap up']],
-    attendees: ['sofia', 'priya', 'marcus'], tags: ['Portfolio', 'UX']
+    attendees: ['sofia', 'priya', 'marcus', 'david'], tags: ['Portfolio', 'UX']
   },
   {
     id: 'data-ama', img: 'covers/data-ama.jpg', mode: 'online', title: 'Data Careers AMA', circle: 'Data Folks',

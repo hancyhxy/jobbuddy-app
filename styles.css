@@ -916,7 +916,7 @@ i.pill { height: 30px; }
 
 .dir-foot button { font-size: 13px; }
 /* Desktop has the Demo director, so DEMO shortcuts that the director or Tappy MEET already cover are hidden there (host approval / waves stay). Two-phone (mobile) demos keep them. */
-@media (min-width: 861px) { .phone .demo:is([data-a=checkin], [data-a=give-badge], [data-a=pair-confirm], [data-a=demo-enc], [data-a=return-badge]) { display: none !important; } }
+@media (min-width: 861px) { .phone .demo:is([data-a=checkin], [data-a=arrive], [data-a=give-badge], [data-a=pair-confirm], [data-a=demo-enc], [data-a=return-badge]) { display: none !important; } }
 
 /* Director: fixed to the far left, slides away like a drawer (hamburger / D key) for clean recordings */
 .director { position: fixed; top: 0; left: 0; bottom: 0; z-index: 60; padding: 64px 18px 18px; overflow-y: auto; scrollbar-width: none; background: rgba(255,255,255,.92); backdrop-filter: blur(12px); box-shadow: 4px 0 24px #0001; transform: translateX(-110%); transition: transform .25s ease; }

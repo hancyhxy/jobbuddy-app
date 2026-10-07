@@ -170,13 +170,9 @@ const PROMPT_TEXT = () => ICEBREAKERS[promptIdx % ICEBREAKERS.length];
 
 const STEPS = [
   { title: 'Ready at the desk', screen: () => `<div class="bs off"><small>JobBuddy</small><b>${BADGE_ID}</b><small>Ready for the next attendee</small></div>`,
-    note: 'On the phone: Your events → Portfolio Crit Circle → “Check in at the event” → DEMO Staff scans your pass → DEMO Staff hands you Tappy TP-07.' },
-  { title: 'Scan to pair', screen: () => `<div class="bs qr-screen">${qrSVG(BADGE_ID)}<small>SCAN WITH JOBBUDDY · ${BADGE_ID}</small></div>`,
-    note: 'On the phone: check the Tappy profile review → “Scan device”, then point the camera at this QR.' },
-  { title: 'Confirm the code', a: 'next', screen: () => `<div class="bs"><small>PAIR WITH</small><b>${esc(look.name)}?</b><div class="bcode">${PAIR_CODE}</div><small>Press = yes · Hold = no</small></div>`,
-    note: 'Phone shows 4812 too. Press Meet here, then tap “Tappy shows ✓ — continue” on the phone.' },
+    note: 'On the phone: Your events → Portfolio Crit Circle → “Check in at the event” → DEMO Staff scans pass · hands you Tappy. It is already linked: no scan, no code.' },
   { title: 'Paired', screen: () => `<div class="bs"><b class="huge">✓</b><b>Hi ${esc(look.name)}</b><small>Tappy is yours tonight</small></div>`,
-    note: 'On the phone: “Back to event”. The phone goes in the pocket — the device does the work.' },
+    note: 'Tappy is linked the moment staff hand it over. The phone goes in the pocket — the device does the work.' },
   { title: 'Idle · tap to meet', nfc: true, screen: () => `<div class="bs idle"><div class="badge-av">${avatar(look.avatar, look.color, 104, frame)}</div><b>${esc(look.name)}</b><small>${esc(look.tag)}</small><small class="dim">TAP TO MEET</small></div>`,
     note: 'Walk up to someone. Hold two Tappy devices together: tap the NFC strip (or Next).' },
   { title: 'Meet Marcus?', a: 'next', b: 'decline', screen: () => `<div class="bs">${avatar(MARCUS.avatar, MARCUS.color, 64)}<small>MEET</small><b>${MARCUS.short}?</b><small>Press to meet · Hold to cancel</small></div>`,
@@ -185,8 +181,8 @@ const STEPS = [
     note: 'Both people have to press. If they don’t, the tap is saved as pending on the phone.' },
   { title: 'Linked · icebreaker', a: 'prompt', b: 'skip', screen: () => `<div class="bs prompt"><small>✓ LINKED · YOU &amp; ${MARCUS.short.toUpperCase()}</small><small class="dim">ICEBREAKER</small><p>${esc(PROMPT_TEXT())}</p><small>● Saved to your event memories</small></div>`,
     note: 'Take turns answering out loud. Press Meet for a new prompt, hold when done. No “accept” here — that happens later at home.' },
-  { title: 'Return', screen: () => `<div class="bs"><small>LEAVING?</small><b>Return me<br>at the desk</b><small>Your taps are<br>already in the app</small></div>`,
-    note: 'On the phone: “Leaving? Return Tappy” → DEMO Staff confirms return → Taps synced → Review in Network.' },
+  { title: 'Return', screen: () => `<div class="bs"><small>LEAVING?</small><b>Tap me on<br>the exit box</b><small>Your taps sync<br>to the app</small></div>`,
+    note: 'Leaving: tap Tappy on the return box at the exit. On the phone: “Leaving? Tap Tappy at the exit” → Taps synced. No staff step.' },
   { title: 'Wiped', screen: () => `<div class="bs off"><b>Thanks!</b><small>Data cleared.<br>Ready for the next person.</small></div>`,
     note: 'Tappy is unpaired and wiped. On the phone, accept or decline Marcus in Network → Requests. Next restarts the demo.' }
 ];
@@ -204,8 +200,8 @@ function scriptHW(btn) {
   const s = STEPS[step];
   if (btn === 'A' && s.a === 'next') return setStep(step + 1);
   if (btn === 'A' && s.a === 'prompt') { promptIdx++; navigator.vibrate?.(12); return render(); }
-  if (btn === 'B' && s.b === 'decline') { flash = `<div class="bs"><b>Cancelled</b><small>Nothing was shared.</small></div>`; render(); clearTimeout(timer); timer = setTimeout(() => setStep(4), 2200); return; }
-  if (btn === 'B' && s.b === 'skip') return setStep(4);
+  if (btn === 'B' && s.b === 'decline') { flash = `<div class="bs"><b>Cancelled</b><small>Nothing was shared.</small></div>`; render(); clearTimeout(timer); timer = setTimeout(() => setStep(2), 2200); return; }
+  if (btn === 'B' && s.b === 'skip') return setStep(2);
   navigator.vibrate?.(8);
 }
 

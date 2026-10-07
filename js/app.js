@@ -353,7 +353,7 @@ function eventPhase(e, r) {
         ${dev}
         <div class="stats">${[['saved', met, 'met so far'], ['pending', pend, 'pending'], ['here', room, 'in the room']].map(([k, n, l]) => `<button data-a="${k === 'pending' ? 'nav' : 'live-go'}" data-x="${k === 'pending' ? 'pending/' + id : id + '|' + k}"><b>${n}</b><small>${l}</small></button>`).join('')}</div>
         <p class="muted small">Synced 2 min ago</p>`;
-      foot = `<button class="btn primary" data-a="live-go" data-x="${id}|saved">See who I’ve met</button><button class="link" style="margin:4px auto 0" data-a="nav" data-x="leave/${id}">Leaving? ${L.noBadge ? 'Wrap up' : 'Return Tappy'}</button>`;
+      foot = `<button class="btn primary" data-a="live-go" data-x="${id}|saved">See who I’ve met</button><button class="link" style="margin:4px auto 0" data-a="exit-tap" data-x="${id}">Leaving? ${L.noBadge ? 'Wrap up' : 'Tap Tappy at the exit'}</button>`;
     }
   } else {
     if (now < 2) body = `<div class="phase-card"><small>AFTER THE EVENT</small><b>Connections first, memories second</b><p>After you leave, the people you tapped show up here and in Network → Requests. Memories stay open for 7 days.</p></div>`;
@@ -613,21 +613,17 @@ V.ticket = (id) => {
 
 /* ---------------------------------------------------- offline: check-in */
 V.checkin = (id) => {
+  // Simplified arrival: staff scan your pass and hand you a Tappy that is already linked to you. No self-pairing, no code.
   const e = ev(id); const r = reg(id);
   if (!r) return V.event(id);
-  const checked = r.status === 'checkedin';
-  const hasBadge = S.live?.eventId === id && S.live.badgeId;
-  return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="ticket/${id}">${ICON.back}</button><b>Arrive</b><span></span></header>
-    <section class="pad">
-      <ol class="steps">
-        <li class="${checked ? 'done' : 'now'}"><b>Check in at the desk</b>
-          ${checked ? '<small>Checked in 17:42 ✓</small>' : `<small>Show your pass. Staff scan it — this confirms you actually came.</small><div class="pass mini">${fakeQR(id + S.profile.name)}</div>${demo('Staff scans your pass', 'checkin', id)}`}</li>
-        <li class="${hasBadge ? 'done' : checked ? 'now' : ''}"><b>Collect a Tappy</b>
-          ${hasBadge ? `<small>Tappy ${BADGE_ID} is yours for tonight ✓</small>` : checked ? `<small>Staff hand you a Tappy wearable. Check the number on its back.</small>${demo('Staff hands you Tappy ' + BADGE_ID, 'give-badge', id)}<button class="link" data-a="no-badge" data-x="${id}">Continue without a Tappy</button>` : '<small>Optional loan device</small>'}</li>
-        <li class="${hasBadge ? 'now' : ''}"><b>Pair it with your app</b><small>Takes 10 seconds</small></li>
-      </ol>
-    </section>
-    ${hasBadge ? `<footer class="sticky"><button class="btn primary" data-a="nav" data-x="${buddyReady() && r.q ? 'pair' : 'buddyreview'}/${id}">${buddyReady() && r.q ? 'Pair Tappy' : 'Check your Tappy profile, then pair'}</button></footer>` : checked ? `<footer class="sticky"><button class="btn" data-a="nav" data-x="event/${id}">Back to event</button></footer>` : ''}`;
+  return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="event/${id}">${ICON.back}</button><b>Arrive</b><span></span></header>
+    <section class="pad center">
+      <h2>Show this at the door</h2>
+      <p class="muted">Staff scan it and hand you a Tappy. It’s already linked to you — just clip it on.</p>
+      <div class="pass">${fakeQR(id + S.profile.name)}<b>${esc(S.profile.name)}</b><small>${esc(e.title)}</small></div>
+      ${demo('Staff scans pass · hands you Tappy ' + BADGE_ID, 'arrive', id)}
+      <button class="link" data-a="no-badge" data-x="${id}">Continue without a Tappy</button>
+    </section>`;
 };
 
 V.pair = (id) => {
@@ -683,7 +679,7 @@ V.live = (id) => {
       <div class="tabs">${tabs.map(([k, l]) => `<button class="${ui.liveTab === k ? 'on' : ''}" data-a="live-tab" data-x="${k}">${l}</button>`).join('')}</div>
       ${body}<div class="spacer"></div>
     </section>
-    <footer class="sticky"><button class="btn" data-a="nav" data-x="leave/${id}">Leaving? ${L.noBadge ? 'Wrap up' : 'Return Tappy'}</button></footer>`;
+    <footer class="sticky"><button class="btn" data-a="exit-tap" data-x="${id}">Leaving? ${L.noBadge ? 'Wrap up' : 'Tap Tappy at the exit'}</button></footer>`;
 };
 
 function encounterRow(x) {
@@ -1541,6 +1537,17 @@ const A = {
   },
   'msg-accept': (x) => { S.msgReqs[x].state = 'accepted'; chats()[x].push([x, 'Hey! Happy to chat 🙂']); save(); toast(`${PEOPLE[x].short} accepted · chat unlocked`); render(); },
   checkin: (id) => { S.regs[id].status = 'checkedin'; S.regs[id].confirmed = true; S.live = { eventId: id }; ui.phase = { ...(ui.phase || {}), [id]: 1 }; save(); earn(20, 'Checked in at an event'); render(); },
+  arrive: (id) => {
+    S.regs[id].status = 'checkedin'; S.regs[id].confirmed = true;
+    S.live = { eventId: id, badgeId: BADGE_ID, paired: true }; S.badge = { screen: 'idle' }; save();
+    earn(20, 'Checked in at an event', true); toast(`Tappy ${BADGE_ID} is yours ✓`); go('event/' + id);
+  },
+  // Leaving = tap the Tappy on the return box at the exit. It unpairs, wipes and syncs in one go; no staff step.
+  'exit-tap': (id) => {
+    if (!S.live || S.live.noBadge) return A.finish(id);
+    clearTimeout(badgeTimer); S.live.returned = true; setBadge('returned'); toast('Tappy returned · taps synced ✓');
+    setTimeout(() => A.finish(id), 900);
+  },
   'give-badge': (id) => { S.live = { eventId: id, badgeId: BADGE_ID }; S.badge = { screen: 'unpaired' }; save(); render(); },
   'no-badge': (id) => { S.live = { eventId: id, noBadge: true }; save(); go('live/' + id); },
   scan: () => startScan(),
@@ -1725,16 +1732,16 @@ function statusBar(name, arg) {
    One click puts BOTH the phone and the simulated Tappy into a scene, so teammates can record the in-person flow
    without walking every step. Uses Portfolio Crit Circle (an upcoming, confirmed in-person event) and Marcus. */
 const DIR_EV = 'crit-circle'; const DIR_PEER = 'marcus';
+const DIR_PEER2 = 'david';
 const SCENES = [
   ['Before', 'Event page before the event'],
-  ['Checked in', 'Phone: During · Tappy off'],
-  ['Collect Tappy', 'Staff hands over TP-07'],
-  ['Pair · code', 'Same code on phone and Tappy'],
-  ['Paired', 'Phone: connected · Tappy: avatar'],
+  ['Arrive', 'Show pass at the door'],
+  ['Got Tappy', 'Already linked · avatar on'],
   ['Tap Marcus', 'Tappy: Meet Marcus?'],
-  ['Linked · icebreaker', 'Shared prompt · saved'],
-  ['Leaving', 'Return Tappy at the desk'],
-  ['Returned · synced', 'Tappy wiped · taps synced'],
+  ['Linked Marcus', 'Icebreaker · saved'],
+  ['Tap David', 'Tappy: Meet David?'],
+  ['Linked David', 'Icebreaker · saved'],
+  ['Exit tap', 'Tappy returned · taps synced'],
   ['After', 'Event page after the event']
 ];
 function scene(n) {
@@ -1743,29 +1750,29 @@ function scene(n) {
   const id = DIR_EV;
   S.regs[id] = { status: 'going', list: true, wall: true, confirmed: true };
   S.encounters = S.encounters.filter((x) => x.eventId !== id);
-  S.followers = S.followers.filter((p) => p !== DIR_PEER || SEED_GRAPH.followers.includes(p));
-  S.live = null; S.badge = { screen: 'off' }; ui.sheet = null; ui.liveTab = 'here'; ui.pairInput = ''; ui.pairError = '';
-  const met = () => addEncounter(DIR_PEER, id, ICEBREAKERS[0], 'tappy');
-  const paired = () => { S.regs[id].status = 'checkedin'; S.live = { eventId: id, badgeId: BADGE_ID, paired: true }; };
+  S.followers = S.followers.filter((p) => ![DIR_PEER, DIR_PEER2].includes(p) || SEED_GRAPH.followers.includes(p));
+  S.live = null; S.badge = { screen: 'off' }; ui.sheet = null; ui.liveTab = 'here';
+  const meet = (p, q) => addEncounter(p, id, q, 'tappy');
   let to = 'event/' + id;
-  if (n >= 1) { S.regs[id].status = 'checkedin'; S.live = { eventId: id }; }
-  if (n === 2) { S.live.badgeId = BADGE_ID; S.badge = { screen: 'unpaired' }; to = 'checkin/' + id; }
-  if (n === 3) { S.live.badgeId = BADGE_ID; S.live.pairing = true; S.badge = { screen: 'pairing' }; to = 'pair/' + id; }
-  if (n === 4) { paired(); S.badge = { screen: 'idle' }; to = 'pair/' + id; }
-  if (n === 5) { paired(); S.badge = { screen: 'request', partner: DIR_PEER }; }
-  if (n === 6) { paired(); met(); S.badge = { screen: 'prompt', partner: DIR_PEER, prompt: ICEBREAKERS[0] }; }
-  if (n === 7) { paired(); met(); S.badge = { screen: 'idle' }; to = 'leave/' + id; }
-  if (n >= 8) {
-    paired(); met(); S.live.returned = true;
+  if (n === 1) to = 'checkin/' + id;
+  if (n >= 2) { S.regs[id].status = 'checkedin'; S.live = { eventId: id, badgeId: BADGE_ID, paired: true }; }
+  if (n === 2) S.badge = { screen: 'idle' };
+  if (n === 3) S.badge = { screen: 'request', partner: DIR_PEER };
+  if (n >= 4) meet(DIR_PEER, ICEBREAKERS[0]);
+  if (n === 4) S.badge = { screen: 'prompt', partner: DIR_PEER, prompt: ICEBREAKERS[0] };
+  if (n === 5) S.badge = { screen: 'request', partner: DIR_PEER2 };
+  if (n >= 6) meet(DIR_PEER2, ICEBREAKERS[3]);
+  if (n === 6) S.badge = { screen: 'prompt', partner: DIR_PEER2, prompt: ICEBREAKERS[3] };
+  if (n >= 7) {
     S.regs[id].status = 'attended'; S.live = null;
-    if (!S.followers.includes(DIR_PEER)) S.followers = [...S.followers, DIR_PEER];
+    [DIR_PEER, DIR_PEER2].forEach((p) => { if (!S.followers.includes(p)) S.followers = [...S.followers, p]; });
     S.badge = { screen: 'returned' };
-    to = (n === 8 ? 'synced/' : 'event/') + id;
+    to = (n === 7 ? 'synced/' : 'event/') + id;
   }
   ui.scene = n; save();
   if (location.hash === '#/' + to) render(); else go(to);
 }
-const TAPPY_DEV = [['off', 'Off'], ['unpaired', 'Unpaired'], ['pairing', 'Pair code'], ['idle', 'Avatar'], ['request:marcus', 'Tap Marcus'], ['request:priya', 'Tap Priya (no reply)'], ['prompt', 'Icebreaker'], ['returned', 'Wiped']];
+const TAPPY_DEV = [['off', 'Off'], ['idle', 'Avatar'], ['request:marcus', 'Tap Marcus'], ['request:david', 'Tap David'], ['request:priya', 'Tap Priya (no reply)'], ['prompt', 'Icebreaker'], ['returned', 'Wiped']];
 function tappyDev(x) {
   const [screen, who] = x.split(':');
   clearTimeout(badgeTimer);
@@ -1789,7 +1796,7 @@ function directorPanel() {
     <div class="dir-grid">${TAPPY_DEV.map(([k, l]) => `<button class="${(([sc, w]) => S.badge.screen === sc && (!w || S.badge.partner === w))(k.split(':')) ? 'on' : ''}" data-a="tappy-dev" data-x="${k}">${l}</button>`).join('')}</div>
     <div class="dir-foot"><button data-a="hw" data-x="A">● Press MEET</button><button data-a="hw" data-x="B">Hold MEET</button></div>
     <button class="dir-reset" data-a="dir-reset">Reset demo data</button>
-    <p class="dir-note">Event: Portfolio Crit Circle · person met: Marcus. You can still click inside the phone and press MEET normally.</p>`;
+    <p class="dir-note">Event: Portfolio Crit Circle · people met: Marcus, David. You can still click inside the phone and press MEET normally.</p>`;
 }
 
 function render() {
