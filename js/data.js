@@ -19,7 +19,7 @@ export const PEOPLE = {
 
 export const EVENTS = [
   {
-    id: 'coffee-meetup', img: 'covers/coffee-meetup.jpg', mode: 'offline', title: 'Junior Designers Coffee Meetup', circle: 'UTS Design Crowd',
+    id: 'coffee-meetup', mode: 'offline', title: 'Junior Designers Coffee Meetup', circle: 'UTS Design Crowd',
     date: 'Fri 18 Sep', time: '11:30 – 13:30', when: 'Now', venue: 'Single O, Surry Hills', distance: '1.2 km',
     cost: 'Free', capacity: 25, going: 18, approval: false, badges: true, host: 'sofia', cover: ['#7CE0C3', '#123A30'],
     audience: 'Junior and student designers meeting over coffee. Bring one question about your first design job.',
