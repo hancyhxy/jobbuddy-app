@@ -19,7 +19,7 @@ export const PEOPLE = {
 
 export const EVENTS = [
   {
-    id: 'coffee-meetup', mode: 'offline', title: 'Junior Designers Coffee Meetup', circle: 'UTS Design Crowd',
+    id: 'coffee-meetup', img: 'covers/coffee-meetup.jpg', mode: 'offline', title: 'Junior Designers Coffee Meetup', circle: 'UTS Design Crowd',
     date: 'Fri 18 Sep', time: '11:30 – 13:30', when: 'Now', venue: 'Single O, Surry Hills', distance: '1.2 km',
     cost: 'Free', capacity: 25, going: 18, approval: false, badges: true, host: 'sofia', cover: ['#7CE0C3', '#123A30'],
     audience: 'Junior and student designers meeting over coffee. Bring one question about your first design job.',
@@ -68,7 +68,7 @@ export const EVENTS = [
 
 // A past event the demo account attended, so the After view has content from the start.
 EVENTS.push({
-  id: 'portfolio-night', past: true, mode: 'offline', title: 'Portfolio Night: Career Swap', circle: 'UTS Design Crowd',
+  id: 'portfolio-night', img: 'covers/portfolio-night.jpg', past: true, mode: 'offline', title: 'Portfolio Night: Career Swap', circle: 'UTS Design Crowd',
   date: 'Sat 13 Sep', time: '18:30 – 20:30', when: 'Last Saturday', venue: 'Local Design Studio, Newtown', distance: '3.2 km',
   cost: 'Free', capacity: 30, going: 24, approval: false, badges: true, host: 'sofia', cover: ['#7CE0C3', '#123A30'],
   audience: 'A relaxed evening to trade portfolio feedback across disciplines. Bring one piece you’re stuck on.',
@@ -78,24 +78,40 @@ EVENTS.push({
 
 // More past events so the Past row on Home scrolls sideways.
 EVENTS.push({
-  id: 'ux-breakfast', past: true, mode: 'offline', title: 'UX Breakfast Club', circle: 'UTS Design Crowd',
+  id: 'ux-breakfast', img: 'covers/ux-breakfast.jpg', past: true, mode: 'offline', title: 'UX Breakfast Club', circle: 'UTS Design Crowd',
   date: 'Wed 10 Sep', time: '08:00 – 09:30', when: 'Last week', venue: 'Paramount Coffee, Surry Hills', distance: '1.5 km',
   cost: 'Free', capacity: 20, going: 16, approval: false, badges: true, host: 'leo', cover: ['#FFD166', '#3A2E10'],
   audience: 'Early-bird designers swapping one UX win and one struggle over breakfast.',
   agenda: [['08:00', 'Coffee & intros'], ['08:30', 'Win / struggle round'], ['09:15', 'Wrap up']],
   attendees: ['leo', 'sofia', 'hannah'], tags: ['UX', 'Networking']
 }, {
-  id: 'ai-tools-jam', past: true, mode: 'online', title: 'AI Tools Jam for Designers', circle: 'Harbour Builders',
+  id: 'ai-tools-jam', img: 'covers/ai-tools-jam.jpg', past: true, mode: 'online', title: 'AI Tools Jam for Designers', circle: 'Harbour Builders',
   date: 'Thu 4 Sep', time: '18:00 – 19:00 AEST', when: '2 weeks ago', platform: 'Zoom (link in app)',
   cost: 'Free', capacity: 150, going: 96, approval: false, badges: false, host: 'maya', cover: ['#E7A6FF', '#2A1838'],
   audience: 'Show-and-tell of AI tools in real design workflows.',
   agenda: [['18:00', 'Demos'], ['18:40', 'Q&A']], attendees: ['maya', 'priya', 'david'], tags: ['AI tools', 'UX']
 }, {
-  id: 'grad-panel', past: true, mode: 'offline', title: 'Grad Hiring Panel', circle: 'Sydney Tech',
+  id: 'grad-panel', img: 'covers/grad-panel.jpg', past: true, mode: 'offline', title: 'Grad Hiring Panel', circle: 'Sydney Tech',
   date: 'Tue 26 Aug', time: '18:00 – 20:00', when: '3 weeks ago', venue: 'UTS Building 11, Ultimo', distance: '0.5 km',
   cost: 'Free', capacity: 80, going: 72, approval: false, badges: true, host: 'ahmed', cover: ['#8FB8FF', '#14223A'],
   audience: 'Hiring managers explain what they look for in grad applications.',
   agenda: [['18:00', 'Panel'], ['19:00', 'Mingle']], attendees: ['ahmed', 'david', 'marcus'], tags: ['Interviews', 'Networking']
+});
+
+// Extra upcoming events nobody has registered for yet, so Picks for you shows fresh events.
+EVENTS.push({
+  id: 'women-product', img: 'covers/women-product.jpg', mode: 'offline', title: 'Women in Product Brunch', circle: 'Product People',
+  date: 'Sun 4 Oct', time: '10:30 – 12:30', when: 'In 2 weeks', venue: 'The Cutaway, Barangaroo', distance: '3.4 km',
+  cost: '$20', capacity: 40, going: 31, approval: true, badges: true, host: 'hannah', cover: ['#F6C9B0', '#2E3B2C'],
+  audience: 'Women and allies in product sharing roadmaps, career moves and brunch.',
+  agenda: [['10:30', 'Brunch & intros'], ['11:15', 'Roadmap swap'], ['12:15', 'Wrap up']],
+  attendees: ['hannah', 'maya', 'priya'], tags: ['Startups', 'Networking']
+}, {
+  id: 'cv-teardown', img: 'covers/cv-teardown.jpg', mode: 'online', title: 'Live CV Teardown', circle: 'Switchers Circle',
+  date: 'Wed 7 Oct', time: '19:00 – 20:00 AEST', when: 'In 3 weeks', platform: 'Zoom (link in app)',
+  cost: 'Free', capacity: 250, going: 164, approval: false, badges: false, host: 'david', cover: ['#B6FF3B', '#0B0B0B'],
+  audience: 'Volunteer CVs reviewed live by hiring managers. Learn what gets shortlisted.',
+  agenda: [['19:00', 'Teardowns'], ['19:40', 'Q&A']], attendees: ['david', 'ahmed', 'marcus'], tags: ['Interviews', 'Career change']
 });
 
 /* Tappy profile (Week 9 revision): one core profile reused for every event,

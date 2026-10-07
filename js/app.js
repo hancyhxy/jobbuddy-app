@@ -172,7 +172,7 @@ function stCls(e, r) {
 }
 function rowChip(e, r) {
   if (r.status === 'checkedin') return '<i class="chip chip-live"><span class="dot"></span>Live now</i>';
-  if (r.status === 'attended') { const n = S.encounters.filter((x) => x.eventId === e.id && !x.waiting).length; return `<i class="chip st-past">${n} connection${n === 1 ? '' : 's'}</i>`; }
+  if (r.status === 'attended') { const n = S.encounters.filter((x) => x.eventId === e.id && !x.waiting).length; return `<i class="chip st-past">${n ? `${n} connection${n === 1 ? '' : 's'}` : 'You went'}</i>`; }
   if (r.status === 'going' && e.mode === 'offline' && !r.confirmed) return '<i class="chip st-confirm">Confirm attendance</i>';
   return `<i class="chip ${stCls(e, r)}">${statusLabel(e, r)}</i>`;
 }
@@ -232,7 +232,7 @@ V.home = () => {
       <div class="seg3 mode-seg">${[['all', 'All'], ['offline', 'In person'], ['online', 'Online']].map(([k, l]) => `<button class="${mode === k ? 'on' : ''}" data-a="home-mode" data-x="${k}">${l}</button>`).join('')}</div>
       ${hint}
       <div class="explorer-row"><h2 style="margin:0">Picks for you</h2><button class="linkish small" data-a="nav" data-x="events">See all</button></div>
-      <div class="hscroll picks">${list.map(pickCard).join('')}</div>
+      <div class="hscroll picks">${list.filter((e) => !reg(e.id) && !isHost(e)).map(pickCard).join('')}</div>
       <h2>By date</h2>
       ${groups}
       ${past.length ? `<h2>Recent views</h2>${past.map((e) => `<div class="card-white" style="display:flex;gap:14px;align-items:flex-start"><div style="width:74px;height:74px;flex:0 0 auto;border-radius:50%;overflow:hidden">${art(seedOf(e.circle), '', 'width:100%;height:100%')}</div><div style="flex:1"><h3 style="margin:0">${esc(e.title)}</h3><p class="muted small" style="margin:6px 0 10px">Attended ${e.date}. Revisit the shared stories and see who else showed up.</p><button class="btn small primary" data-a="nav" data-x="circle/${encodeURIComponent(e.circle)}">See more</button></div></div>`).join('')}` : ''}
