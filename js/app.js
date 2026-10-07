@@ -841,13 +841,38 @@ function postCard(p) {
   const a = p.anon ? { name: 'Anonymous member' } : who(p.author);
   const helped = S.helped.includes(p.id); const own = p.author === 'me';
   const conn = !own && !p.anon && isConn(p.author);
-  return `<article class="post">
+  return `<article class="post tappable" data-a="nav" data-x="post/${p.id}">
     <header>${p.anon ? '<span class="ph anon" style="width:36px;height:36px">?</span>' : `<button class="plain" data-a="nav" data-x="${own ? 'me' : 'person/' + p.author}">${av(a, 36)}</button>`}
       <div><b>${esc(a.name)}${conn ? ' <i class="conn-tag">Connection</i>' : ''}</b><small>${p.aud === 'circle' ? ICON.lock : ''}${esc(p.circle)} · ${p.ago}</small></div><i class="chip">${p.type}</i></header>
     <p>${esc(p.text)}</p>
-    <footer><button class="help ${helped ? 'on' : ''}" data-a="helped" data-x="${p.id}" ${own ? 'disabled' : ''}>${ICON.spark}Helpful · ${p.helpful + (helped ? 1 : 0)}</button><button class="help" data-a="comments" data-x="${p.id}">${ICON.chat}${p.comments + ((S.myComments || {})[p.id] || []).length}</button>${!own && !p.anon && S.profile ? `<span style="flex:1"></span>${conn ? '' : followBtn(p.author)}<button class="help icon-only" aria-label="Message" title="Message" data-a="${conn || msgReq(p.author)?.state === 'accepted' ? 'nav' : 'msg-open'}" data-x="${conn || msgReq(p.author) ? 'chat/' + p.author : p.author}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3L10 14"/><path d="M21 3l-7 18-4-7-7-4z"/></svg></button>` : ''}</footer>
+    <footer><button class="help ${helped ? 'on' : ''}" data-a="helped" data-x="${p.id}" ${own ? 'disabled' : ''}>${ICON.spark}Helpful · ${p.helpful + (helped ? 1 : 0)}</button><button class="help" data-a="nav" data-x="post/${p.id}">${ICON.chat}${p.comments + ((S.myComments || {})[p.id] || []).length}</button><span style="flex:1"></span><span class="read-more">Read more ›</span></footer>
   </article>`;
 }
+
+/* Post detail (teammate flow): author + Connect, full post, comments inline, reply box. */
+V.post = (id) => {
+  const p = allPosts().find((x) => x.id === id); if (!p) return V.notfound();
+  const a = p.anon ? { name: 'Anonymous member' } : who(p.author); const own = p.author === 'me';
+  const helped = S.helped.includes(p.id); const cs = comments(id); const total = p.comments + ((S.myComments || {})[id] || []).length;
+  let rel = '';
+  if (!own && !p.anon && S.profile) {
+    rel = isConn(p.author) ? `<button class="btn small" data-a="nav" data-x="chat/${p.author}">Message</button>`
+      : S.following.includes(p.author) ? '<button class="btn small" disabled>Requested</button>'
+      : `<button class="btn small primary" data-a="connect-open" data-x="${p.author}">${ICON.plus}Connect</button>`;
+  }
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>Post</b><button class="icon-btn" data-a="toast" data-x="Link copied">${ICON.share}</button></header>
+    <section class="pad post-detail">
+      <div class="pd-author">${p.anon ? '<span class="ph anon" style="width:44px;height:44px">?</span>' : `<button class="plain" data-a="nav" data-x="${own ? 'me' : 'person/' + p.author}">${av(a, 44)}</button>`}
+        <div><b>${esc(a.name)}</b><small>${p.anon ? '' : esc(a.headline || '') + ' · '}${p.ago}</small></div>${rel}</div>
+      <div class="pd-tags"><i class="chip">${p.type}</i><i class="chip">${p.aud === 'circle' ? ICON.lock : ''}${esc(p.circle)}</i></div>
+      <p class="pd-text">${esc(p.text)}</p>
+      <div class="pd-actions"><button class="help ${helped ? 'on' : ''}" data-a="helped" data-x="${p.id}" ${own ? 'disabled' : ''}>${ICON.spark}Helpful · ${p.helpful + (helped ? 1 : 0)}</button><span class="muted small">${ICON.chat} ${total} comments</span></div>
+      <h3>Comments · ${total}</h3>
+      <div class="clist">${cs.map(([au, t]) => { const u = who(au); return `<div class="cmt">${av(u, 30)}<div><b>${esc(u.name)}${au === p.author ? ' <i class="chip" style="margin:0 0 0 4px">Author</i>' : ''}</b><p>${esc(t)}</p></div></div>`; }).join('') || '<p class="muted small">Be the first to reply.</p>'}${p.comments > cs.length ? `<p class="muted small">+ ${p.comments - cs.length} earlier comments</p>` : ''}</div>
+      <div class="spacer"></div>
+    </section>
+    <footer class="sticky"><div class="cinput"><input class="field" data-model="commentText" placeholder="Add a comment… (+3 pts)" value="${esc(ui.commentText || '')}"><button class="btn small primary" data-a="send-comment" data-x="${id}">Send</button></div></footer>`;
+};
 
 V.community = () => {
   const mode = ui.cmode === 'Networks' ? 'Networks' : 'Community';
@@ -1650,7 +1675,7 @@ const A = {
 };
 
 /* =============================================================== RENDER */
-const NO_NAV = ['buddy', 'buddyq', 'buddyreview', 'pending', 'synced', 'createEvent', 'pod', 'podnew', 'welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'cv', 'mock', 'event', 'recap', 'circle', 'chat'];
+const NO_NAV = ['post', 'buddy', 'buddyq', 'buddyreview', 'pending', 'synced', 'createEvent', 'pod', 'podnew', 'welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'cv', 'mock', 'event', 'recap', 'circle', 'chat'];
 const TABS = [['home', 'Event', 'var(--t-event)'], ['community', 'Community', 'var(--t-comm)'], ['messages', 'Messages', 'var(--t-msg)'], ['me', 'Account', 'var(--t-acc)']];
 const scrollEnd = () => { const a = $('#app'); a.scrollTop = a.scrollHeight; };
 
