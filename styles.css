@@ -825,3 +825,27 @@ i.pill { height: 30px; }
 .post footer { flex-wrap: nowrap; }
 .post footer .help.icon-only { width: 36px; height: 36px; padding: 0; justify-content: center; flex: 0 0 auto; }
 .post footer .btn.small { flex: 0 0 auto; }
+
+/* Home: horizontal scroll rows (teammate interaction) */
+.hscroll { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 var(--pad); margin: 0 calc(-1 * var(--pad)) 22px; padding: 0 var(--pad) 4px; scrollbar-width: none; }
+.hscroll::-webkit-scrollbar { display: none; }
+.hscroll > * { scroll-snap-align: start; flex-shrink: 0; }
+.ye-card { width: 82%; display: flex; gap: 12px; align-items: center; padding: 12px; background: var(--s1, #f2f0ee); border-radius: 18px; text-align: left; }
+.ye-card .cover { width: 84px; height: 84px; flex: 0 0 auto; border-radius: 12px; }
+.ye-main { display: grid; gap: 4px; min-width: 0; }
+.ye-main .chip { margin: 0; justify-self: start; }
+.ye-main b { font-size: 15px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ye-main small { color: var(--mu); }
+.pick-card { width: 78%; display: grid; gap: 6px; padding: 12px; background: var(--s1, #f2f0ee); border-radius: 20px; text-align: left; }
+.pick-card .cover { width: 100%; height: 170px; border-radius: 14px; }
+.pick-card b { font-size: 17px; line-height: 1.25; }
+.pick-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pick-meta .chip { margin: 0; display: inline-flex; gap: 4px; align-items: center; }
+.pick-meta .chip .ic { width: 12px; height: 12px; }
+.pick-meta small { color: var(--mu); }
+.chip-live { background: #ffe1df !important; color: #c0261b !important; display: inline-flex; align-items: center; gap: 5px; }
+.chip-live .dot { width: 6px; height: 6px; border-radius: 50%; background: #e5372b; display: inline-block; }
+/* Me: name card below level, connections link */
+.nc-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 22px; }
+.nc-head h3 { margin: 0; }
+.nc-conn { display: block; margin-top: 10px; padding: 0; color: #d6f36b; font-weight: 600; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }

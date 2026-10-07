@@ -19,6 +19,14 @@ export const PEOPLE = {
 
 export const EVENTS = [
   {
+    id: 'coffee-meetup', mode: 'offline', title: 'Junior Designers Coffee Meetup', circle: 'UTS Design Crowd',
+    date: 'Fri 18 Sep', time: '11:30 – 13:30', when: 'Now', venue: 'Single O, Surry Hills', distance: '1.2 km',
+    cost: 'Free', capacity: 25, going: 18, approval: false, badges: true, host: 'sofia', cover: ['#7CE0C3', '#123A30'],
+    audience: 'Junior and student designers meeting over coffee. Bring one question about your first design job.',
+    agenda: [['11:30', 'Arrive & collect EventBuddy devices'], ['11:45', 'Intro round'], ['12:15', 'Coffee & tap to talk'], ['13:15', 'Wrap up & EventBuddy return']],
+    attendees: ['leo', 'sofia', 'hannah', 'marcus', 'priya'], tags: ['UX', 'Portfolio', 'Networking']
+  },
+  {
     id: 'build-night', img: 'covers/build-night.jpg', mode: 'offline', title: 'Build Night: AI Agents in Practice', circle: 'Harbour Builders',
     date: 'Sat 19 Sep', time: '17:30 – 20:30', when: 'This Saturday', venue: 'Harbour Commons, Surry Hills', distance: '2.1 km',
     cost: 'Free', capacity: 60, going: 47, approval: true, badges: true, host: 'maya', cover: ['#D7FF3A', '#1E3A2F'],

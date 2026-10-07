@@ -166,6 +166,7 @@ const MONTHS = { Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April', Ma
 function dayParts(e) { const [d, n, m] = e.date.split(' '); return [`${n} ${MONTHS[m] || m}`, DAYS[d] || d]; }
 
 function rowChip(e, r) {
+  if (r.status === 'checkedin') return '<i class="chip chip-live"><span class="dot"></span>Live now</i>';
   if (r.status === 'attended') { const n = S.encounters.filter((x) => x.eventId === e.id && !x.waiting).length; return `<i class="chip chip-attended">${n} connection${n === 1 ? '' : 's'}</i>`; }
   if (r.status === 'going' && e.mode === 'offline' && !r.confirmed) return '<i class="chip chip-pending">Confirm attendance</i>';
   return `<i class="chip chip-${['waitlist', 'offered'].includes(r.status) ? 'pending' : r.status}">${statusLabel(e, r)}</i>`;
@@ -181,6 +182,16 @@ function lumaRow(e) {
       <span class="lrow-meta"><span>${ICON.clock}${e.time.split(' ')[0]}</span><span>${e.mode === 'online' ? ICON.globe : ICON.pin}${esc(place)}</span>${e.mode === 'offline' && e.badges ? `<span class="badge-tag">${ICON.badge}EventBuddy</span>` : ''}</span>
       ${connLine(e)}
     </span></button>`;
+}
+
+function yeCard(e) {
+  const r = reg(e.id);
+  const chip = isHost(e) ? '<i class="chip chip-going">Hosting</i>' : r ? rowChip(e, r) : '';
+  return `<button class="ye-card" data-a="nav" data-x="event/${e.id}">${cover(e, 'th')}<span class="ye-main">${chip}<b>${esc(e.title)}</b><small>${e.date} · ${e.mode === 'online' ? 'Online' : 'Offline'}</small></span></button>`;
+}
+function pickCard(e) {
+  const r = reg(e.id);
+  return `<button class="pick-card" data-a="nav" data-x="event/${e.id}">${cover(e, 'md')}<span class="pick-meta">${r ? rowChip(e, r) : ''}${e.badges && e.mode === 'offline' ? `<i class="chip chip-going">${ICON.badge}Buddy device</i>` : ''}<small>${e.date} · ${e.mode === 'online' ? 'Online' : 'Offline'}</small></span><b>${esc(e.title)}</b><small class="muted">${esc(e.circle)} · ${e.going} going</small></button>`;
 }
 
 V.home = () => {
@@ -208,11 +219,14 @@ V.home = () => {
       ${liveE ? `<button class="live-card flush" data-a="nav" data-x="${liveE.mode === 'online' ? 'room' : 'live'}/${liveE.id}"><span class="dot"></span><div><small>HAPPENING NOW</small><b>${esc(liveE.title)}</b></div>${ICON.chev}</button>` : ''}
       <button class="h2link" data-a="nav" data-x="me"><h2>Your events</h2>${ICON.chev}</button>
       ${p ? `<div class="seg3" style="margin-bottom:12px">${[['upcoming', `Upcoming · ${mine.length}`], ['past', `Past · ${pastMine.length}`]].map(([k, l]) => `<button class="${yseg === k ? 'on' : ''}" data-a="yseg" data-x="${k}">${l}</button>`).join('')}</div>` : ''}
-      ${yseg === 'past' && p ? pastMine.map(lumaRow).join('') || '<div class="empty">Events you attend show up here with the people you met.</div>'
-        : mine.length ? mine.map(lumaRow).join('') : `<div class="empty">No upcoming events. Explore events below and RSVP to one.</div>`}
+      ${yseg === 'past' && p ? (pastMine.length ? `<div class="hscroll">${pastMine.map(yeCard).join('')}</div>` : '<div class="empty">Events you attend show up here with the people you met.</div>')
+        : mine.length ? `<div class="hscroll">${mine.map(yeCard).join('')}</div>` : `<div class="empty">No upcoming events. Explore events below and RSVP to one.</div>`}
       <div class="explorer-row"><h2 class="explorer">Event Explorer</h2><button class="icon-btn" data-a="nav" data-x="events" aria-label="Search events">${ICON.search}</button></div>
       <div class="seg3 mode-seg">${[['all', 'All'], ['offline', 'In person'], ['online', 'Online']].map(([k, l]) => `<button class="${mode === k ? 'on' : ''}" data-a="home-mode" data-x="${k}">${l}</button>`).join('')}</div>
       ${hint}
+      <div class="explorer-row"><h2 style="margin:0">Picks for you</h2><button class="linkish small" data-a="nav" data-x="events">See all</button></div>
+      <div class="hscroll picks">${list.map(pickCard).join('')}</div>
+      <h2>By date</h2>
       ${groups}
       ${past.length ? `<h2>Recent views</h2>${past.map((e) => `<div class="card-white" style="display:flex;gap:14px;align-items:flex-start"><div style="width:74px;height:74px;flex:0 0 auto;border-radius:50%;overflow:hidden">${art(seedOf(e.circle), '', 'width:100%;height:100%')}</div><div style="flex:1"><h3 style="margin:0">${esc(e.title)}</h3><p class="muted small" style="margin:6px 0 10px">Attended ${e.date}. Revisit the shared stories and see who else showed up.</p><button class="btn small primary" data-a="nav" data-x="circle/${encodeURIComponent(e.circle)}">See more</button></div></div>`).join('')}` : ''}
       <div class="spacer"></div>
@@ -792,8 +806,14 @@ function seedAccount(points) {
   S.following = [...SEED_GRAPH.following]; S.followers = [...SEED_GRAPH.followers];
   S.circles = ['Harbour Builders', 'UTS Design Crowd'];
   S.regs['portfolio-night'] = { status: 'attended', list: true, confirmed: true };
+  // Mock one offline event per time state so Before / During / After can be shown without walking the flow.
+  S.regs['crit-circle'] = { status: 'going', list: true, wall: true, confirmed: true };
+  S.regs['coffee-meetup'] = { status: 'checkedin', list: true, wall: true, confirmed: true };
+  S.live = { eventId: 'coffee-meetup', badgeId: BADGE_ID, paired: true }; S.badge = { screen: 'idle' };
   S.encounters = [['leo', 'What’s one skill you’re trying to build this year?'], ['sofia', 'What’s the best piece of feedback you’ve ever had on your work?'], ['marcus', 'What did you almost do instead of this career?']]
     .map(([person, prompt], i) => ({ id: 'seed' + i, person, eventId: 'portfolio-night', prompt, via: 'tappy', at: Date.now() - 6e8 }));
+  S.encounters.push({ id: 'seed-live0', person: 'hannah', eventId: 'coffee-meetup', prompt: 'What would you tell yourself on day one of your first job?', via: 'tappy', at: Date.now() - 9e5 },
+    { id: 'seed-live1', person: 'priya', eventId: 'coffee-meetup', prompt: 'Which project are you proudest of, and why?', via: 'tappy', at: Date.now() - 3e5, waiting: true });
   S.points = points; S.lifetime = points; S.ledger = points ? [{ n: 15, why: 'Shared an event takeaway', at: Date.now() - 864e5 }, { n: 20, why: 'Checked in at an event', at: Date.now() - 9e7 }, { n: 5, why: 'New connection · Leo', at: Date.now() - 2e8 }] : [];
 }
 const wallet = () => S.points || 0;            // spendable: goes down when you redeem
@@ -1165,9 +1185,9 @@ V.me = () => {
     <section class="pad">
       <p class="muted">Hi, I’m ${esc(p.short)} — ${p.stage.toLowerCase()} in ${p.field.toLowerCase()}. ${p.fact ? esc(p.fact) + '.' : ''}</p>
       <button class="eb-entry" data-a="nav" data-x="buddy"><span>${ICON.badge}</span><div><b>EventBuddy</b><small>${buddyReady() ? `${esc(badgeLook().tag)} · device & profile settings` : 'Set up once, reused for every event'}</small></div>${ICON.chev}</button>
-      <div class="namecard"><small>Your name card · No. 0001</small><b>${esc(p.name)}</b><small style="color:#bbb">${p.field} · Sydney, AU</small><small style="color:#bbb;margin-top:4px">${p.interests.map((t) => '#' + t).join(' ')}</small></div>
       <div class="lv-card" data-a="nav" data-x="rewards" role="button"><div><small>LEVEL ${l.n}</small><b>${l.name}</b></div><span>${wallet()} pts<small style="display:inline;margin-left:4px;color:#bbb;letter-spacing:0">to spend</small><button class="icon-btn help-btn sm" data-a="growth-help" aria-label="How growth works">${ICON.help}</button></span><div class="lvbar"><i style="width:${l.pct}%"></i></div><small>${earned()} earned in total · ${l.next ? `${l.next - earned()} to ${l.nextName}` : 'Top level'} · Redeeming never lowers your level</small></div>
-      <div class="stats four">${[['connections', connections().length, 'connections'], ['followers', S.followers.length, 'followers'], ['following', S.following.length, 'following'], ['met', metIds.length, 'met']].map(([t, n, lbl]) => `<button data-a="people-tab" data-x="${t}"><b>${n}</b><small>${lbl}</small></button>`).join('')}</div>
+      <div class="nc-head"><h3>Your name card</h3><button class="linkish small" data-a="edit-profile">Edit</button></div>
+      <div class="namecard"><small>Your name card · No. 0001</small><b>${esc(p.name)}</b><small style="color:#bbb">${p.field} · Sydney, AU</small><small style="color:#bbb;margin-top:4px">${p.interests.map((t) => '#' + t).join(' ')}</small><button class="nc-conn" data-a="people-tab" data-x="connections">${connections().length} connections</button></div>
       <button class="list-item" data-a="nav" data-x="messages"><span class="lead-ico">${ICON.chat}</span><div class="grow"><b>Messages</b><small>View your chatbox</small></div>${ICON.chev}</button>
       <h3>Career tools</h3>
       <button class="tool" data-a="nav" data-x="cv"><span class="tool-ico">${ICON.file}</span><span class="row-main"><b>AI CV review</b><small>${S.cvFree ?? 3} free this month${(S.credits || {}).cv ? ` · +${S.credits.cv} extra` : ''}</small></span>${ICON.chev}</button>
@@ -1188,14 +1208,13 @@ V.me = () => {
 };
 
 V.people = () => {
-  const tab = ui.pplTab || 'connections';
+  const tab = 'connections';
   const metIds = [...new Set(S.encounters.map((x) => x.person))];
   const ids = { connections: connections(), followers: S.followers, following: S.following, met: metIds }[tab];
   const empty = { connections: 'When you and someone follow each other, you’re connected.', followers: 'No followers yet.', following: 'You’re not following anyone yet.', met: 'People you save at events show up here.' }[tab];
-  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>People</b><span></span></header>
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>${ids.length} connections</b><span></span></header>
     <section class="pad">
-      <div class="tabs">${[['connections', 'Connections'], ['followers', 'Followers'], ['following', 'Following'], ['met', 'Met']].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-a="people-tab" data-x="${k}">${l}</button>`).join('')}</div>
-      ${tab === 'connections' ? `<p class="note">${ICON.info} A connection is a mutual follow.</p>` : ''}
+      <p class="note">${ICON.info} A connection is a mutual follow.</p>
       ${ids.map((id) => { const p = PEOPLE[id]; const x = S.encounters.find((y) => y.person === id);
         return `<div class="enc"><button class="plain" data-a="nav" data-x="person/${id}">${av(p, 44)}</button><div><b>${p.name}</b><small>${x ? 'Met at ' + ev(x.eventId).title : p.headline}</small></div>${followBtn(id)}</div>`; }).join('') || `<p class="empty">${empty}</p>`}
     </section>`;
