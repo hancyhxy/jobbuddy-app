@@ -763,9 +763,9 @@ i.pill { height: 30px; }
 /* ---------- Week 9 revision: event phases, EventBuddy profile, single Meet button ---------- */
 .toggle span small { display: block; }
 .phase-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 16px 0; }
-.phase-steps button { height: 36px; border-radius: 99px; background: var(--s1); color: var(--mu); font-size: 13px; font-weight: 600; text-align: center; }
-.phase-steps button.done { background: color-mix(in srgb, var(--green2) 18%, #fff); color: var(--green2); }
-.phase-steps button.on { background: var(--tx); color: #fff; }
+.phase-steps > * { height: 36px; border-radius: 99px; background: var(--s1); color: var(--mu); font-size: 13px; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; cursor: default; }
+.phase-steps > *.done { background: color-mix(in srgb, var(--green2) 18%, #fff); color: var(--green2); }
+.phase-steps > *.on { background: var(--tx); color: #fff; }
 .phase-card { background: var(--s1); border-radius: 18px; padding: 16px; margin-bottom: 12px; display: grid; gap: 4px; }
 .phase-card small { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--mu); }
 .phase-card .ok, .ok { color: var(--green2); }
