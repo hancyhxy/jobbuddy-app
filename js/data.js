@@ -24,7 +24,7 @@ export const EVENTS = [
     cost: 'Free', capacity: 25, going: 18, approval: false, badges: true, host: 'sofia', cover: ['#7CE0C3', '#123A30'],
     audience: 'Junior and student designers meeting over coffee. Bring one question about your first design job.',
     agenda: [['11:30', 'Arrive & collect Tappy devices'], ['11:45', 'Intro round'], ['12:15', 'Coffee & tap to talk'], ['13:15', 'Wrap up & Tappy return']],
-    attendees: ['leo', 'sofia', 'hannah', 'marcus', 'priya'], tags: ['UX', 'Portfolio', 'Networking']
+    attendees: ['leo', 'sofia', 'hannah', 'marcus', 'priya', 'david'], tags: ['UX', 'Portfolio', 'Networking']
   },
   {
     id: 'build-night', img: 'covers/build-night.jpg', mode: 'offline', title: 'Build Night: AI Agents in Practice', circle: 'Harbour Builders',

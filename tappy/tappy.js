@@ -170,7 +170,7 @@ const PROMPT_TEXT = () => ICEBREAKERS[promptIdx % ICEBREAKERS.length];
 
 const STEPS = [
   { title: 'Ready at the desk', screen: () => `<div class="bs off"><small>JobBuddy</small><b>${BADGE_ID}</b><small>Ready for the next attendee</small></div>`,
-    note: 'On the phone: Your events → Portfolio Crit Circle → “Check in at the event” → DEMO Staff scans pass · hands you Tappy. Then confirm on the Tappy (next step).' },
+    note: 'On the phone: Your events → Junior Designers Coffee Meetup → “Check in at the event” → DEMO Staff scans pass · hands you Tappy. Then confirm on the Tappy (next step).' },
   { title: 'Link to you', a: 'next', screen: () => `<div class="bs"><small>IS THIS YOU?</small><div class="badge-av">${avatar(look.avatar, look.color, 72, frame)}</div><b>${esc(look.name)}</b><small>Press MEET to link</small><small class="dim">Hold if it’s not you</small></div>`,
     note: 'Staff scanned the pass, so this Tappy is assigned to you. Press Meet to confirm it’s yours (bind). Phone shows “Press MEET on your Tappy” — it updates when you press.' },
   { title: 'Paired', screen: () => `<div class="bs"><b class="huge">✓</b><b>Hi ${esc(look.name)}</b><small>Tappy is yours tonight</small></div>`,

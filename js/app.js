@@ -318,7 +318,7 @@ function eventPhase(e, r) {
   const head = `<header class="bar float"><button class="icon-btn" data-a="nav" data-x="home">${ICON.back}</button><span></span><button class="icon-btn" data-a="toast" data-x="Link copied">${ICON.share}</button></header>
     <div class="hero" style="--c1:${e.cover[0]};--c2:${e.cover[1]}">${cover(e, 'art')}</div>
     <section class="pad">
-      <button class="host" data-a="nav" data-x="person/${hostOf(e).id}">${av(hostOf(e), 32)}<span><small>Hosted by</small><b>${esc(hostOf(e).name)}</b></span>${e.badges ? `<i class="chip chip-going" style="margin:0 0 0 auto">${ICON.badge}Tappy</i>` : ''}</button>
+      <button class="host" data-a="nav" data-x="person/${hostOf(e).id}">${av(hostOf(e), 32)}<span><small>Hosted by</small><b>${esc(hostOf(e).name)}</b></span></button>
       <h1 class="title sm">${esc(e.title)}</h1>
       <p class="muted small">${e.date} · ${e.time}${now === 1 ? ' · <b style="color:var(--green2)">Live now</b>' : ''}<br>${esc(e.venue)}</p>
       ${steps}`;
@@ -337,7 +337,7 @@ function eventPhase(e, r) {
       ${e.badges ? bud : ''}
       <p class="note">${ICON.badge} The Tappy is handed out at check-in. Nothing to carry until the day.</p>
       <h3>About this event</h3><p class="muted">${esc(e.audience)}</p>`;
-    foot = `<p class="muted small center">Check-in opens when you arrive at the venue.</p><button class="btn primary" data-a="nav" data-x="checkin/${id}">Check in at the event</button><button class="link danger" style="margin:4px auto 0" data-a="cancel" data-x="${id}">Can’t make it? Cancel RSVP</button>`;
+    foot = `<button class="btn primary" data-a="nav" data-x="checkin/${id}">Check in at the event</button>`;
   } else if (ph === 1) {
     if (now < 1) body = `<div class="phase-card"><small>NOT CHECKED IN YET</small><b>This opens when you arrive</b><p>Tap your card at the door or show your pass. Then your Tappy does the work and your phone stays in your pocket.</p></div>`;
     else {
@@ -1758,7 +1758,7 @@ function statusBar(name, arg) {
 /* ---------------------------------------------------------------- demo director (desktop only)
    One click puts BOTH the phone and the simulated Tappy into a scene, so teammates can record the in-person flow
    without walking every step. Uses Portfolio Crit Circle (an upcoming, confirmed in-person event) and Marcus. */
-const DIR_EV = 'crit-circle'; const DIR_PEER = 'marcus';
+const DIR_EV = 'coffee-meetup'; const DIR_PEER = 'marcus';
 const DIR_PEER2 = 'david';
 const SCENES = [
   ['Before', 'Event page before the event'],
@@ -1826,7 +1826,7 @@ function directorPanel() {
     <div class="dir-grid">${TAPPY_DEV.map(([k, l]) => `<button class="${(([sc, w]) => S.badge.screen === sc && (!w || S.badge.partner === w))(k.split(':')) ? 'on' : ''}" data-a="tappy-dev" data-x="${k}">${l}</button>`).join('')}</div>
     <div class="dir-foot"><button data-a="hw" data-x="A">● Press MEET</button><button data-a="hw" data-x="B">Hold MEET</button></div>
     <button class="dir-reset" data-a="dir-reset">Reset demo data</button>
-    <p class="dir-note">Event: Portfolio Crit Circle · people met: Marcus, David. You can still click inside the phone and press MEET normally.</p>`;
+    <p class="dir-note">Event: Junior Designers Coffee Meetup (the Live now event on Home) · people met: Marcus, David. You can still click inside the phone and press MEET normally.</p>`;
 }
 
 function render() {
