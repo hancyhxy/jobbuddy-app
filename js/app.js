@@ -1695,7 +1695,7 @@ const A = {
     setTimeout(() => { const p = S.posts.find((y) => y.id === post.id); if (!p) return; p.comments++; earn(2, 'Sofia commented on your post'); render(); }, 7000);
   },
   helped: (x) => { S.helped = S.helped.includes(x) ? S.helped.filter((p) => p !== x) : [...S.helped, x]; save(); render(); },
-  reset: () => { if (confirm('Reset all demo data?')) { localStorage.removeItem(KEY); S = fresh(); Object.assign(ui, { sheet: null, ob: null, compose: null, waved: {}, pairInput: '', phase: {}, bd: null, bq: null, mem: null }); go('home'); render(); } }
+  reset: () => { if (confirm('Reset all demo data?')) { localStorage.removeItem(KEY); S = { ...fresh(), seedV: '2026-10-07' }; Object.assign(ui, { sheet: null, ob: null, compose: null, waved: {}, pairInput: '', phase: {}, bd: null, bq: null, mem: null }); go('home'); render(); } }
 };
 
 /* =============================================================== RENDER */
@@ -1778,6 +1778,16 @@ setInterval(tickBadge, 650);
   const q = new URLSearchParams(location.search);
   if (q.get('theme')) { localStorage.setItem(THEME_KEY, q.get('theme')); applyTheme(); }
   if (q.get('demo') && !S.onboarded) { S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; seedAccount(140); save(); }
+}
+// Demo data version: when the seeded demo changes, every browser (phone or laptop) re-seeds once on open,
+// so all devices show the same Home. Bump SEED_V whenever seedAccount() or the demo events change.
+{
+  const SEED_V = '2026-10-07';
+  if (S.seedV !== SEED_V) {
+    const wasIn = S.onboarded; S = fresh();
+    if (wasIn) { S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; seedAccount(140); }
+    S.seedV = SEED_V; save();
+  }
 }
 loadMyEvents();
 render();
