@@ -708,6 +708,7 @@ function seedAccount(points) {
   if (!S.encounters.some((x) => x.eventId === 'crit-circle')) S.encounters.push(
     { id: 'xseed1', person: 'sofia', eventId: 'crit-circle', prompt: 'What’s one piece of feedback that changed your work?', via: 'badge', at: Date.now() - 864e5 },
     { id: 'xseed2', person: 'priya', eventId: 'crit-circle', prompt: 'Which project are you proudest of, and why?', via: 'badge', at: Date.now() - 864e5 });
+  if (!S.regs['coffee-crit']) S.regs['coffee-crit'] = { status: 'going', list: true, wall: true };
   if (!S.regs['data-ama']) S.regs['data-ama'] = { status: 'going', list: true, wall: true };
   S.points = points; S.lifetime = points; S.ledger = points ? [{ n: 15, why: 'Shared an event takeaway', at: Date.now() - 864e5 }, { n: 20, why: 'Checked in at an event', at: Date.now() - 9e7 }, { n: 5, why: 'New connection · Leo', at: Date.now() - 2e8 }] : [];
 }
