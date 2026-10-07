@@ -989,3 +989,13 @@ body.dir-open .dir-toggle span:nth-child(3) { transform: translateY(-6px) rotate
 .hw-bubble.a { left: calc(50% - 82px); top: 20px; } .hw-bubble.b { right: calc(50% - 82px); top: 54px; animation-delay: 1.2s; }
 @keyframes pop { 0% { opacity: 0; transform: scale(.5) translateY(6px); } 15%, 45% { opacity: 1; transform: none; } 60%, 100% { opacity: 0; transform: translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) { .how-art * { animation: none !important; } }
+/* Link page: picture first, two short steps */
+.link-page h2 { margin: 6px 0 4px; }
+.link-art { height: 170px; margin: 8px 0 6px; }
+.link-art .hw-dev { transform: scale(1.25); }
+.link-art .hw-finger { top: 128px; }
+.link-art .hw-face small { color: #D7FF3A; font-size: 6px; letter-spacing: .1em; }
+.link-steps { list-style: none; counter-reset: s; padding: 0; margin: 18px 0 12px; text-align: left; display: grid; gap: 8px; }
+.link-steps li { counter-increment: s; display: grid; grid-template-columns: 28px 1fr; column-gap: 12px; align-items: center; background: var(--s1, #f4f3ef); border-radius: 16px; padding: 12px 14px; }
+.link-steps li::before { content: counter(s); grid-row: span 2; width: 28px; height: 28px; border-radius: 50%; background: #111; color: #D7FF3A; display: grid; place-items: center; font-weight: 700; font-size: 13px; }
+.link-steps small { color: var(--mu); }

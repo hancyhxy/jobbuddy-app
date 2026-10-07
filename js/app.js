@@ -663,14 +663,15 @@ V.pair = (id) => {
       <p class="note">${ICON.lock} Linking never adds a connection. You accept or decline later, at home.</p>
     </section>
     <footer class="sticky"><button class="btn primary" data-a="phase-go" data-x="${id}|1">Back to event</button></footer>`; }
-  if (L.pairing) return `<header class="bar"><span></span><b>Link your Tappy</b><span></span></header>
-    <section class="pad center">
-      <div class="big-check" style="background:var(--s1);color:var(--tx)">${ICON.badge}</div>
-      <h2>Is ${BADGE_ID} showing your name?</h2>
-      <p class="muted">Staff linked this Tappy to your pass. Press <b>Meet</b> on the Tappy to confirm it’s yours. Hold it if it shows someone else.</p>
-      <p class="note">${ICON.lock} Only you can confirm. Until you do, the Tappy shows nothing about you to others.</p>
+  if (L.pairing) { const l = badgeLook(); return `<header class="bar"><span></span><b>Link your Tappy</b><span></span></header>
+    <section class="pad center link-page">
+      <div class="how-art press link-art"><div class="hw-dev c"><div class="hw-scr"><div class="hw-face"><small>IS THIS YOU?</small>${avatar(l.avatar, l.color, 30)}<b>${esc(me().short)}</b></div></div><i class="hw-btn">MEET</i></div><span class="hw-finger"></span></div>
+      <h2>Press MEET on your Tappy</h2>
+      <p class="muted">That links ${BADGE_ID} to you for this event.</p>
+      <ol class="link-steps"><li><b>Check the screen</b><small>It should show your name and avatar</small></li><li><b>Press MEET once</b><small>Your phone updates right away</small></li></ol>
+      <p class="muted small">Not your name? <b>Hold MEET</b> and swap it at the desk.</p>
       ${demo('Pressed Meet on the Tappy', 'pair-confirm')}
-    </section>`;
+    </section>`; }
   return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="checkin/${id}">${ICON.back}</button><b>Pair Tappy</b><span></span></header>
     <section class="pad">
       <h2>Scan your Tappy</h2><p class="muted">Point your camera at the QR code on the device</p>
@@ -1382,7 +1383,7 @@ function badgeScreen() {
   switch (b.screen) {
     case 'off': return `<div class="bs off"><small>JobBuddy</small><b>${BADGE_ID}</b><small>Not assigned</small></div>`;
     case 'unpaired': return `<div class="bs"><small>EVENTBUDDY</small><b class="huge">${BADGE_ID}</b><small>Scan this device<br>with JobBuddy to pair</small></div>`;
-    case 'pairing': { const l = badgeLook(); return `<div class="bs"><small>LINK TO</small><div class="badge-av">${avatar(l.avatar, l.color, 72, ui.frame)}</div><b>${esc(p.short)}?</b><small>Press = it’s me · Hold = not me</small></div>`; }
+    case 'pairing': { const l = badgeLook(); return `<div class="bs"><small>IS THIS YOU?</small><div class="badge-av">${avatar(l.avatar, l.color, 72, ui.frame)}</div><b>${esc(p.short)}</b><small>Press MEET to link</small><small class="dim">Hold if it’s not you</small></div>`; }
     case 'idle': { const l = badgeLook(); return `<div class="bs idle"><div class="badge-av">${avatar(l.avatar, l.color, 104, ui.frame)}</div><b>${esc(p.short)}</b><small>${esc(l.tag)}</small><small class="dim">TAP TO MEET · hold devices together</small></div>`; }
     case 'request': return `<div class="bs">${avatar(partner.avatar, partner.color, 64)}<small>MEET</small><b>${partner.short}?</b><small>Press to meet · Hold to cancel</small></div>`;
     case 'waiting': return `<div class="bs">${avatar(partner.avatar, partner.color, 64)}<small>Waiting for</small><b>${partner.short}…</b></div>`;
@@ -1400,7 +1401,7 @@ function badgePanel() {
   const nearby = e && e.attendees.map((id) => PEOPLE[id]).filter((p) => !S.encounters.some((x) => x.person === p.id && x.eventId === e.id));
   const idle = S.badge.screen === 'idle';
   const hint = {
-    off: 'No Tappy assigned. Collect one at check-in.', unpaired: 'Assigned but not paired. Scan its QR from the phone.', pairing: 'Staff assigned it to your pass. Press Meet to confirm it’s you; hold if it isn’t.',
+    off: 'No Tappy assigned. Collect one at check-in.', unpaired: 'Assigned but not paired. Scan its QR from the phone.', pairing: 'Press MEET to link this Tappy to you. Hold if it isn’t your name.',
     idle: 'Showing your avatar and career line. Hold devices together with someone nearby.', request: 'Shows who you just tapped. Press Meet to say yes, hold to cancel.', waiting: 'Waiting for the other person to press Meet.',
     declined: 'They didn’t press yet. The tap is saved as pending.', prompt: 'Linked. Take turns answering out loud. Press for a new prompt, hold when done.', returned: 'Tappy unpaired and wiped.'
   }[S.badge.screen];
