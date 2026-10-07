@@ -64,11 +64,12 @@ function art(seed, cls = '', st = '') {
   return `<div class="art ${cls}" style="background:${bg};${st}"></div>`;
 }
 const seedOf = (s) => [...String(s)].reduce((a, c) => a + c.charCodeAt(0), 0);
+// Monochrome line icons (filled when active) to match the app's modern UI — replaces the coloured blob icons.
 const TAB_ICON = {
-  home: '<svg viewBox="0 0 40 40"><path d="M20 3l4.9 10.6 11.6 1.3-8.6 7.9 2.4 11.4L20 28.4 9.7 34.2l2.4-11.4-8.6-7.9 11.6-1.3z" fill="var(--t-event)" stroke="var(--t-event)" stroke-width="3" stroke-linejoin="round"/></svg>',
-  community: '<svg viewBox="0 0 40 40"><g fill="var(--t-comm)"><circle cx="20" cy="10" r="8.5"/><circle cx="20" cy="30" r="8.5"/><circle cx="10" cy="20" r="8.5"/><circle cx="30" cy="20" r="8.5"/></g><circle cx="20" cy="20" r="4" fill="#fff"/></svg>',
-  messages: '<svg viewBox="0 0 40 40"><path d="M6 6h28a4 4 0 014 4v16a4 4 0 01-4 4H16l-8 6v-6H6a4 4 0 01-4-4V10a4 4 0 014-4z" fill="var(--t-msg)"/><g fill="#fff"><circle cx="13" cy="18" r="2.2"/><circle cx="20" cy="18" r="2.2"/><circle cx="27" cy="18" r="2.2"/></g></svg>',
-  me: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="var(--t-acc)"/></svg>'
+  home: '<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+  community: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.8" cy="9.3" r="2.6"/><path d="M15.6 14.6c2.5-.3 4.4 1.3 4.9 4.4"/></svg>',
+  messages: '<svg viewBox="0 0 24 24"><path d="M5.5 4.5h13a2.5 2.5 0 012.5 2.5v8a2.5 2.5 0 01-2.5 2.5H11l-4.5 3.5v-3.5h-1A2.5 2.5 0 013 15V7a2.5 2.5 0 012.5-2.5z"/></svg>',
+  me: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c.9-4 3.8-6 7.5-6s6.6 2 7.5 6"/></svg>'
 };
 
 let toastTimer;
@@ -1648,7 +1649,7 @@ function render() {
   const showNav = !NO_NAV.includes(name);
   $('#nav').hidden = !showNav;
   const un = unreadTotal();
-  $('#nav').innerHTML = TABS.map(([k, l, c]) => `<button class="${name === k || (k === 'home' && name === 'events') ? 'on' : ''}" data-a="nav" data-x="${k}" style="color:${c}" aria-label="${l}">${TAB_ICON[k]}<span>${l}</span>${k === 'messages' && un ? `<i class="cnt">${un}</i>` : ''}</button>`).join('');
+  $('#nav').innerHTML = TABS.map(([k, l]) => `<button class="${name === k || (k === 'home' && name === 'events') ? 'on' : ''}" data-a="nav" data-x="${k}" aria-label="${l}">${TAB_ICON[k]}<span>${l}</span>${k === 'messages' && un ? `<i class="cnt">${un}</i>` : ''}</button>`).join('');
   $('#badge').innerHTML = badgePanel();
   document.body.classList.toggle('has-badge', !!(S.live && S.live.badgeId));
 }

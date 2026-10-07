@@ -807,3 +807,11 @@ i.pill { height: 30px; }
 .hw.meet.down { transform: translateY(3px); box-shadow: 0 1px 0 #0b0b0b; }
 .hw.meet.held { background: radial-gradient(circle at 40% 35%, #6a2a2a, #311); }
 .bs small.dim { color: #666; font-size: 9px; }
+
+/* Navigation bar: monochrome line icons, active = black + filled pill (replaces coloured blob icons) */
+.nav button { color: #9a9a96; opacity: 1; gap: 3px; font-size: 11px; font-weight: 600; letter-spacing: .01em; }
+.nav button svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; padding: 6px 16px; box-sizing: content-box; border-radius: 99px; transition: background .15s; }
+.nav button.on { color: var(--tx); }
+.nav button.on svg { background: var(--s1); stroke-width: 2; }
+.nav .cnt { right: 24%; top: -3px; }
+.post footer .help { white-space: nowrap; }
