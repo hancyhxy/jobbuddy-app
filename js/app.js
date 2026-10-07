@@ -305,9 +305,9 @@ function metStatus(pid) {
 
 function eventPhase(e, r) {
   const id = e.id; const now = phaseOf(r);
-  // The page always shows the event's current state; the steps are a read-only progress indicator.
   const ph = now;
-  const steps = `<div class="phase-steps readonly" aria-label="Event stage">${PHASES.map((l, i) => `<span class="${i === ph ? 'on' : ''} ${i < now ? 'done' : ''}">${i < now ? '✓ ' : ''}${l}</span>`).join('')}</div>`;
+  // No stage switcher: the page simply shows whatever state the event is in right now.
+  const steps = '<div style="height:12px"></div>';
   const head = `<header class="bar float"><button class="icon-btn" data-a="nav" data-x="home">${ICON.back}</button><span></span><button class="icon-btn" data-a="toast" data-x="Link copied">${ICON.share}</button></header>
     <div class="hero" style="--c1:${e.cover[0]};--c2:${e.cover[1]}">${cover(e, 'art')}</div>
     <section class="pad">
