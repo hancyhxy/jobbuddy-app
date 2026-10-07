@@ -206,20 +206,22 @@ function lumaRow(e) {
   return `<button class="lrow" data-a="nav" data-x="event/${e.id}">
     ${cover(e, 'th')}
     <span class="lrow-main">
-      <span class="lrow-host">${av(host, 20)}<span>${esc(e.circle)}</span>${isHost(e) ? '<i class="chip chip-going">Hosting</i>' : r ? `<i class="chip chip-${r.status}">${statusLabel(e, r)}</i>` : e.cost !== 'Free' ? `<i class="price">${e.cost}</i>` : ''}</span>
+      <span class="lrow-host">${av(host, 20)}<span>${esc(e.circle)}</span>${phaseChip(e) || ''}${phaseChip(e) ? '' : isHost(e) ? '<i class="chip chip-going">Hosting</i>' : r ? `<i class="chip chip-${r.status}">${statusLabel(e, r)}</i>` : e.cost !== 'Free' ? `<i class="price">${e.cost}</i>` : ''}</span>
       <b>${esc(e.title)}</b>
       <span class="lrow-meta"><span>${ICON.clock}${e.time.split(' ')[0]}</span><span>${e.mode === 'online' ? ICON.globe : ICON.pin}${esc(place)}</span>${e.mode === 'offline' && e.badges ? `<span class="badge-tag">${ICON.badge}EventBuddy</span>` : ''}</span>
       ${connLine(e)}
     </span></button>`;
 }
 
+const phaseChip = (e) => (e.phase === 'during' ? '<i class="chip chip-live"><span class="dot"></span>Live now</i>' : e.phase === 'after' ? '<i class="chip chip-attended">Ended</i>' : '');
+
 function yeCard(e) {
   const r = reg(e.id); const c = connsGoing(e).length;
   const chip = isHost(e) ? '<i class="chip chip-going">Hosting</i>' : c ? `<i class="chip chip-going">${c} connection${c > 1 ? 's' : ''}</i>` : r ? `<i class="chip chip-${r.status}">${statusLabel(e, r)}</i>` : '';
-  return `<button class="ye-card" data-a="nav" data-x="event/${e.id}">${cover(e, 'th')}<span class="ye-main">${chip}<b>${esc(e.title)}</b><small>${e.date} · ${e.mode === 'online' ? 'Online' : 'In person'}</small></span></button>`;
+  return `<button class="ye-card" data-a="nav" data-x="event/${e.id}">${cover(e, 'th')}<span class="ye-main">${phaseChip(e) || chip}<b>${esc(e.title)}</b><small>${e.date} · ${e.mode === 'online' ? 'Online' : 'In person'}</small></span></button>`;
 }
 function pickCard(e) {
-  return `<button class="pick-card" data-a="nav" data-x="event/${e.id}">${cover(e, 'md')}<span class="pick-meta">${e.badges && e.mode === 'offline' ? `<i class="chip chip-going">${ICON.badge}EventBuddy</i>` : ''}<small>${e.date} · ${e.mode === 'online' ? 'Online' : 'In person'}</small></span><b>${esc(e.title)}</b><small class="muted">${esc(e.circle)} · ${e.going} going</small></button>`;
+  return `<button class="pick-card" data-a="nav" data-x="event/${e.id}">${cover(e, 'md')}<span class="pick-meta">${phaseChip(e)}${e.badges && e.mode === 'offline' ? `<i class="chip chip-going">${ICON.badge}EventBuddy</i>` : ''}<small>${e.date} · ${e.mode === 'online' ? 'Online' : 'In person'}</small></span><b>${esc(e.title)}</b><small class="muted">${esc(e.circle)} · ${e.going} going</small></button>`;
 }
 
 V.home = () => {
@@ -280,8 +282,8 @@ V.event = (id) => {
     ? [['Check in', 'Show your pass at the desk'], ['Collect an EventBuddy', 'Optional loan device'], ['Pair it', 'Link the EventBuddy to your app'], ['Tap to talk', 'Both say yes, get a shared prompt'], ['Return it', 'Your encounters stay in the app']]
     : [['Join the lobby', 'Choose what others see'], ['Watch the stream', 'Camera & mic stay in Zoom'], ['Wave at people', 'Both say yes, get a shared prompt'], ['Connect', 'Accept or not now — your call']];
   const autoPh = r?.status === 'attended' ? 'after' : r?.status === 'checkedin' || S.live?.eventId === id ? 'during' : 'before';
-  const ph = (ui.phase || {})[id] || autoPh;
-  const phaseBar = `<div class="phase-bar"><span class="demo-tag">DEMO</span><div class="seg3">${[['before', 'Before'], ['during', 'During'], ['after', 'After']].map(([k, l]) => `<button class="${ph === k ? 'on' : ''}" data-a="ev-phase" data-x="${id}|${k}">${l}</button>`).join('')}</div></div>`;
+  const ph = e.phase || autoPh;
+  const phaseBar = '';
   if (ph !== 'before') return eventPhase(e, r, ph, phaseBar);
   let cta;
   if (isHost(e)) cta = `<button class="btn primary" data-a="toast" data-x="Invite link copied">${ICON.share}Share invite link</button><p class="muted small center">You’re hosting · ${e.going} going so far</p>`;
@@ -291,7 +293,6 @@ V.event = (id) => {
   return `<header class="bar float"><button class="icon-btn" data-a="back">${ICON.back}</button><span></span><button class="icon-btn" data-a="toast" data-x="Link copied">${ICON.share}</button></header>
     <div class="hero" style="--c1:${e.cover[0]};--c2:${e.cover[1]}">${cover(e, 'art')}</div>
     <section class="pad">
-      ${phaseBar}
       <p class="eyebrow">${esc(e.circle)}</p>
       <h1 class="title">${esc(e.title)}</h1>
       ${r ? `<i class="chip chip-${r.status}">${statusLabel(e, r)}</i>` : ''}
@@ -703,7 +704,11 @@ function seedAccount(points) {
   S.following = [...SEED_GRAPH.following]; S.followers = [...SEED_GRAPH.followers];
   S.circles = ['Harbour Builders', 'UTS Design Crowd'];
   // Mock upcoming RSVPs so the Home “Your events” carousel has content; the two scripted demo events stay unregistered.
-  ['crit-circle', 'data-ama'].forEach((id) => { if (!S.regs[id]) S.regs[id] = { status: 'going', list: true, wall: true }; });
+  if (!S.regs['crit-circle']) S.regs['crit-circle'] = { status: 'attended', list: true, wall: true };
+  if (!S.encounters.some((x) => x.eventId === 'crit-circle')) S.encounters.push(
+    { id: 'xseed1', person: 'sofia', eventId: 'crit-circle', prompt: 'What’s one piece of feedback that changed your work?', via: 'badge', at: Date.now() - 864e5 },
+    { id: 'xseed2', person: 'priya', eventId: 'crit-circle', prompt: 'Which project are you proudest of, and why?', via: 'badge', at: Date.now() - 864e5 });
+  if (!S.regs['data-ama']) S.regs['data-ama'] = { status: 'going', list: true, wall: true };
   S.points = points; S.lifetime = points; S.ledger = points ? [{ n: 15, why: 'Shared an event takeaway', at: Date.now() - 864e5 }, { n: 20, why: 'Checked in at an event', at: Date.now() - 9e7 }, { n: 5, why: 'New connection · Leo', at: Date.now() - 2e8 }] : [];
 }
 const wallet = () => S.points || 0;            // spendable: goes down when you redeem
@@ -1269,7 +1274,6 @@ const A = {
   'badge-save': (id) => { const d = ui.regDraft; S.regs[id].badge = { avatar: d.avatar, color: d.color, tag: d.tag }; S.lastBadge = S.regs[id].badge; save(); toast('EventBuddy updated'); history.back(); },
   logout: () => { S.onboarded = false; S.profile = null; save(); toast('Logged out'); go('home'); },
   'home-ye': (x) => { ui.yeTab = x; render(); },
-  'ev-phase': (x) => { const [id, ph] = x.split('|'); (ui.phase ||= {})[id] = ph; render(); },
   'home-mode': (x) => { ui.homeMode = x; render(); },
   'filter-go': (x) => { ui.filter = x; go('events'); },
   filter: (x) => { ui.filter = x; render(); },

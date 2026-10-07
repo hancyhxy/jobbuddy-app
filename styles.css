@@ -820,3 +820,5 @@ i.pill { height: 30px; }
 .now-card b { font-size: 17px; }
 .nc-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 22px; }
 .nc-head h3 { margin: 0; }
+.chip-live { background: #ffe1df !important; color: #c0261b !important; display: inline-flex; align-items: center; gap: 5px; }
+.chip-live .dot { width: 6px; height: 6px; border-radius: 50%; background: #e5372b; display: inline-block; }
