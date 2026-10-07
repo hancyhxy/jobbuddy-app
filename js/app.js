@@ -198,6 +198,9 @@ V.home = () => {
   const p = me();
   const liveE = S.live && ev(S.live.eventId);
   const mine = EVENTS.filter((e) => !e.past && (isHost(e) || ['pending', 'going', 'checkedin', 'waitlist', 'offered'].includes(reg(e.id)?.status)));
+  // Live event first, then confirmed in-person events, then the rest.
+  const rank = (e) => { const r = reg(e.id); return r?.status === 'checkedin' ? 0 : e.mode === 'offline' && r?.confirmed ? 1 : 2; };
+  mine.sort((a, b) => rank(a) - rank(b));
   const pastMine = EVENTS.filter((e) => reg(e.id)?.status === 'attended');
   const yseg = ui.yseg === 'past' ? 'past' : 'upcoming';
   const mode = ui.homeMode || 'all';
