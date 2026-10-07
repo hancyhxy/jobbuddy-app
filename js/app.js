@@ -1388,7 +1388,7 @@ function badgeScreen() {
     case 'request': return `<div class="bs">${avatar(partner.avatar, partner.color, 64)}<small>MEET</small><b>${partner.short}?</b><small>Press to meet · Hold to cancel</small></div>`;
     case 'waiting': return `<div class="bs">${avatar(partner.avatar, partner.color, 64)}<small>Waiting for</small><b>${partner.short}…</b></div>`;
     case 'declined': return `<div class="bs"><b>Saved as pending</b><small>${partner ? partner.short + ' can tap back later.' : ''}<br>Nothing else was shared.</small></div>`;
-    case 'prompt': { const l = badgeLook(); return `<div class="bs ice"><small class="ice-ok">✓ LINKED</small><div class="ice-pair">${avatar(l.avatar, l.color, 24)}${avatar(partner.avatar, partner.color, 24)}</div><b class="ice-who">You &amp; ${partner.short}</b><div class="ice-card"><small>ICEBREAKER</small><p>${esc(b.prompt)}</p><i>Take turns answering out loud</i></div><small class="ice-saved">● Saved to your event memories</small><small class="ice-hint">Press for a new prompt · hold when done</small></div>`; }
+    case 'prompt': { const l = badgeLook(); return `<div class="bs ice"><div class="ice-top"><div class="ice-pair">${avatar(l.avatar, l.color, 24)}${avatar(partner.avatar, partner.color, 24)}</div><b class="ice-who">✓ You &amp; ${partner.short}</b></div><p class="ice-q">${esc(b.prompt)}</p><small class="ice-hint">Press for another question</small></div>`; }
     case 'returned': return `<div class="bs off"><b>Thanks!</b><small>Data cleared.<br>Ready for next person.</small></div>`;
     default: return '';
   }

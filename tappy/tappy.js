@@ -50,7 +50,7 @@ function screen() {
     case 'request': return `<div class="bs">${avatar(p.avatar, p.color, 64)}<small>MEET</small><b>${p.short}?</b><small>Press to meet · Hold to cancel</small></div>`;
     case 'waiting': return `<div class="bs">${avatar(p.avatar, p.color, 64)}<small>Waiting for</small><b>${p.short}…</b></div>`;
     case 'declined': return `<div class="bs"><b>Saved as pending</b><small>${p ? p.short + ' can tap back later.' : ''}<br>Nothing else was shared.</small></div>`;
-    case 'prompt': { const o = owner(); return `<div class="bs ice"><small class="ice-ok">✓ LINKED</small><div class="ice-pair">${avatar(o.avatar, o.color, 24)}${avatar(p.avatar, p.color, 24)}</div><b class="ice-who">You &amp; ${p.short}</b><div class="ice-card"><small>ICEBREAKER</small><p>${esc(b.prompt)}</p><i>Take turns answering out loud</i></div><small class="ice-saved">● Saved to your event memories</small><small class="ice-hint">Press for a new prompt · hold when done</small></div>`; }
+    case 'prompt': { const o = owner(); return `<div class="bs ice"><div class="ice-top"><div class="ice-pair">${avatar(o.avatar, o.color, 24)}${avatar(p.avatar, p.color, 24)}</div><b class="ice-who">✓ You &amp; ${p.short}</b></div><p class="ice-q">${esc(b.prompt)}</p><small class="ice-hint">Press for another question</small></div>`; }
     case 'returned': return `<div class="bs off"><b>Thanks!</b><small>Data cleared.<br>Ready for next person.</small></div>`;
     default: return `<div class="bs off"><small>JobBuddy</small><b>${BADGE_ID}</b><small>Not assigned</small></div>`;
   }
@@ -181,7 +181,7 @@ const STEPS = [
     note: 'Tappy shows who you just tapped. Press Meet to say yes (hold = cancel, nothing is shared).' },
   { title: 'Waiting', auto: 1600, screen: () => `<div class="bs">${avatar(MARCUS.avatar, MARCUS.color, 64)}<small>Waiting for</small><b>${MARCUS.short}…</b></div>`,
     note: 'Both people have to press. If they don’t, the tap is saved as pending on the phone.' },
-  { title: 'Linked · icebreaker', a: 'prompt', b: 'skip', screen: () => `<div class="bs ice"><small class="ice-ok">✓ LINKED</small><div class="ice-pair">${avatar(look.avatar, look.color, 24)}${avatar(MARCUS.avatar, MARCUS.color, 24)}</div><b class="ice-who">You &amp; ${MARCUS.short}</b><div class="ice-card"><small>ICEBREAKER</small><p>${esc(PROMPT_TEXT())}</p><i>Take turns answering out loud</i></div><small class="ice-saved">● Saved to your event memories</small><small class="ice-hint">Press for a new prompt · hold when done</small></div>`,
+  { title: 'Linked · icebreaker', a: 'prompt', b: 'skip', screen: () => `<div class="bs ice"><div class="ice-top"><div class="ice-pair">${avatar(look.avatar, look.color, 24)}${avatar(MARCUS.avatar, MARCUS.color, 24)}</div><b class="ice-who">✓ You &amp; ${MARCUS.short}</b></div><p class="ice-q">${esc(PROMPT_TEXT())}</p><small class="ice-hint">Press for another question</small></div>`,
     note: 'Take turns answering out loud. Press Meet for a new prompt, hold when done. No “accept” here — that happens later at home.' },
   { title: 'Return', screen: () => `<div class="bs"><small>LEAVING?</small><b>Tap me on<br>the exit box</b><small>Your taps sync<br>to the app</small></div>`,
     note: 'Leaving: tap Tappy on the return box at the exit. On the phone: “Leaving? Tap Tappy at the exit” → Taps synced. No staff step.' },
