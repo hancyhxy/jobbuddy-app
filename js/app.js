@@ -1,4 +1,4 @@
-import { FIELDS, STAGES, INTERESTS, AVATAR_CHOICES, AVATAR_COLORS, PEOPLE, EVENTS, SEED_POSTS, SEED_COMMENTS, SEED_GRAPH, FOLLOWS_BACK, POINT_RULES, LEVELS, REDEEM, PRACTITIONERS, POST_TYPES, LEVEL_PERKS, RULE_ICONS, PROMPTS } from './data.js';
+import { FIELDS, STAGES, INTERESTS, AVATAR_CHOICES, AVATAR_COLORS, PEOPLE, EVENTS, SEED_POSTS, SEED_COMMENTS, SEED_GRAPH, FOLLOWS_BACK, POINT_RULES, LEVELS, REDEEM, PRACTITIONERS, POST_TYPES, LEVEL_PERKS, RULE_ICONS, PROMPTS, BUDDY, EVENT_Q, ICEBREAKERS, AUTO_REPLY, DEFAULT_AUTO_REPLY, MEMORY_SEED, EVENT_CHAT_SEED } from './data.js';
 import { avatar } from './avatar.js';
 import { ICON } from './icons.js';
 
@@ -64,11 +64,12 @@ function art(seed, cls = '', st = '') {
   return `<div class="art ${cls}" style="background:${bg};${st}"></div>`;
 }
 const seedOf = (s) => [...String(s)].reduce((a, c) => a + c.charCodeAt(0), 0);
+// Monochrome line icons (filled when active) to match the app's modern UI — replaces the coloured blob icons.
 const TAB_ICON = {
-  home: '<svg viewBox="0 0 40 40"><path d="M20 3l4.9 10.6 11.6 1.3-8.6 7.9 2.4 11.4L20 28.4 9.7 34.2l2.4-11.4-8.6-7.9 11.6-1.3z" fill="var(--t-event)" stroke="var(--t-event)" stroke-width="3" stroke-linejoin="round"/></svg>',
-  community: '<svg viewBox="0 0 40 40"><g fill="var(--t-comm)"><circle cx="20" cy="10" r="8.5"/><circle cx="20" cy="30" r="8.5"/><circle cx="10" cy="20" r="8.5"/><circle cx="30" cy="20" r="8.5"/></g><circle cx="20" cy="20" r="4" fill="#fff"/></svg>',
-  messages: '<svg viewBox="0 0 40 40"><path d="M6 6h28a4 4 0 014 4v16a4 4 0 01-4 4H16l-8 6v-6H6a4 4 0 01-4-4V10a4 4 0 014-4z" fill="var(--t-msg)"/><g fill="#fff"><circle cx="13" cy="18" r="2.2"/><circle cx="20" cy="18" r="2.2"/><circle cx="27" cy="18" r="2.2"/></g></svg>',
-  me: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="var(--t-acc)"/></svg>'
+  home: '<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+  community: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.8" cy="9.3" r="2.6"/><path d="M15.6 14.6c2.5-.3 4.4 1.3 4.9 4.4"/></svg>',
+  messages: '<svg viewBox="0 0 24 24"><path d="M5.5 4.5h13a2.5 2.5 0 012.5 2.5v8a2.5 2.5 0 01-2.5 2.5H11l-4.5 3.5v-3.5h-1A2.5 2.5 0 013 15V7a2.5 2.5 0 012.5-2.5z"/></svg>',
+  me: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c.9-4 3.8-6 7.5-6s6.6 2 7.5 6"/></svg>'
 };
 
 let toastTimer;
@@ -81,7 +82,8 @@ function toast(msg) {
 function statusLabel(e, r) {
   if (!r) return '';
   return {
-    pending: 'Pending approval', declined: 'Not approved', going: e.mode === 'online' ? 'Registered' : 'Going',
+    pending: 'Pending approval', declined: 'Not approved', going: e.mode === 'online' ? 'Registered' : r.confirmed ? 'Confirmed' : 'Going',
+    waitlist: `Waitlist · #${r.pos || 3}`, offered: 'Spot offered',
     checkedin: 'Checked in', attended: 'You went'
   }[r.status] || '';
 }
@@ -120,43 +122,6 @@ function eventCard(e) {
 
 /* ================================================================== VIEWS */
 const V = {};
-
-/* ------------------------------------------------------------ intro: how EventBuddy matching works
-   Shown on first launch (and from Home → “How EventBuddy works”). Four steps, device-first. */
-const devScreen = (inner, cls = '') => `<div class="intro-dev ${cls}"><div class="mini-screen"><div class="bs">${inner}</div></div><span class="intro-btns"><i>●</i><i>○</i></span></div>`;
-const INTRO = [
-  {
-    kicker: 'Step 1 · At check-in', title: 'Pick up an EventBuddy',
-    text: 'Staff lend you a small device at the door. Scan its QR code with JobBuddy — the same 4-digit code on both screens means it’s yours.',
-    art: () => `<div class="intro-pair">${devScreen(`<small>PAIR WITH</small><b>Emma?</b><div class="bcode">4812</div><small>● yes · ○ no</small>`)}<div class="intro-phone"><div class="code sm">${'4812'.split('').map((d) => `<span>${d}</span>`).join('')}</div><small>Same code ✓</small></div></div>`
-  },
-  {
-    kicker: 'Step 2 · Tap to say hi', title: 'Tap devices with someone',
-    text: 'Hold your EventBuddy against another attendee’s. A tap only asks to talk — no names, contacts or profiles are shared.',
-    art: () => `<div class="intro-tap">${devScreen(`${avatar('female_2_1', '#D7FF3A', 70)}<b>Emma</b><small>#UX</small>`)}<span class="intro-nfc">NFC</span>${devScreen(`${avatar(PEOPLE.marcus.avatar, PEOPLE.marcus.color, 70)}<b>Marcus</b><small>#Data viz</small>`)}</div>`
-  },
-  {
-    kicker: 'Step 3 · Both say yes', title: 'Get a shared question',
-    text: 'Each of you presses ● if you want to talk. Only when both say yes do you get the same career question to start the conversation. “Not now” stays silent.',
-    art: () => devScreen(`<small>YOU + MARCUS · #CAREER STORIES</small><p>What do you wish you knew a year ago?</p>`, 'big prompt')
-  },
-  {
-    kicker: 'Step 4 · Connect', title: 'Accept or not now',
-    text: 'After talking, choose ● Accept to keep them in your app, or ○ Not now. Follow each other later to become connections. Return the device — it’s wiped.',
-    art: () => devScreen(`${avatar(PEOPLE.marcus.avatar, PEOPLE.marcus.color, 56)}<b>Connect?</b><small>● accept · ○ not now</small>`, 'big')
-  }
-];
-V.intro = () => {
-  const i = Math.min(ui.introStep || 0, INTRO.length - 1); const s = INTRO[i]; const last = i === INTRO.length - 1;
-  return `<section class="intro">
-    <header class="intro-top"><span class="intro-brand">${ICON.badge}<b>EventBuddy</b></span><button class="link" data-a="intro-done">Skip</button></header>
-    <div class="intro-art">${s.art()}</div>
-    <div class="intro-copy"><p class="eyebrow">${s.kicker}</p><h1>${s.title}</h1><p class="muted">${s.text}</p></div>
-    <div class="intro-dots">${INTRO.map((_, k) => `<button class="${k === i ? 'on' : ''}" data-a="intro-go" data-x="${k}" aria-label="Step ${k + 1}"></button>`).join('')}</div>
-    <div class="intro-cta">${i ? `<button class="btn" data-a="intro-go" data-x="${i - 1}">Back</button>` : ''}<button class="btn primary" data-a="${last ? 'intro-done' : 'intro-go'}" data-x="${i + 1}">${last ? 'Explore events' : 'Next'}</button></div>
-    <p class="muted small center">No device? Everything also works in the app with hi requests.</p>
-  </section>`;
-};
 
 V.welcome = () => `
   <section class="welcome">
@@ -200,34 +165,32 @@ const DAYS = { Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday',
 const MONTHS = { Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April', May: 'May', Jun: 'June', Jul: 'July', Aug: 'August', Sep: 'September', Oct: 'October', Nov: 'November', Dec: 'December' };
 function dayParts(e) { const [d, n, m] = e.date.split(' '); return [`${n} ${MONTHS[m] || m}`, DAYS[d] || d]; }
 
+function rowChip(e, r) {
+  if (r.status === 'attended') { const n = S.encounters.filter((x) => x.eventId === e.id && !x.waiting).length; return `<i class="chip chip-attended">${n} connection${n === 1 ? '' : 's'}</i>`; }
+  if (r.status === 'going' && e.mode === 'offline' && !r.confirmed) return '<i class="chip chip-pending">Confirm attendance</i>';
+  return `<i class="chip chip-${['waitlist', 'offered'].includes(r.status) ? 'pending' : r.status}">${statusLabel(e, r)}</i>`;
+}
 function lumaRow(e) {
   const r = reg(e.id); const host = hostOf(e);
   const place = e.mode === 'online' ? 'Online' : e.venue.split(',')[0];
   return `<button class="lrow" data-a="nav" data-x="event/${e.id}">
     ${cover(e, 'th')}
     <span class="lrow-main">
-      <span class="lrow-host">${av(host, 20)}<span>${esc(e.circle)}</span>${isHost(e) ? '<i class="chip chip-going">Hosting</i>' : r ? `<i class="chip chip-${r.status}">${statusLabel(e, r)}</i>` : e.cost !== 'Free' ? `<i class="price">${e.cost}</i>` : ''}</span>
+      <span class="lrow-host">${av(host, 20)}<span>${esc(e.circle)}</span>${isHost(e) ? '<i class="chip chip-going">Hosting</i>' : r ? rowChip(e, r) : e.cost !== 'Free' ? `<i class="price">${e.cost}</i>` : ''}</span>
       <b>${esc(e.title)}</b>
       <span class="lrow-meta"><span>${ICON.clock}${e.time.split(' ')[0]}</span><span>${e.mode === 'online' ? ICON.globe : ICON.pin}${esc(place)}</span>${e.mode === 'offline' && e.badges ? `<span class="badge-tag">${ICON.badge}EventBuddy</span>` : ''}</span>
       ${connLine(e)}
     </span></button>`;
 }
 
-function yeCard(e) {
-  const r = reg(e.id); const c = connsGoing(e).length;
-  const chip = isHost(e) ? '<i class="chip chip-going">Hosting</i>' : c ? `<i class="chip chip-going">${c} connection${c > 1 ? 's' : ''}</i>` : r ? `<i class="chip chip-${r.status}">${statusLabel(e, r)}</i>` : '';
-  return `<button class="ye-card" data-a="nav" data-x="event/${e.id}">${cover(e, 'th')}<span class="ye-main">${chip}<b>${esc(e.title)}</b><small>${e.date} · ${e.mode === 'online' ? 'Online' : 'In person'}</small></span></button>`;
-}
-function pickCard(e) {
-  return `<button class="pick-card" data-a="nav" data-x="event/${e.id}">${cover(e, 'md')}<span class="pick-meta">${e.badges && e.mode === 'offline' ? `<i class="chip chip-going">${ICON.badge}EventBuddy</i>` : ''}<small>${e.date} · ${e.mode === 'online' ? 'Online' : 'In person'}</small></span><b>${esc(e.title)}</b><small class="muted">${esc(e.circle)} · ${e.going} going</small></button>`;
-}
-
 V.home = () => {
   const p = me();
   const liveE = S.live && ev(S.live.eventId);
-  const mine = EVENTS.filter((e) => isHost(e) || ['pending', 'going', 'checkedin'].includes(reg(e.id)?.status));
+  const mine = EVENTS.filter((e) => !e.past && (isHost(e) || ['pending', 'going', 'checkedin', 'waitlist', 'offered'].includes(reg(e.id)?.status)));
+  const pastMine = EVENTS.filter((e) => reg(e.id)?.status === 'attended');
+  const yseg = ui.yseg === 'past' ? 'past' : 'upcoming';
   const mode = ui.homeMode || 'all';
-  const list = EVENTS.filter((e) => mode === 'all' || e.mode === mode);
+  const list = EVENTS.filter((e) => !e.past && (mode === 'all' || e.mode === mode));
   let groups = ''; let last = '';
   list.forEach((e) => {
     const [day, wd] = dayParts(e);
@@ -235,8 +198,7 @@ V.home = () => {
     groups += lumaRow(e);
   });
   const hint = { all: '', offline: `<p class="note">${ICON.badge} In-person events can lend you an EventBuddy device. You connect it to your account when you arrive.</p>`, online: `<p class="note">${ICON.globe} Online events run in the app. No EventBuddy needed — wave at people instead.</p>` }[mode];
-  const past = EVENTS.filter((e) => reg(e.id)?.status === 'attended');
-  const yeTab = ui.yeTab || 'upcoming'; const yeList = yeTab === 'past' ? past : mine;
+  const past = [];
   return `<header class="top home-top">
       <div class="hi"><h1>Hi, ${p ? esc(p.short) : 'there'}</h1><p class="sub">${p ? `${esc(p.stage)} /<br>${esc(p.field)}` : 'Find career events and the people at them.'}</p></div>
       <span class="top-actions">${p ? `<button class="icon-btn dark" data-a="ce-new" aria-label="Create event">${ICON.plus}</button>` : `<button class="btn small primary" data-a="login-demo">Log in</button>`}</span></header>
@@ -244,16 +206,13 @@ V.home = () => {
       ${p ? `<div class="pills" style="gap:6px">${p.interests.map((t) => `<i class="tag">${esc(t)}</i>`).join('')}</div>` : ''}
       <div style="height:22px"></div>
       ${liveE ? `<button class="live-card flush" data-a="nav" data-x="${liveE.mode === 'online' ? 'room' : 'live'}/${liveE.id}"><span class="dot"></span><div><small>HAPPENING NOW</small><b>${esc(liveE.title)}</b></div>${ICON.chev}</button>` : ''}
-      <button class="how-card" data-a="intro-open"><span class="how-dev">${ICON.badge}</span><span><b>How EventBuddy works</b><small>Pair · tap · both say yes · connect</small></span>${ICON.chev}</button>
-      <h2 style="margin:6px 0 12px">Your events</h2>
-      <div class="seg2 ye-seg">${[['upcoming', `Upcoming · ${mine.length}`], ['past', `Past · ${past.length}`]].map(([k, l]) => `<button class="${yeTab === k ? 'on' : ''}" data-a="home-ye" data-x="${k}">${l}</button>`).join('')}</div>
-      ${yeList.length ? `<div class="hscroll">${yeList.map(yeCard).join('')}</div>` : `<div class="empty">${yeTab === 'past' ? 'No past events yet.' : 'No upcoming events. Explore events below and RSVP to one.'}</div>`}
+      <button class="h2link" data-a="nav" data-x="me"><h2>Your events</h2>${ICON.chev}</button>
+      ${p ? `<div class="seg3" style="margin-bottom:12px">${[['upcoming', `Upcoming · ${mine.length}`], ['past', `Past · ${pastMine.length}`]].map(([k, l]) => `<button class="${yseg === k ? 'on' : ''}" data-a="yseg" data-x="${k}">${l}</button>`).join('')}</div>` : ''}
+      ${yseg === 'past' && p ? pastMine.map(lumaRow).join('') || '<div class="empty">Events you attend show up here with the people you met.</div>'
+        : mine.length ? mine.map(lumaRow).join('') : `<div class="empty">No upcoming events. Explore events below and RSVP to one.</div>`}
       <div class="explorer-row"><h2 class="explorer">Event Explorer</h2><button class="icon-btn" data-a="nav" data-x="events" aria-label="Search events">${ICON.search}</button></div>
       <div class="seg3 mode-seg">${[['all', 'All'], ['offline', 'In person'], ['online', 'Online']].map(([k, l]) => `<button class="${mode === k ? 'on' : ''}" data-a="home-mode" data-x="${k}">${l}</button>`).join('')}</div>
       ${hint}
-      <div class="explorer-row"><h2 style="margin:0">Picks for you</h2><button class="linkish small" data-a="nav" data-x="events">See all</button></div>
-      <div class="hscroll picks">${list.map(pickCard).join('')}</div>
-      <h2>By date</h2>
       ${groups}
       ${past.length ? `<h2>Recent views</h2>${past.map((e) => `<div class="card-white" style="display:flex;gap:14px;align-items:flex-start"><div style="width:74px;height:74px;flex:0 0 auto;border-radius:50%;overflow:hidden">${art(seedOf(e.circle), '', 'width:100%;height:100%')}</div><div style="flex:1"><h3 style="margin:0">${esc(e.title)}</h3><p class="muted small" style="margin:6px 0 10px">Attended ${e.date}. Revisit the shared stories and see who else showed up.</p><button class="btn small primary" data-a="nav" data-x="circle/${encodeURIComponent(e.circle)}">See more</button></div></div>`).join('')}` : ''}
       <div class="spacer"></div>
@@ -261,7 +220,7 @@ V.home = () => {
 };
 
 function filteredEvents() {
-  return EVENTS.filter((e) => (ui.filter === 'all' || (ui.filter === 'free' ? e.cost === 'Free' : e.mode === ui.filter)) && (!ui.q || (e.title + e.circle + e.tags.join(' ')).toLowerCase().includes(ui.q.toLowerCase())));
+  return EVENTS.filter((e) => !e.past && (ui.filter === 'all' || (ui.filter === 'free' ? e.cost === 'Free' : e.mode === ui.filter)) && (!ui.q || (e.title + e.circle + e.tags.join(' ')).toLowerCase().includes(ui.q.toLowerCase())));
 }
 
 V.events = () => `
@@ -276,22 +235,21 @@ const eventListHTML = () => filteredEvents().map(eventRow).join('') || '<p class
 V.event = (id) => {
   const e = ev(id); if (!e) return V.notfound();
   const r = reg(id); const host = hostOf(e);
+  if (e.mode === 'offline' && !isHost(e) && ['going', 'checkedin', 'attended'].includes(r?.status)) return eventPhase(e, r);
+  const full = e.going >= e.capacity; const left = e.capacity - e.going;
   const how = e.mode === 'offline'
     ? [['Check in', 'Show your pass at the desk'], ['Collect an EventBuddy', 'Optional loan device'], ['Pair it', 'Link the EventBuddy to your app'], ['Tap to talk', 'Both say yes, get a shared prompt'], ['Return it', 'Your encounters stay in the app']]
     : [['Join the lobby', 'Choose what others see'], ['Watch the stream', 'Camera & mic stay in Zoom'], ['Wave at people', 'Both say yes, get a shared prompt'], ['Connect', 'Accept or not now — your call']];
-  const autoPh = r?.status === 'attended' ? 'after' : r?.status === 'checkedin' || S.live?.eventId === id ? 'during' : 'before';
-  const ph = (ui.phase || {})[id] || autoPh;
-  const phaseBar = `<div class="phase-bar"><span class="demo-tag">DEMO</span><div class="seg3">${[['before', 'Before'], ['during', 'During'], ['after', 'After']].map(([k, l]) => `<button class="${ph === k ? 'on' : ''}" data-a="ev-phase" data-x="${id}|${k}">${l}</button>`).join('')}</div></div>`;
-  if (ph !== 'before') return eventPhase(e, r, ph, phaseBar);
   let cta;
   if (isHost(e)) cta = `<button class="btn primary" data-a="toast" data-x="Invite link copied">${ICON.share}Share invite link</button><p class="muted small center">You’re hosting · ${e.going} going so far</p>`;
-  else if (!r || r.status === 'cancelled') cta = `<button class="btn primary" data-a="nav" data-x="register/${id}">${e.approval ? 'Request to join' : 'RSVP'}${e.cost === 'Free' ? '' : ' · ' + e.cost}</button>`;
+  else if (!r || r.status === 'cancelled') cta = `<button class="btn primary" data-a="nav" data-x="register/${id}">${full && e.waitlist ? 'Join the waitlist' : e.approval ? 'Request to join' : 'RSVP'}${e.cost === 'Free' ? '' : ' · ' + e.cost}</button>`;
+  else if (r.status === 'waitlist') cta = `<p class="muted small center">You’re #${r.pos} on the waitlist. Spots free up when people don’t confirm 24h before.</p>${demo('Someone releases their spot', 'wait-offer', id)}<button class="link danger" data-a="cancel" data-x="${id}">Leave the waitlist</button>`;
+  else if (r.status === 'offered') cta = `<p class="muted small center">A spot freed up for you. Claim it within 24 hours or it goes to the next person.</p><button class="btn primary" data-a="wait-claim" data-x="${id}">Claim my spot</button>`;
   else if (r.status === 'attended') cta = `<button class="btn" data-a="nav" data-x="recap/${id}">See recap</button>`;
   else cta = `<button class="btn primary" data-a="nav" data-x="ticket/${id}">${r.status === 'pending' ? 'View request' : 'View pass'}</button>`;
   return `<header class="bar float"><button class="icon-btn" data-a="back">${ICON.back}</button><span></span><button class="icon-btn" data-a="toast" data-x="Link copied">${ICON.share}</button></header>
     <div class="hero" style="--c1:${e.cover[0]};--c2:${e.cover[1]}">${cover(e, 'art')}</div>
     <section class="pad">
-      ${phaseBar}
       <p class="eyebrow">${esc(e.circle)}</p>
       <h1 class="title">${esc(e.title)}</h1>
       ${r ? `<i class="chip chip-${r.status}">${statusLabel(e, r)}</i>` : ''}
@@ -303,7 +261,7 @@ V.event = (id) => {
       <button class="host" data-a="nav" data-x="${isHost(e) ? 'me' : 'person/' + host.id}">${av(host, 40, 'round')}<span><small>Hosted by</small><b>${isHost(e) ? 'You' : host.name}</b></span></button>
       <h3>About this event</h3>
       <p class="muted">${esc(e.audience)}</p>
-      <div class="card-soft" style="margin-top:18px"><div style="display:flex;align-items:center"><div style="flex:1"><b>${e.going + (r ? 1 : 0)} / ${e.capacity}</b> <span class="muted small">spots filled</span></div>${e.badges ? '<i class="chip chip-going" style="margin:0">EventBuddy</i>' : ''}</div><div class="progress" style="margin-top:8px"><i style="width:${Math.min(100, ((e.going + (r ? 1 : 0)) / e.capacity) * 100)}%"></i></div></div>
+      <div class="card-soft" style="margin-top:18px"><div style="display:flex;align-items:center"><div style="flex:1"><b>${Math.min(e.capacity, e.going + (r && !['waitlist'].includes(r.status) ? 1 : 0))} / ${e.capacity}</b> <span class="muted small">spots filled${full ? ` · waitlist open` : left <= 3 ? ` · only ${left} left — grab it before it’s gone` : ''}</span></div>${e.badges ? '<i class="chip chip-going" style="margin:0">EventBuddy</i>' : ''}</div><div class="progress" style="margin-top:8px"><i style="width:${Math.min(100, ((e.going + (r ? 1 : 0)) / e.capacity) * 100)}%"></i></div></div>
       <h3>See who’s going</h3>
       ${connsGoing(e).length ? `<div class="conn-going">${faces(connsGoing(e), 36)}<div><b>${connsGoing(e).length} connection${connsGoing(e).length > 1 ? 's' : ''} going</b><small>${connsGoing(e).map((pid) => PEOPLE[pid].short).join(', ')}</small></div></div>` : ''}
       <div class="stack">${e.attendees.filter((pid) => !isConn(pid)).map((pid) => av(PEOPLE[pid], 32)).join('')}<small>${e.going} going · ${Math.round(e.going * 0.6)} visible</small></div>
@@ -317,51 +275,178 @@ V.event = (id) => {
     <footer class="sticky">${cta}</footer>`;
 };
 
-/* Event detail during / after — mocked so the page can be previewed without walking the whole flow. */
-function eventPhase(e, r, ph, phaseBar) {
-  const id = e.id; const host = hostOf(e); const off = e.mode === 'offline';
-  const people = e.attendees.filter((pid) => pid !== e.host).map((pid) => PEOPLE[pid]);
-  const conns = connsGoing(e);
-  const head = `<header class="bar float"><button class="icon-btn" data-a="back">${ICON.back}</button><span></span><button class="icon-btn" data-a="toast" data-x="Link copied">${ICON.share}</button></header>
-    <div class="hero" style="--c1:${e.cover[0]};--c2:${e.cover[1]}">${cover(e, 'art')}</div>`;
-  if (ph === 'during') {
-    const nowI = Math.min(2, e.agenda.length - 1); const [t, a] = e.agenda[nowI]; const next = e.agenda[nowI + 1];
-    const cta = r && r.status !== 'cancelled'
-      ? (off ? `<button class="btn primary" data-a="nav" data-x="${r.status === 'checkedin' ? (S.live?.paired || S.live?.noBadge ? 'live' : 'checkin') : 'ticket'}/${id}">${r.status === 'checkedin' ? 'Continue at event' : 'Show pass & check in'}</button>` : `<button class="btn primary" data-a="nav" data-x="lobby/${id}">Join now</button>`)
-      : `<button class="btn primary" data-a="nav" data-x="register/${id}">${off ? 'Walk in — register at the door' : 'Join now'}</button>`;
-    return `${head}<section class="pad">${phaseBar}
-      <span class="live-pill"><span class="dot"></span>Happening now</span>
-      <h1 class="title">${esc(e.title)}</h1>
-      <p class="muted">${off ? esc(e.venue) : e.platform} · ends ${e.time.split('–')[1] || 'soon'}</p>
-      <div class="card-soft now-card"><small>NOW · ${t}</small><b>${a}</b>${next ? `<small class="muted">Next · ${next[0]} ${next[1]}</small>` : ''}</div>
-      <h3>Who’s here</h3>
-      ${conns.length ? `<div class="conn-going">${faces(conns, 36)}<div><b>${conns.length} connection${conns.length > 1 ? 's' : ''} here</b><small>${conns.map((pid) => PEOPLE[pid].short).join(', ')}</small></div></div>` : ''}
-      <div class="stack">${people.map((p) => av(p, 32)).join('')}<small>${Math.round(e.going * 0.8)} checked in · ${people.length} on the wall</small></div>
-      <h3>${off ? 'Meet people' : 'Say hi'}</h3>
-      <p class="muted">${off ? 'Tap EventBuddy devices with someone. If you both say yes, you get a shared prompt.' : 'Wave at someone in People. If they wave back, you get a shared prompt.'}</p>
-      <h3>Agenda</h3>
-      <ul class="agenda">${e.agenda.map(([tt, aa], i) => `<li class="${i === nowI ? 'now' : ''}"><time>${tt}</time>${aa}${i === nowI ? ' <i class="chip">Now</i>' : ''}</li>`).join('')}</ul>
-      <div class="spacer"></div></section>
-    <footer class="sticky">${cta}</footer>`;
-  }
-  const went = r?.status === 'attended' || r?.status === 'checkedin';
-  const mine = S.encounters.filter((x) => x.eventId === id);
-  const posts = allPosts().filter((p) => p.circle === e.circle).slice(0, 2);
-  const nextUp = EVENTS.filter((x) => x.id !== id && (x.circle === e.circle || x.tags.some((t) => e.tags.includes(t)))).slice(0, 4);
-  return `${head}<section class="pad">${phaseBar}
-    <p class="eyebrow">${went ? 'You went' : 'Ended'} · ${e.date}</p>
-    <h1 class="title">${esc(e.title)}</h1>
-    <div class="stats"><div><b>${e.going}</b><small>attended</small></div><div><b>${went ? mine.length : conns.length}</b><small>${went ? 'people you met' : 'connections went'}</small></div><div><b>${posts.length + 3}</b><small>takeaways</small></div></div>
-    <div class="msg">${av(host, 36, 'round')}<div><small>Message from ${host.short} · host</small><p>Thanks for coming! Slides and the resource list are in the ${esc(e.circle)} circle. See you at the next one.</p></div></div>
-    ${went ? (mine.length ? `<h3>People you met</h3>${mine.map(encounterRow).join('')}` : '') + `<div class="prompt-card" data-a="compose" data-x="${id}"><small>Share a takeaway</small><b>What’s one thing you’ll try this week?</b><span>+15 pts</span></div>` : `<p class="note">${ICON.info} Missed it? Catch up on takeaways and join the circle for the next one.</p>`}
-    <h3>From the ${esc(e.circle)} circle</h3>
-    ${posts.map(postCard).join('') || '<p class="empty">No takeaways yet.</p>'}
-    <h3>Who went</h3>
-    <div class="stack">${people.map((p) => `<button class="plain" data-a="nav" data-x="person/${p.id}">${av(p, 32)}</button>`).join('')}<small>${e.going} attended</small></div>
-    ${nextUp.length ? `<h3>Next from this circle</h3><div class="hscroll">${nextUp.map(eventCard).join('')}</div>` : ''}
-    <div class="spacer"></div></section>
-    <footer class="sticky">${went ? `<button class="btn primary" data-a="nav" data-x="recap/${id}">See full recap</button>` : `<button class="btn primary" data-a="nav" data-x="circle/${encodeURIComponent(e.circle)}">Visit the circle</button>`}</footer>`;
+/* ------------------------------------------------ event flow: Before / During / After (Week 9 revision)
+   The event page is organised around the event itself. The wearable leads in person; the app supports before and after. */
+const PHASES = ['Before', 'During', 'After'];
+const phaseOf = (r) => ({ going: 0, checkedin: 1, attended: 2 }[r.status] ?? 0);
+const confirmedCount = (e, r) => Math.round(e.going * 0.8) + (r?.confirmed ? 1 : 0);
+const memories = (id) => [...((S.memories || {})[id] || []), ...(MEMORY_SEED[id] || [])];
+const metHere = (id) => S.encounters.filter((x) => x.eventId === id);
+function metStatus(pid) {
+  if (isConn(pid)) return '<i class="chip chip-going" style="margin:0">Connected</i>';
+  if (S.following.includes(pid)) return '<i class="chip chip-pending" style="margin:0">Request pending</i>';
+  if (S.followers.includes(pid)) return `<button class="btn small primary" data-a="follow" data-x="${pid}">Accept</button>`;
+  return '<i class="chip" style="margin:0">Waiting</i>';
 }
+
+function eventPhase(e, r) {
+  const id = e.id; const now = phaseOf(r);
+  const ph = ui.phase?.[id] ?? now;
+  const steps = `<div class="phase-steps">${PHASES.map((l, i) => `<button class="${i === ph ? 'on' : ''} ${i < now ? 'done' : ''}" data-a="phase" data-x="${id}|${i}">${i < now ? '✓ ' : ''}${l}</button>`).join('')}</div>`;
+  const head = `<header class="bar float"><button class="icon-btn" data-a="nav" data-x="home">${ICON.back}</button><span></span><button class="icon-btn" data-a="toast" data-x="Link copied">${ICON.share}</button></header>
+    <div class="hero" style="--c1:${e.cover[0]};--c2:${e.cover[1]}">${cover(e, 'art')}</div>
+    <section class="pad">
+      <button class="host" data-a="nav" data-x="person/${hostOf(e).id}">${av(hostOf(e), 32)}<span><small>Hosted by</small><b>${esc(hostOf(e).name)}</b></span>${e.badges ? `<i class="chip chip-going" style="margin:0 0 0 auto">${ICON.badge} Buddy device</i>` : ''}</button>
+      <h1 class="title sm">${esc(e.title)}</h1>
+      <p class="muted small">${e.date} · ${e.time}${now === 1 ? ' · <b style="color:var(--green2)">Live now</b>' : ''}<br>${esc(e.venue)}</p>
+      ${steps}`;
+  let body = ''; let foot = '';
+  if (ph === 0) {
+    const card = r.confirmed
+      ? `<div class="phase-card"><small class="ok">✓ YOU’RE GOING</small><b>Check in when you arrive</b><p>We’ll remind you the day before.</p></div>`
+      : `<div class="phase-card warn"><small>CONFIRM ATTENDANCE · 24H BEFORE</small><b>Still coming on ${e.date}?</b><p>Unconfirmed spots go to the waitlist, so the people who match are the people who show up.</p>
+          <div class="row2"><button class="btn small" data-a="cancel" data-x="${id}">Can’t make it</button><button class="btn small primary" data-a="confirm-att" data-x="${id}">I’m coming</button></div></div>`;
+    const bud = !buddyReady()
+      ? `<button class="buddy-cta" data-a="buddy-start" data-x="${id}"><span><b>Set up your EventBuddy profile</b><i class="chip" style="margin:0 0 0 6px">Recommended</i><small>Optional. Fill it in once, reuse it for every event and edit anytime.</small></span>${ICON.chev}</button>`
+      : !r.q ? `<button class="buddy-cta" data-a="nav" data-x="buddyq/${id}"><span><b>Answer ${esc(hostOf(e).short)}’s questions for this event</b><small>3 quick questions · your core profile is already saved</small></span>${ICON.chev}</button>`
+      : `<button class="buddy-cta done" data-a="nav" data-x="buddyreview/${id}"><span><b>EventBuddy ready</b><small>Review what strangers will see today</small></span>${ICON.chev}</button>`;
+    body = `${card}
+      <button class="linkrow" data-a="who-sheet" data-x="${id}|going">${confirmedCount(e, r)} confirmed · See who’s going ›</button>
+      ${e.badges ? bud : ''}
+      <p class="note">${ICON.badge} The Handshake EventBuddy is handed out at check-in. Nothing to carry until the day.</p>
+      <h3>About this event</h3><p class="muted">${esc(e.audience)}</p>`;
+    foot = `<p class="muted small center">Check-in opens when you arrive at the venue.</p><button class="btn primary" data-a="nav" data-x="checkin/${id}">Check in at the event</button><button class="link danger" style="margin:4px auto 0" data-a="cancel" data-x="${id}">Can’t make it? Cancel RSVP</button>`;
+  } else if (ph === 1) {
+    if (now < 1) body = `<div class="phase-card"><small>NOT CHECKED IN YET</small><b>This opens when you arrive</b><p>Tap your card at the door or show your pass. Then your EventBuddy does the work and your phone stays in your pocket.</p></div>`;
+    else {
+      const L = S.live?.eventId === id ? S.live : {};
+      const mine = metHere(id); const met = mine.filter((x) => !x.waiting).length; const pend = mine.filter((x) => x.waiting).length;
+      const room = Math.round(e.going * 0.35) + 1;
+      const dev = L.paired ? `<div class="eb-card"><span class="ok">${ICON.check}</span><div><b>EventBuddy</b><small>Connected · checked in 17:42</small></div><p>Tap devices to meet someone.</p></div>`
+        : L.badgeId ? `<button class="eb-card" data-a="nav" data-x="${buddyReady() && r.q ? 'pair' : 'buddyreview'}/${id}"><span>${ICON.badge}</span><div><b>Pair your EventBuddy</b><small>${BADGE_ID} · scan the QR on its screen</small></div>${ICON.chev}</button>`
+        : L.noBadge ? `<div class="eb-card"><span>${ICON.info}</span><div><b>No EventBuddy</b><small>Send hi requests from Who’s here</small></div></div>`
+        : `<button class="eb-card" data-a="nav" data-x="checkin/${id}"><span>${ICON.badge}</span><div><b>Collect your EventBuddy</b><small>Optional · at the desk</small></div>${ICON.chev}</button>`;
+      body = `<div class="phase-card"><div style="display:flex"><small style="flex:1">EVENT PROGRESS</small><small class="ok">1h 12m left</small></div><div class="ev-prog"><i style="width:58%"></i><b style="left:58%"></b></div><div class="ev-times"><small>${e.time.split(' ')[0]}</small><small><b>Now</b></small><small>${e.time.split(' ').pop()}</small></div></div>
+        <button class="linkrow" data-a="live-go" data-x="${id}|here">${room} here now · See who’s here ›</button>
+        ${dev}
+        <div class="stats">${[['saved', met, 'met so far'], ['pending', pend, 'pending'], ['here', room, 'in the room']].map(([k, n, l]) => `<button data-a="${k === 'pending' ? 'nav' : 'live-go'}" data-x="${k === 'pending' ? 'pending/' + id : id + '|' + k}"><b>${n}</b><small>${l}</small></button>`).join('')}</div>
+        <p class="muted small">Synced 2 min ago</p>`;
+      foot = `<button class="btn primary" data-a="live-go" data-x="${id}|saved">See who I’ve met</button><button class="link" style="margin:4px auto 0" data-a="nav" data-x="leave/${id}">Leaving? ${L.noBadge ? 'Wrap up' : 'Return EventBuddy'}</button>`;
+    }
+  } else {
+    if (now < 2) body = `<div class="phase-card"><small>AFTER THE EVENT</small><b>Connections first, memories second</b><p>After you leave, the people you tapped show up here and in Network → Requests. Memories stay open for 7 days.</p></div>`;
+    else {
+      const sub = ui.asub === 'Conversation' ? 'Conversation' : 'Stories';
+      const mine = metHere(id).filter((x) => !x.waiting);
+      const mem = memories(id);
+      body = `<div class="seg2" style="margin:4px 0 14px">${['Stories', 'Conversation'].map((x) => `<button class="${sub === x ? 'on' : ''}" data-a="asub" data-x="${x}">${x === 'Conversation' ? 'Follow-up' : x}</button>`).join('')}</div>
+        ${sub === 'Stories' ? `<div class="phase-card"><small class="ok">✓ YOU ATTENDED</small><p style="margin-top:6px">${esc(e.audience)}</p></div>
+          <button class="linkrow" data-a="who-sheet" data-x="${id}|there">${e.going} attended · See who was there ›</button>
+          <h3>People you met · ${mine.length}</h3>
+          ${mine.map((x) => { const p = PEOPLE[x.person]; return `<div class="enc"><button class="plain" data-a="nav" data-x="person/${p.id}">${av(p, 40)}</button><div><b>${esc(p.name)}</b><small>${esc(p.headline)}</small></div>${metStatus(p.id)}</div>`; }).join('') || '<p class="empty">You didn’t link with anyone this time — that’s fine.</p>'}
+          <div class="enc">${av(hostOf(e), 40)}<div><b>${esc(hostOf(e).name)}</b><small>Event host</small></div><i class="chip" style="margin:0">Host</i></div>
+          <h3>Shared stories</h3>
+          <p class="muted small" style="margin:-4px 0 10px">Shared after the event · open for 7 days, then archived</p>
+          <button class="btn primary" data-a="memory-open" data-x="${id}">+ Add a memory</button>
+          <div class="mem-grid">${mem.map((m) => { const p = who(m.by); return `<figure class="mem">${m.photo !== false ? art(m.seed ?? 2, 'mem-art') : ''}<figcaption><span>${av(p, 20)}<b>${m.by === 'me' ? 'You' : esc(p.short)}</b><small>Day ${m.day || 1}</small></span>“${esc(m.text)}”</figcaption></figure>`; }).join('')}</div>
+          <button class="link" data-a="nav" data-x="recap/${id}">See your recap</button>`
+        : `<p class="note">${ICON.info} Follow-up is optional. Everyone here attended — share slides, links or a thank-you.</p>${chatThread('ev:' + id, 'Reply to the group...')}`}`;
+    }
+  }
+  return `${head}${body}<div class="spacer"></div></section>${foot ? `<footer class="sticky">${foot}</footer>` : ''}`;
+}
+
+V.pending = (id) => {
+  const e = ev(id); const list = metHere(id).filter((x) => x.waiting);
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>Pending · ${list.length}</b><span></span></header>
+    <section class="pad">
+      <p class="muted">People you’ve tapped who haven’t tapped back yet.</p>
+      <button class="linkrow" data-a="toast" data-x="Synced just now">Synced 2 min ago · Sync now ›</button>
+      ${list.map((x) => { const p = PEOPLE[x.person]; return `<div class="list-item">${av(p, 44)}<div class="grow"><h3>${esc(p.name)}</h3><small>${esc(p.headline)}</small><small>Tapped at ${new Date(x.at).toTimeString().slice(0, 5)}</small></div><i class="chip chip-pending" style="margin:0">Waiting</i></div>`; }).join('') || '<div class="empty">No one is pending.</div>'}
+      <p class="note">${ICON.info} Once they tap back, they move to your Connections. Taps can take a few minutes to show up.</p>
+      ${list.map((x) => demo(`${PEOPLE[x.person].short} taps back`, 'tap-back', x.id)).join('')}
+    </section>`;
+};
+
+// Shown after the EventBuddy is returned: taps synced, decisions happen later at home.
+V.synced = (id) => {
+  const e = ev(id); const list = metHere(id).filter((x) => !x.waiting && !isConn(x.person));
+  return `<header class="bar"><span></span><b>Taps synced</b><span></span></header>
+    <section class="pad center">
+      <div class="big-check">↻</div>
+      <h2>${list.length} new connection${list.length === 1 ? '' : 's'} from today</h2>
+      <p class="muted">EventBuddy picked up these taps at ${esc(e.title)}</p>
+      <div style="text-align:left;margin-top:14px">${list.map((x) => { const p = PEOPLE[x.person]; return `<div class="enc">${av(p, 44)}<div><b>${esc(p.name)}</b><small>${esc(p.headline)}</small></div><i class="chip chip-pending" style="margin:0">Pending</i></div>`; }).join('')}</div>
+      <p class="note">${ICON.lock} They’ll appear in Network → Requests. Accept or decline anytime — nobody is told if you decline.</p>
+    </section>
+    <footer class="sticky"><button class="btn primary" data-a="review-requests">Review in Network</button><button class="link" style="margin:4px auto 0" data-a="nav" data-x="event/${id}">Remind me later</button></footer>`;
+};
+
+/* ------------------------------------------------ EventBuddy profile: core (once) + this event (host questions) + review */
+const chipRow = (list, val, key, multi) => `<div class="pills">${list.map((v) => { const on = multi ? (val || []).includes(v) : val === v; return `<button class="pill ${on ? 'on' : ''}" data-a="bq-pick" data-x="${key}|${v}|${multi ? 1 : 0}">${v}</button>`; }).join('')}</div>`;
+
+V.buddy = () => {
+  if (!S.profile) return V.me();
+  const p = me(); const b = ui.bd || (ui.bd = { avatar: p.avatar, color: p.color, career: 'Design', level: 'Beginner', looking: 'Mentor', vibe: BUDDY.vibe[0], mbti: '', showMbti: false, hobbies: [], ...(S.buddy || {}) });
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>EventBuddy Profile</b><span></span></header>
+    <section class="pad">
+      <p class="muted center small" style="margin-top:-6px">Reused for every event — edit anytime</p>
+      <div class="badge-preview"><div class="mini-screen"><div class="bs idle">${avatar(b.avatar, b.color, 84)}<b>${esc(p.short)}</b><small>${esc(b.career)} · ${esc(b.level)}</small></div></div><small>This is all your device shows. Everything else stays in the app.</small></div>
+      <div class="avatar-grid">${AVATAR_CHOICES.map((k) => `<button class="${b.avatar === k ? 'on' : ''}" data-a="bq-pick" data-x="avatar|${k}|0">${avatar(k, b.color, 60)}</button>`).join('')}</div>
+      <div class="swatches">${AVATAR_COLORS.map((c) => `<button class="${b.color === c ? 'on' : ''}" style="background:${c}" data-a="bq-pick" data-x="color|${c}|0" aria-label="colour ${c}"></button>`).join('')}</div>
+      <h3>Career background</h3>${chipRow(BUDDY.career, b.career, 'career')}
+      <h3>Experience level</h3>${chipRow(BUDDY.level, b.level, 'level')}
+      <h3>What are you hoping to find?</h3>${chipRow(BUDDY.looking, b.looking, 'looking')}
+      <h3>Your vibe at events</h3>${chipRow(BUDDY.vibe, b.vibe, 'vibe')}
+      <h3>Your personality <small class="muted">(optional)</small></h3>
+      <p class="muted small" style="margin-bottom:10px">Shown on your profile only if you choose. Your EventBuddy asks career questions, not these.</p>
+      <select class="field" data-model="bd.mbti"><option value="">MBTI type (optional)</option>${BUDDY.mbti.map((m) => `<option ${b.mbti === m ? 'selected' : ''}>${m}</option>`).join('')}</select>
+      <label class="toggle"><input type="checkbox" data-a="bd-toggle" ${b.showMbti ? 'checked' : ''}><span>Show on profile</span></label>
+      <h3>Interests &amp; hobbies <small class="muted">(optional)</small></h3>${chipRow(BUDDY.hobbies, b.hobbies, 'hobbies', true)}
+      <div class="spacer"></div>
+    </section>
+    <footer class="sticky"><button class="btn primary" data-a="buddy-save">Save profile</button><p class="muted small center">Saved to your account — you won’t need to redo this for future events</p></footer>`;
+};
+
+V.buddyq = (id) => {
+  const e = ev(id); const r = reg(id); if (!r) return V.event(id);
+  if (!buddyReady()) { ui.bdNext = 'buddyq/' + id; return V.buddy(); }
+  const last = Object.values(S.regs).find((x) => x.q)?.q || {};
+  const q = ui.bq?.id === id ? ui.bq : (ui.bq = { id, hoping: [], open: '', skill: last.skill || '', opener: '', reply: S.buddy.reply || DEFAULT_AUTO_REPLY, ...(r.q || {}) });
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>For this event</b><span></span></header>
+    <section class="pad">
+      <p class="eyebrow">${esc(e.title)}</p><p class="muted small">Set by the host — changes per event</p>
+      <h3>What are you hoping to get from today?</h3>${chipRow(EVENT_Q.hoping, q.hoping, 'hoping', true)}
+      <h3>Comfortable talking to strangers about your career today?</h3>${chipRow(EVENT_Q.open, q.open, 'open')}
+      <h3>Skill level for this session</h3>${last.skill ? '<p class="muted small" style="margin:-4px 0 8px">Prefilled from your last event — feel free to change it</p>' : ''}${chipRow(EVENT_Q.skill, q.skill, 'skill')}
+      <h3>Your opening message <small class="muted">(optional)</small></h3>
+      <input class="field" data-model="bq.opener" placeholder="Say hi and share what brings you here today..." value="${esc(q.opener)}" maxlength="80">
+      <h3>Auto-reply message</h3><p class="muted small" style="margin-bottom:8px">Sent automatically when someone accepts your connection</p>
+      <input class="field" data-model="bq.reply" value="${esc(q.reply)}" maxlength="80">
+      <div class="spacer"></div>
+    </section>
+    <footer class="sticky"><button class="btn primary" data-a="bq-save" data-x="${id}">Save &amp; continue</button><p class="muted small center">Only your answers for this event — the rest stays saved to your account</p></footer>`;
+};
+
+V.buddyreview = (id) => {
+  const e = ev(id); const r = reg(id); if (!r) return V.event(id);
+  if (!buddyReady() || !r.q) return V.buddyq(id);
+  const b = S.buddy; const q = r.q; const L = S.live?.eventId === id ? S.live : {};
+  const row = (k, v, to) => `<button class="rev-row" data-a="nav" data-x="${to}"><span><small>${k}</small><b>${esc(v || '—')}</b></span><u>Edit</u></button>`;
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>You’re all set</b><span></span></header>
+    <section class="pad">
+      <p class="muted">Here’s what strangers will see today</p>
+      ${row('CORE PROFILE · Career background', `${b.career} · ${b.level}`, 'buddy')}
+      ${row('CORE PROFILE · Looking for', b.looking, 'buddy')}
+      ${row('CORE PROFILE · Vibe', b.vibe, 'buddy')}
+      ${row('THIS EVENT · Hoping to get', q.hoping.join(', '), 'buddyq/' + id)}
+      ${row('THIS EVENT · Openness + skill level', [q.open, q.skill].filter(Boolean).join(' · '), 'buddyq/' + id)}
+      <p class="note">${ICON.lock} Only visible to people you link with via EventBuddy. MBTI and hobbies never appear on the device.</p>
+      <div class="phase-card"><small>SAMPLE PROMPT YOU MIGHT GET</small><b>“${ICEBREAKERS[1]}”</b><p>Career-focused, picked fresh each event — not based on your personality answers.</p></div>
+      <div class="spacer"></div>
+    </section>
+    <footer class="sticky">${L.badgeId && !L.paired ? `<button class="btn primary" data-a="nav" data-x="pair/${id}">Scan device</button><p class="muted small center">You’ll scan the QR code on your EventBuddy wearable next</p>` : `<button class="btn primary" data-a="nav" data-x="event/${id}">Back to event</button>`}</footer>`;
+};
 
 /* ------------------------------------------------------------ create event (teammate flow + our event model) */
 const COVER_PAIRS = [['#D7FF3A', '#1E3A2F'], ['#E7A6FF', '#2A1838'], ['#FF9E7A', '#3A1E14'], ['#8FB8FF', '#14223A'], ['#FFD166', '#3A2E10'], ['#7CE0C3', '#123A30']];
@@ -412,11 +497,12 @@ V.auth = () => `<header class="bar"><button class="icon-btn" data-a="back">${ICO
 
 const DEFAULT_PROFILE = { name: 'Emma C.', field: 'Design', stage: 'Studying', interests: ['AI tools', 'UX', 'Portfolio'], fact: 'Built a badge from scratch', avatar: 'female_2_1', color: '#D7FF3A', showStage: false };
 
-function badgeLook(eventId) {
-  const p = S.profile || DEFAULT_PROFILE;
-  const b = (eventId && S.regs[eventId]?.badge) || S.lastBadge || {};
-  return { avatar: b.avatar || p.avatar, color: b.color || p.color, tag: b.tag || p.interests[0] || p.field };
+// One EventBuddy profile reused for every event (Week 9 revision). The device shows avatar, name and career line only.
+function badgeLook() {
+  const p = S.profile || DEFAULT_PROFILE; const b = S.buddy || {};
+  return { avatar: b.avatar || p.avatar, color: b.color || p.color, tag: b.career ? `${b.career} · ${b.level}` : p.field };
 }
+const buddyReady = () => !!S.buddy?.saved;
 
 function badgePicker(d) {
   const p = me();
@@ -431,6 +517,7 @@ function badgePicker(d) {
 }
 
 V.badgeedit = (id) => {
+  return V.buddy();
   const e = ev(id); if (!reg(id)) return V.event(id);
   if (!ui.regDraft || ui.regDraft.id !== id) ui.regDraft = { id, ...badgeLook(id) };
   return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><b>Your EventBuddy</b><span></span></header>
@@ -441,20 +528,21 @@ V.badgeedit = (id) => {
 V.register = (id) => {
   const e = ev(id);
   if (!S.onboarded) { if (S.afterOnboard !== 'register/' + id) { S.afterOnboard = 'register/' + id; save(); ui.ob = null; } return ui.authNew ? V.onboarding() : V.auth(); }
-  ui.regDraft = ui.regDraft?.id === id ? ui.regDraft : { id, list: true, wall: true, ...badgeLook() };
+  ui.regDraft = ui.regDraft?.id === id ? ui.regDraft : { id, list: true, wall: true };
   const d = ui.regDraft; const p = me();
   return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><b>${e.approval ? 'Request to join' : 'Register'}</b><span></span></header>
     <section class="pad">
       <div class="next-card static">${cover(e, 'sm')}<div><b>${esc(e.title)}</b><small>${e.date} · ${e.time}</small></div></div>
-      ${e.badges ? `<h3>Your EventBuddy for this event</h3>${badgePicker(d)}` : ''}
-      <h3>${e.badges ? 'In the attendee list' : 'What attendees will see'}</h3>
-      <div class="public-card">${e.badges ? asc({ ...p, ...d }, 56) : av(p, 56)}<div><b>${esc(p.name)}</b><small>${p.field}${p.showStage ? ' · ' + p.stage : ''}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
-      <label class="toggle"><input type="checkbox" data-a="reg-toggle" data-x="list" ${d.list ? 'checked' : ''}><span>Show me in the attendee list</span></label>
+      <h3>What attendees will see</h3>
+      <div class="public-card">${av(p, 56)}<div><b>${esc(p.name)}</b><small>${p.field}${p.showStage ? ' · ' + p.stage : ''}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
+      <label class="toggle"><input type="checkbox" data-a="reg-toggle" data-x="list" ${d.list ? 'checked' : ''}><span>Let people see I’m going<small>Shown on this event’s list so others can connect with you</small></span></label>
       ${e.mode === 'offline' ? `<label class="toggle"><input type="checkbox" data-a="reg-toggle" data-x="wall" ${d.wall ? 'checked' : ''}><span>Appear on the live participant wall after check-in</span></label>` : ''}
       <p class="note">${ICON.lock} Email, career stage and CV are never shown to attendees.</p>
+      ${e.badges ? `<p class="note">${ICON.badge} ${buddyReady() ? 'Your EventBuddy profile is saved and will be reused here.' : 'After you RSVP you can set up your EventBuddy profile once and reuse it for every event. Optional.'}</p>` : ''}
+      ${e.going >= e.capacity && e.waitlist ? `<p class="note">${ICON.info} This event is full. You’ll join the waitlist and get a spot if someone doesn’t confirm 24h before.</p>` : ''}
       ${e.approval ? `<p class="note">${ICON.info} This host approves requests. You’ll get a notification either way, and the exact address unlocks once approved.</p>` : ''}
     </section>
-    <footer class="sticky"><button class="btn primary" data-a="register" data-x="${id}">${e.approval ? 'Send request' : 'Confirm · ' + e.cost}</button></footer>`;
+    <footer class="sticky"><button class="btn primary" data-a="register" data-x="${id}">${e.going >= e.capacity && e.waitlist ? 'Join waitlist' : e.approval ? 'Send request' : 'Confirm · ' + e.cost}</button></footer>`;
 };
 
 function fakeQR(seed) {
@@ -482,7 +570,7 @@ V.ticket = (id) => {
   else if (r.status === 'declined') body = `<div class="state-box warn"><b>This one’s full</b><small>The host couldn’t fit everyone. Similar events:</small></div>${EVENTS.filter((x) => x.id !== id && x.mode === e.mode).slice(0, 2).map(eventRow).join('')}`;
   else if (off) body = `<div class="pass">${fakeQR(id + S.profile.name)}<b>${esc(S.profile.name)}</b><small>Show this at the check-in desk</small></div>
       <div class="info-grid"><div>${ICON.pin}<b>${e.venue}</b><small>Get directions</small></div><div>${ICON.badge}<b>EventBuddy on loan</b><small>Collect → pair → return</small></div></div>
-      ${e.badges ? `<button class="row badge-link" data-a="nav" data-x="badgeedit/${id}">${avatar(badgeLook(id).avatar, badgeLook(id).color, 44)}<span class="row-main"><b>Your EventBuddy look</b><small>#${esc(badgeLook(id).tag)} · only for this event</small></span><span class="small muted">Change</span></button>` : ''}
+      ${e.badges ? `<button class="row badge-link" data-a="nav" data-x="buddy">${avatar(badgeLook().avatar, badgeLook().color, 44)}<span class="row-main"><b>Your EventBuddy profile</b><small>${esc(badgeLook().tag)} · reused for every event</small></span><span class="small muted">Edit</span></button>` : ''}
       <h3>Before you go</h3><ul class="checklist"><li>Arrive by 17:45 — first 30 get a drink token</li><li>Bring your phone charged (or pair with staff help)</li><li>Nothing to prepare. Just come curious.</li></ul>`;
   else body = `<div class="pass online"><div>${ICON.globe}</div><b>${e.date} · ${e.time}</b><small>Lobby opens 10 min before</small></div>
       <h3>Before you join</h3><ul class="checklist"><li>Stream runs in Zoom. Camera optional.</li><li>Waves and chats happen here in JobBuddy</li><li>${e.recording ? 'Recording shared afterwards' : 'Not recorded'}</li></ul>`;
@@ -517,7 +605,7 @@ V.checkin = (id) => {
         <li class="${hasBadge ? 'now' : ''}"><b>Pair it with your app</b><small>Takes 10 seconds</small></li>
       </ol>
     </section>
-    ${hasBadge ? `<footer class="sticky"><button class="btn primary" data-a="nav" data-x="pair/${id}">Pair EventBuddy</button></footer>` : ''}`;
+    ${hasBadge ? `<footer class="sticky"><button class="btn primary" data-a="nav" data-x="${buddyReady() && r.q ? 'pair' : 'buddyreview'}/${id}">${buddyReady() && r.q ? 'Pair EventBuddy' : 'Check your EventBuddy profile, then pair'}</button></footer>` : checked ? `<footer class="sticky"><button class="btn" data-a="nav" data-x="event/${id}">Back to event</button></footer>` : ''}`;
 };
 
 V.pair = (id) => {
@@ -528,16 +616,16 @@ V.pair = (id) => {
       <div class="big-check">${ICON.check}</div>
       <h2>You’re connected!</h2>
       <p class="muted">Your EventBuddy wearable (${BADGE_ID}) is paired and live for ${esc(ev(id).title)}.</p>
-      <div class="card-soft" style="text-align:left;margin-top:16px"><h3 style="margin:0 0 8px">How it works</h3><p class="muted small" style="font-size:14px">Tap your device with another attendee’s to see a career question you can talk about together. Save the moment if you both want to — you decide later whether to follow.</p></div>
-      <div class="rules"><div><b>Tap</b><small>asks to talk</small></div><div><b>Both say yes</b><small>shared prompt appears</small></div><div><b>Save</b><small>keeps it in your app</small></div></div>
-      <p class="note">${ICON.lock} Tapping never adds a friend or shares contact details.</p>
+      <div class="card-soft" style="text-align:left;margin-top:16px"><h3 style="margin:0 0 8px">How it works</h3><p class="muted small" style="font-size:14px">Tap your device with another attendee’s and both press Meet. You get a career question to talk about, and the tap is saved quietly. You decide later, at home, whether to connect.</p></div>
+      <div class="rules"><div><b>Tap</b><small>hold devices together</small></div><div><b>Press = yes</b><small>hold = no</small></div><div><b>Linked</b><small>icebreaker + saved quietly</small></div></div>
+      <p class="note">${ICON.lock} Linking never adds a connection. You accept or decline later, at home.</p>
     </section>
-    <footer class="sticky"><button class="btn primary" data-a="nav" data-x="live/${id}">Back to event</button></footer>`;
+    <footer class="sticky"><button class="btn primary" data-a="phase-go" data-x="${id}|1">Back to event</button></footer>`;
   if (L.pairing) return `<header class="bar"><button class="icon-btn" data-a="pair-cancel">${ICON.back}</button><b>Confirm on EventBuddy</b><span></span></header>
     <section class="pad center">
       <p class="muted">Does your EventBuddy show this code?</p>
       <div class="code">${PAIR_CODE.split('').map((d) => `<span>${d}</span>`).join('')}</div>
-      <p>Press <i class="kdot"></i> on the EventBuddy to confirm.</p>
+      <p>Press the <b>Meet</b> button on the EventBuddy to confirm. Hold it to cancel.</p>
       <p class="note">${ICON.info} Code doesn’t match? You may have someone else’s EventBuddy — go back and check the number.</p>
       ${demo('EventBuddy shows ✓ — continue', 'pair-confirm')}
     </section>`;
@@ -558,14 +646,14 @@ V.live = (id) => {
   if (!reg(id)) return V.event(id);
   const here = e.attendees.map((p) => PEOPLE[p]);
   const mine = S.encounters.filter((x) => x.eventId === id);
-  const tabs = [['here', 'Who’s here'], ['agenda', 'Agenda'], ['saved', `Met · ${mine.length}`]];
+  const tabs = [['here', 'Who’s here'], ['agenda', 'Agenda'], ['saved', `Met · ${mine.filter((x) => !x.waiting).length}`]];
   let body = '';
   if (ui.liveTab === 'here') body = `<p class="muted small">${here.length + 1} people chose to show on the wall. Spot their avatar on a EventBuddy.</p>
-      <div class="wall">${(reg(id).wall ? [{ ...me(), ...badgeLook(id), headline: '#' + badgeLook(id).tag }, ...here] : here).map((p) => `<button class="wall-tile" data-a="sheet-person" data-x="${p.id}">${asc(p, 64)}<b>${esc(p.short)}${p.id === 'me' ? ' (you)' : ''}</b><small>${esc(p.headline)}</small></button>`).join('')}</div>`;
+      <div class="wall">${(reg(id).wall ? [{ ...me(), ...badgeLook(), headline: badgeLook().tag }, ...here] : here).map((p) => `<button class="wall-tile" data-a="sheet-person" data-x="${p.id}">${asc(p, 64)}<b>${esc(p.short)}${p.id === 'me' ? ' (you)' : ''}</b><small>${esc(p.headline)}</small></button>`).join('')}</div>`;
   if (ui.liveTab === 'agenda') body = `<ul class="agenda">${e.agenda.map(([t, a], i) => `<li class="${i === 2 ? 'now' : ''}"><time>${t}</time>${a}${i === 2 ? ' <i class="chip">Now</i>' : ''}</li>`).join('')}</ul>`;
-  if (ui.liveTab === 'saved') body = (mine.length ? mine.map(encounterRow).join('') : `<p class="empty">No one yet. When you and someone both say yes on your devices, choose Accept to connect and they show up here.</p>`)
-    + (L.noBadge ? '' : here.filter((p) => !mine.some((x) => x.person === p.id)).slice(0, 2).map((p) => demo(`EventBuddy on another device accepted ${p.short}`, 'demo-enc', p.id)).join(''));
-  return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="home">${ICON.back}</button><span class="live-pill"><span class="dot"></span>Live</span>
+  if (ui.liveTab === 'saved') body = (mine.length ? mine.map(encounterRow).join('') : `<p class="empty">No one yet. Hold devices together with someone and both press Meet — they show up here, and you decide whether to connect after the event.</p>`)
+    + (L.noBadge ? '' : here.filter((p) => !mine.some((x) => x.person === p.id)).slice(0, 2).map((p) => demo(`Linked with ${p.short} on the other device`, 'demo-enc', p.id)).join(''));
+  return `<header class="bar"><button class="icon-btn" data-a="phase-go" data-x="${id}|1">${ICON.back}</button><span class="live-pill"><span class="dot"></span>Live</span>
       ${L.noBadge ? '<span class="muted small">No EventBuddy</span>' : `<button class="badge-pill" data-a="badge-open">${ICON.badge}${BADGE_ID}</button>`}</header>
     <section class="pad">
       <h2 class="title sm">${esc(e.title)}</h2>
@@ -577,9 +665,9 @@ V.live = (id) => {
 };
 
 function encounterRow(x) {
-  const p = who(x.person); const f = S.following.includes(x.person);
-  return `<div class="enc">${av(p, 44, 'round')}<div><b>${esc(p.name)}</b><small>${esc(x.prompt)}</small></div>
-    ${followBtn(p.id)}</div>`;
+  const p = who(x.person);
+  return `<div class="enc">${av(p, 44, 'round')}<div><b>${esc(p.name)}</b><small>${x.waiting ? 'Tapped · hasn’t tapped back yet' : esc(x.prompt)}</small></div>
+    ${x.waiting ? '<i class="chip chip-pending" style="margin:0">Waiting</i>' : S.live?.eventId === x.eventId && !S.live?.online ? '<i class="chip" style="margin:0">Saved</i>' : followBtn(p.id)}</div>`;
 }
 
 V.leave = (id) => {
@@ -642,7 +730,7 @@ V.recap = (id) => {
   const e = ev(id); const host = hostOf(e);
   if (!S.profile) return V.event(id);
   const mine = S.encounters.filter((x) => x.eventId === id);
-  const nextUp = EVENTS.filter((x) => x.id !== id && !reg(x.id) && x.tags.some((t) => e.tags.includes(t) || S.profile.interests.includes(t)));
+  const nextUp = EVENTS.filter((x) => x.id !== id && !x.past && !reg(x.id) && x.tags.some((t) => e.tags.includes(t) || S.profile.interests.includes(t)));
   const fb = S.feedback[id];
   return `<header class="bar float"><button class="icon-btn" data-a="nav" data-x="home">${ICON.back}</button><span></span><span></span></header>
     <div class="hero" style="--c1:${e.cover[0]};--c2:${e.cover[1]}">${cover(e, 'art')}</div>
@@ -671,15 +759,16 @@ function connLine(e, size = 20) {
   const names = c.slice(0, 2).map((id) => PEOPLE[id].short).join(', ');
   return `<span class="conn-line">${faces(c, size)}<span>${names}${c.length > 2 ? ` +${c.length - 2}` : ''} going</span></span>`;
 }
+// Nobody can contact someone directly: Connect sends a request (optional note); a mutual yes = connected.
 function relLabel(id) {
   if (isConn(id)) return 'Connected';
-  if (S.following.includes(id)) return 'Following';
-  if (S.followers.includes(id)) return 'Follow back';
-  return 'Follow';
+  if (S.following.includes(id)) return 'Requested';
+  if (S.followers.includes(id)) return 'Accept';
+  return 'Connect';
 }
 function followBtn(id, small = true) {
-  const l = relLabel(id); const cta = l === 'Follow' || l === 'Follow back';
-  return `<button class="btn ${small ? 'small' : ''} ${cta ? 'primary' : ''}" data-a="follow" data-x="${id}">${l === 'Connected' ? '✓ Connected' : l}</button>`;
+  const l = relLabel(id); const cta = l === 'Connect' || l === 'Accept';
+  return `<button class="btn ${small ? 'small' : ''} ${cta ? 'primary' : ''}" data-a="${l === 'Connect' ? 'connect-open' : 'follow'}" data-x="${id}">${l === 'Connected' ? '✓ Connected' : l}</button>`;
 }
 const circlesJoined = () => [...new Set([...(S.circles || []), ...Object.keys(S.regs).map((id) => ev(id).circle)])];
 
@@ -702,8 +791,9 @@ function earn(n, why, quiet) {
 function seedAccount(points) {
   S.following = [...SEED_GRAPH.following]; S.followers = [...SEED_GRAPH.followers];
   S.circles = ['Harbour Builders', 'UTS Design Crowd'];
-  // Mock upcoming RSVPs so the Home “Your events” carousel has content; the two scripted demo events stay unregistered.
-  ['crit-circle', 'data-ama'].forEach((id) => { if (!S.regs[id]) S.regs[id] = { status: 'going', list: true, wall: true }; });
+  S.regs['portfolio-night'] = { status: 'attended', list: true, confirmed: true };
+  S.encounters = [['leo', 'What’s one skill you’re trying to build this year?'], ['sofia', 'What’s the best piece of feedback you’ve ever had on your work?'], ['marcus', 'What did you almost do instead of this career?']]
+    .map(([person, prompt], i) => ({ id: 'seed' + i, person, eventId: 'portfolio-night', prompt, via: 'tappy', at: Date.now() - 6e8 }));
   S.points = points; S.lifetime = points; S.ledger = points ? [{ n: 15, why: 'Shared an event takeaway', at: Date.now() - 864e5 }, { n: 20, why: 'Checked in at an event', at: Date.now() - 9e7 }, { n: 5, why: 'New connection · Leo', at: Date.now() - 2e8 }] : [];
 }
 const wallet = () => S.points || 0;            // spendable: goes down when you redeem
@@ -712,6 +802,8 @@ const lvChip = () => { const l = level(); return `<button class="lv-chip" data-a
 const ptsPair = () => `<div class="pts-pair"><div><b>${wallet()}</b><small>pts to spend</small><i>Redeeming uses these</i></div><div><b>${earned()}</b><small>earned in total</small><i>Sets your level · never goes down</i></div></div>`;
 
 /* ------------------------------------------------------------ community */
+const msgReq = (id) => (S.msgReqs || {})[id];
+const canChat = (id) => isConn(id) || msgReq(id)?.state === 'accepted';
 const comments = (id) => [...(SEED_COMMENTS[id] || []), ...((S.myComments || {})[id] || []).map((t) => ['me', t])];
 function postCard(p) {
   const a = p.anon ? { name: 'Anonymous member' } : who(p.author);
@@ -721,7 +813,7 @@ function postCard(p) {
     <header>${p.anon ? '<span class="ph anon" style="width:36px;height:36px">?</span>' : `<button class="plain" data-a="nav" data-x="${own ? 'me' : 'person/' + p.author}">${av(a, 36)}</button>`}
       <div><b>${esc(a.name)}${conn ? ' <i class="conn-tag">Connection</i>' : ''}</b><small>${p.aud === 'circle' ? ICON.lock : ''}${esc(p.circle)} · ${p.ago}</small></div><i class="chip">${p.type}</i></header>
     <p>${esc(p.text)}</p>
-    <footer><button class="help ${helped ? 'on' : ''}" data-a="helped" data-x="${p.id}" ${own ? 'disabled' : ''}>${ICON.spark}Helpful · ${p.helpful + (helped ? 1 : 0)}</button><button class="help" data-a="comments" data-x="${p.id}">${ICON.chat}${p.comments + ((S.myComments || {})[p.id] || []).length}</button></footer>
+    <footer><button class="help ${helped ? 'on' : ''}" data-a="helped" data-x="${p.id}" ${own ? 'disabled' : ''}>${ICON.spark}Helpful · ${p.helpful + (helped ? 1 : 0)}</button><button class="help" data-a="comments" data-x="${p.id}">${ICON.chat}${p.comments + ((S.myComments || {})[p.id] || []).length}</button>${!own && !p.anon && S.profile ? `<span style="flex:1"></span>${conn ? '' : followBtn(p.author)}<button class="help icon-only" aria-label="Message" title="Message" data-a="${conn || msgReq(p.author)?.state === 'accepted' ? 'nav' : 'msg-open'}" data-x="${conn || msgReq(p.author) ? 'chat/' + p.author : p.author}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3L10 14"/><path d="M21 3l-7 18-4-7-7-4z"/></svg></button>` : ''}</footer>
   </article>`;
 }
 
@@ -759,10 +851,10 @@ function networkView() {
   let body;
   if (sub === 'Connections') body = conns.map((id) => `<button class="list-item" data-a="nav" data-x="person/${id}">${av(PEOPLE[id], 48)}<div class="grow"><h3>${PEOPLE[id].name}</h3><small>${esc(PEOPLE[id].headline)}</small></div>${ICON.chev}</button>`).join('')
     || '<div class="empty">No connections yet — tap devices at your next event, then follow each other.</div>';
-  else body = (reqs.map((id) => `<div class="card-soft"><div style="display:flex;gap:14px;align-items:center">${av(PEOPLE[id], 48)}<div class="grow" style="flex:1"><h3 style="margin:0">${PEOPLE[id].name}</h3><small>${esc(PEOPLE[id].headline)}</small>${metAt(id) ? `<small>Met at ${esc(metAt(id))}</small>` : ''}</div></div>
-      <p class="muted" style="margin:12px 0;font-size:14px">${PEOPLE[id].short} follows you. Follow back to connect.</p>
-      <div style="display:flex;gap:10px"><button class="btn" style="height:42px" data-a="dismiss" data-x="${id}">Not now</button><button class="btn primary" style="height:42px" data-a="follow" data-x="${id}">Follow back</button></div></div>`).join('')
-    || '<div class="empty">You’re all caught up. New follows from events will show up here.</div>')
+  else body = (reqs.map((id) => `<div class="card-soft"><div style="display:flex;gap:14px;align-items:center">${av(PEOPLE[id], 48)}<div class="grow" style="flex:1"><h3 style="margin:0">${PEOPLE[id].name}</h3><small>${esc(PEOPLE[id].headline)}</small><small style="color:var(--green2)">${metAt(id) ? `Met at ${esc(metAt(id))}` : 'Sent you a connect request'}</small></div></div>
+      <p class="muted" style="margin:12px 0;font-size:14px">“${esc(AUTO_REPLY[id] || DEFAULT_AUTO_REPLY)}”</p>
+      <div style="display:flex;gap:10px"><button class="btn" style="height:42px" data-a="dismiss" data-x="${id}">Decline</button><button class="btn primary" style="height:42px" data-a="follow" data-x="${id}">Accept</button></div></div>`).join('')
+    || '<div class="empty">You’re all caught up. People you tap at events show up here after they sync.</div>')
     + (seen.length ? `<h3>Explore who else was there</h3>${seen.map((id) => person(id, followBtn(id))).join('')}` : '');
   const circles = circlesJoined();
   return `<div class="search">${ICON.search}<input data-model="nq" placeholder="Search connections" aria-label="Search connections" value="${esc(ui.nq || '')}"></div>
@@ -821,11 +913,12 @@ function podsSection() {
    Messages: [by, text] or [by, { ev: eventId }]. */
 const thread = (key) => {
   const [kind, id] = key.split(':');
+  if (kind === 'ev') { const e = ev(id); S.evChats = S.evChats || {}; S.evChats[id] = S.evChats[id] || JSON.parse(JSON.stringify(EVENT_CHAT_SEED[id] || [])); return e && { kind, id, msgs: S.evChats[id], group: true, repliers: e.attendees, title: e.title, onShare: () => {} }; }
   if (kind === 'pod') { const p = pod(id); return p && { kind, id, msgs: p.chat, group: true, repliers: p.members, title: p.name, onShare: (eid) => { if (!p.events.includes(eid)) p.events.push(eid); } }; }
   const c = chats(); c[id] = c[id] || [];
   return PEOPLE[id] && { kind, id, msgs: c[id], group: false, repliers: [id], title: PEOPLE[id].short, onShare: () => {} };
 };
-const threadHash = (key) => { const [k, id] = key.split(':'); return '#/' + (k === 'pod' ? 'pod/' : 'chat/') + id; };
+const threadHash = (key) => { const [k, id] = key.split(':'); return '#/' + ({ pod: 'pod/', ev: 'event/' }[k] || 'chat/') + id; };
 
 function msgBubble(m, group) {
   const mine = m[0] === 'me'; const who_ = mine ? 'You' : PEOPLE[m[0]]?.short || '';
@@ -915,7 +1008,7 @@ V.messages = () => {
       ${pods().map((p) => `<button class="list-item" data-a="pod-open" data-x="${p.id}">${podFaces(p)}<div class="grow"><h3>${esc(p.name)}</h3><small style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(podLast(p))}</small></div>${S.podUnread?.[p.id] ? `<i class="unread">${S.podUnread[p.id]}</i>` : ''}</button>`).join('') || '<div class="empty">No pods yet. Create one from Community → Networks.</div>'}
       <h3>Direct</h3>
       ${ids.map((id) => { const m = c[id][c[id].length - 1]; return `<button class="list-item" data-a="nav" data-x="chat/${id}">${av(PEOPLE[id], 48)}<div class="grow"><h3>${PEOPLE[id].name}</h3><small style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m ? (m[0] === 'me' ? 'You: ' : '') + (typeof m[1] === 'string' ? esc(m[1]) : 'Shared an event') : 'Say hi 👋'}</small></div>${S.unread?.[id] ? `<i class="unread">${S.unread[id]}</i>` : ''}</button>`; }).join('') || '<div class="empty">No messages yet. Connect with someone to start chatting.</div>'}
-      <p class="note">${ICON.lock} You can message people once you’re connected (you follow each other).</p>
+      <p class="note">${ICON.lock} You can message connections. Anyone else needs a message request they accept first.</p>
       <div class="spacer"></div>
     </section>`;
 };
@@ -923,8 +1016,9 @@ V.messages = () => {
 V.chat = (id) => {
   const p = PEOPLE[id]; if (!p || !S.profile) return V.messages();
   chats(); if (S.unread?.[id]) { S.unread[id] = 0; save(); }
-  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><button class="plain" data-a="nav" data-x="person/${id}" style="display:flex;gap:10px;align-items:center;justify-self:center">${av(p, 32)}<span style="text-align:left"><b>${p.name}</b><small style="color:var(--ac-tx)">${isConn(id) ? 'Connected' : 'Not connected'}</small></span></button><span></span></header>
-    <section class="pad">${chatThread('dm:' + id, 'Type a message...', isConn(id) ? '' : `Follow each other to message ${p.short}.`)}</section>`;
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><button class="plain" data-a="nav" data-x="person/${id}" style="display:flex;gap:10px;align-items:center;justify-self:center">${av(p, 32)}<span style="text-align:left"><b>${p.name}</b><small style="color:var(--ac-tx)">${isConn(id) ? 'Connected' : msgReq(id)?.state === 'accepted' ? 'Request accepted' : msgReq(id) ? 'Request pending' : 'Not connected'}</small></span></button><span></span></header>
+    <section class="pad">${!isConn(id) && msgReq(id)?.state === 'pending' ? `<p class="note">${ICON.lock} Message request sent. Waiting for ${p.short} to accept — chat unlocks then. Expires in 7 days.</p>${demo(`${p.short} accepts your message request`, 'msg-accept', id)}` : msgReq(id)?.state === 'accepted' && !isConn(id) ? `<p class="note">${ICON.check} ${p.short} accepted your message request. You can both talk now.</p>` : ''}
+      ${chatThread('dm:' + id, 'Type a message...', canChat(id) ? '' : msgReq(id) ? 'Waiting for them to accept…' : `Send ${p.short} a message request first.`)}</section>`;
 };
 
 const PLACEHOLDER = { Question: 'What are you stuck on?', Takeaway: 'What’s one thing you’ll try this week?', Resource: 'Share a link, template or tool…', 'Offer help': 'What could you help someone with?', Referral: 'Which role, and who should reach out?', 'Going together': 'Which event? Where should people meet you?', Win: 'What happened? Who helped?' };
@@ -1070,9 +1164,10 @@ V.me = () => {
   return `<header class="top"><div style="display:flex;gap:14px;align-items:center">${av(p, 64)}<div><h1>${esc(p.name)}</h1><p class="muted" style="margin-top:4px">${p.stage}${p.showStage ? '' : ' 🔒'} / ${p.field}</p></div></div><button class="icon-btn" data-a="edit-profile" aria-label="Edit profile">${ICON.edit}</button></header>
     <section class="pad">
       <p class="muted">Hi, I’m ${esc(p.short)} — ${p.stage.toLowerCase()} in ${p.field.toLowerCase()}. ${p.fact ? esc(p.fact) + '.' : ''}</p>
+      <button class="eb-entry" data-a="nav" data-x="buddy"><span>${ICON.badge}</span><div><b>EventBuddy</b><small>${buddyReady() ? `${esc(badgeLook().tag)} · device & profile settings` : 'Set up once, reused for every event'}</small></div>${ICON.chev}</button>
+      <div class="namecard"><small>Your name card · No. 0001</small><b>${esc(p.name)}</b><small style="color:#bbb">${p.field} · Sydney, AU</small><small style="color:#bbb;margin-top:4px">${p.interests.map((t) => '#' + t).join(' ')}</small></div>
       <div class="lv-card" data-a="nav" data-x="rewards" role="button"><div><small>LEVEL ${l.n}</small><b>${l.name}</b></div><span>${wallet()} pts<small style="display:inline;margin-left:4px;color:#bbb;letter-spacing:0">to spend</small><button class="icon-btn help-btn sm" data-a="growth-help" aria-label="How growth works">${ICON.help}</button></span><div class="lvbar"><i style="width:${l.pct}%"></i></div><small>${earned()} earned in total · ${l.next ? `${l.next - earned()} to ${l.nextName}` : 'Top level'} · Redeeming never lowers your level</small></div>
-      <div class="nc-head"><h3>Your name card</h3><button class="linkish small" data-a="edit-profile">Edit</button></div>
-      <div class="namecard"><small>Your name card · No. 0001</small><b>${esc(p.name)}</b><small style="color:#bbb">${p.field} · Sydney, AU</small><small style="color:#bbb;margin-top:4px">${p.interests.map((t) => '#' + t).join(' ')}</small><button class="nc-conn" data-a="people-tab" data-x="connections">${connections().length} connections</button></div>
+      <div class="stats four">${[['connections', connections().length, 'connections'], ['followers', S.followers.length, 'followers'], ['following', S.following.length, 'following'], ['met', metIds.length, 'met']].map(([t, n, lbl]) => `<button data-a="people-tab" data-x="${t}"><b>${n}</b><small>${lbl}</small></button>`).join('')}</div>
       <button class="list-item" data-a="nav" data-x="messages"><span class="lead-ico">${ICON.chat}</span><div class="grow"><b>Messages</b><small>View your chatbox</small></div>${ICON.chev}</button>
       <h3>Career tools</h3>
       <button class="tool" data-a="nav" data-x="cv"><span class="tool-ico">${ICON.file}</span><span class="row-main"><b>AI CV review</b><small>${S.cvFree ?? 3} free this month${(S.credits || {}).cv ? ` · +${S.credits.cv} extra` : ''}</small></span>${ICON.chev}</button>
@@ -1081,7 +1176,7 @@ V.me = () => {
       <div class="pills">${[['upcoming', 'Upcoming'], ['pending', 'Requests'], ['past', 'Previous']].map(([k, lb]) => `<button class="pill ${ui.meSeg === k ? 'on' : ''}" data-a="me-seg" data-x="${k}">${lb}</button>`).join('')}</div>
       ${list.map(eventRow).join('') || '<p class="empty">Nothing here yet.</p>'}
       <h3>Two avatars</h3>
-      <div class="two-av"><div>${av(p, 56)}<small>Profile photo<br>app & online events</small></div><div>${avatar(look.avatar, look.color, 56)}<small>EventBuddy avatar<br>chosen per in-person event</small></div></div>
+      <div class="two-av"><div>${av(p, 56)}<small>Profile photo<br>app & online events</small></div><div>${avatar(look.avatar, look.color, 56)}<small>EventBuddy avatar<br>same for every event</small></div></div>
       <h3>Privacy</h3>
       <ul class="checklist"><li>Public: name, photo, field, interests${p.fact ? ', fun fact' : ''}</li><li>Private: ${p.showStage ? 'email, CV' : 'career stage, email, CV'}</li></ul>
       <h3>EventBuddy</h3>
@@ -1093,13 +1188,14 @@ V.me = () => {
 };
 
 V.people = () => {
-  const tab = 'connections';
+  const tab = ui.pplTab || 'connections';
   const metIds = [...new Set(S.encounters.map((x) => x.person))];
   const ids = { connections: connections(), followers: S.followers, following: S.following, met: metIds }[tab];
   const empty = { connections: 'When you and someone follow each other, you’re connected.', followers: 'No followers yet.', following: 'You’re not following anyone yet.', met: 'People you save at events show up here.' }[tab];
-  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>${ids.length} connections</b><span></span></header>
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>People</b><span></span></header>
     <section class="pad">
-      <p class="note">${ICON.info} A connection is a mutual follow.</p>
+      <div class="tabs">${[['connections', 'Connections'], ['followers', 'Followers'], ['following', 'Following'], ['met', 'Met']].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-a="people-tab" data-x="${k}">${l}</button>`).join('')}</div>
+      ${tab === 'connections' ? `<p class="note">${ICON.info} A connection is a mutual follow.</p>` : ''}
       ${ids.map((id) => { const p = PEOPLE[id]; const x = S.encounters.find((y) => y.person === id);
         return `<div class="enc"><button class="plain" data-a="nav" data-x="person/${id}">${av(p, 44)}</button><div><b>${p.name}</b><small>${x ? 'Met at ' + ev(x.eventId).title : p.headline}</small></div>${followBtn(id)}</div>`; }).join('') || `<p class="empty">${empty}</p>`}
     </section>`;
@@ -1112,8 +1208,8 @@ V.person = (id) => {
   return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><span></span><span></span></header>
     <section class="pad">
       <div class="me-hero">${av(p, 88)}<div><h2>${p.name}</h2><small>${esc(p.headline)}</small><small class="tags">${p.interests.map((t) => '#' + t).join(' ')}</small></div></div>
-      ${S.profile ? `<div style="display:grid;gap:8px">${followBtn(id, false)}${isConn(id) ? `<button class="btn primary" data-a="nav" data-x="chat/${id}">${ICON.chat}Message</button>` : ''}</div>` : ''}
-      ${S.followers.includes(id) && !S.following.includes(id) ? `<p class="note">${ICON.info} ${p.short} follows you. Follow back to connect.</p>` : ''}
+      ${S.profile ? `<div style="display:grid;gap:8px">${followBtn(id, false)}<button class="btn ${canChat(id) ? 'primary' : ''}" data-a="${canChat(id) || msgReq(id) ? 'nav' : 'msg-open'}" data-x="${canChat(id) || msgReq(id) ? 'chat/' + id : id}">${ICON.chat}${canChat(id) ? 'Message' : msgReq(id) ? 'Message request sent' : 'Send a message request'}</button></div>` : ''}
+      ${S.followers.includes(id) && !S.following.includes(id) ? `<p class="note">${ICON.info} ${p.short} sent you a connect request. Accept to connect.</p>` : ''}
       ${met.map((x) => `<div class="msg"><div><small>You met at ${esc(ev(x.eventId).title)}</small><p>${esc(x.prompt)}</p></div></div>`).join('')}
       ${both.length ? `<h3>Also going</h3>${both.map(lumaRow).join('')}` : ''}
       <h3>Fun fact</h3><p>${esc(p.fact)}</p>
@@ -1153,23 +1249,47 @@ function sheetHTML() {
       <div class="cinput"><input class="field" data-model="commentText" placeholder="Add a helpful reply… (+3 pts)" value="${esc(ui.commentText || '')}"><button class="btn small primary" data-a="send-comment" data-x="${s.id}">Send</button></div>`;
   }
   if (['chat-share', 'pod-invite'].includes(s.type)) inner = podSheet();
-  return `<div class="scrim" data-a="sheet-close"></div><div class="sheet ${['comments', 'chat-share', 'pod-invite'].includes(s.type) ? 'left' : ''}"><i class="grab"></i>${inner}</div>`;
+  if (s.type === 'who') {
+    const e = ev(s.id); const ids = e.attendees; const extra = Math.max(0, (s.mode === 'there' ? e.going : confirmedCount(e, reg(e.id))) - ids.length - 1);
+    inner = `<h2 class="sheet-title">${s.mode === 'there' ? `Who was there (${e.going})` : `Who’s going · ${confirmedCount(e, reg(e.id))} confirmed`}</h2>
+      <p class="muted small">${s.mode === 'there' ? 'Tap someone to see their profile. Connecting is always a request.' : 'Only people who chose “Let people see I’m going”.'}</p>
+      <div class="clist">${ids.map((id) => `<div class="enc"><button class="plain" data-a="nav" data-x="person/${id}">${av(PEOPLE[id], 40)}</button><div><b>${PEOPLE[id].name}</b><small>${esc(PEOPLE[id].headline)}</small></div>${followBtn(id)}</div>`).join('')}
+      ${extra ? `<p class="muted small">+ ${extra} more ${s.mode === 'there' ? 'attendees' : 'people'}</p>` : ''}</div>`;
+  }
+  if (s.type === 'memory') {
+    const d = ui.mem || (ui.mem = { photo: false, text: '' });
+    inner = `<h2 class="sheet-title">Add a memory</h2><p class="muted small">Shared after the event · visible for 7 days</p>
+      <button class="mem-pick ${d.photo ? 'on' : ''}" data-a="memory-photo">${d.photo ? art(7, 'mem-art') : `${ICON.plus}<small>Tap to add a photo</small>`}</button>
+      <textarea class="field area" style="min-height:90px;margin-top:4px" data-model="mem.text" maxlength="200" placeholder="What stuck with you?">${esc(d.text)}</textarea>
+      <button class="btn primary" data-a="memory-share" data-x="${s.id}">Share memory</button><button class="link" style="margin:2px auto 0" data-a="sheet-close">Cancel</button>`;
+  }
+  if (s.type === 'connect' || s.type === 'msgreq') {
+    const p = PEOPLE[s.id]; const isMsg = s.type === 'msgreq'; const max = isMsg ? 200 : 150;
+    inner = `<div style="display:flex;gap:12px;align-items:center">${av(p, 48)}<div><b>${isMsg ? 'Message' : 'Connect with'} ${esc(p.name)}</b><small class="muted">${esc(p.headline)}</small></div></div>
+      <p class="muted small">${isMsg ? `Your first message is sent as a request. ${p.short} has to accept before you can chat. It expires in 7 days.` : `${p.short} has to accept before you’re connected. A short note helps.`}</p>
+      <textarea class="field area" style="min-height:90px;margin-top:0" data-model="reqText" maxlength="${max}" placeholder="${isMsg ? 'Hi! I saw your post about…' : 'Add a note (optional)'}">${esc(ui.reqText || '')}</textarea>
+      <small class="muted">Up to ${max} characters</small>
+      <button class="btn primary" data-a="${isMsg ? 'msg-send' : 'connect-send'}" data-x="${s.id}">${isMsg ? 'Send message request' : 'Send request'}</button>`;
+  }
+  return `<div class="scrim" data-a="sheet-close"></div><div class="sheet ${['comments', 'chat-share', 'pod-invite', 'who', 'memory', 'connect', 'msgreq'].includes(s.type) ? 'left' : ''}"><i class="grab"></i>${inner}</div>`;
 }
 
 /* ================================================================ BADGE */
+// Handshake EventBuddy: one physical Meet button. Press = yes, hold = no. NFC to tap, small screen.
+const linkCode = (pid) => String(2700 + (seedOf(pid) * 37) % 300);
+const PRESS = 'Press = yes · Hold = no';
 function badgeScreen() {
   const b = S.badge; const p = me();
   const partner = b.partner && PEOPLE[b.partner];
   switch (b.screen) {
     case 'off': return `<div class="bs off"><small>JobBuddy</small><b>${BADGE_ID}</b><small>Not assigned</small></div>`;
-    case 'unpaired': return `<div class="bs"><small>BADGE</small><b class="huge">${BADGE_ID}</b><small>Open JobBuddy<br>to pair</small></div>`;
-    case 'pairing': return `<div class="bs"><small>PAIR WITH</small><b>${esc(p.short)}?</b><div class="bcode">${PAIR_CODE}</div><small>● yes · ○ no</small></div>`;
-    case 'idle': { const l = badgeLook(S.live?.eventId); return `<div class="bs idle"><div class="badge-av">${avatar(l.avatar, l.color, 118, ui.frame)}</div><b>${esc(p.short)}</b><small>#${esc(l.tag)}</small></div>`; }
-    case 'request': return `<div class="bs">${avatar(partner.avatar, partner.color, 64)}<small>TALK WITH</small><b>${partner.short}?</b><small>● yes · ○ not now</small></div>`;
+    case 'unpaired': return `<div class="bs"><small>EVENTBUDDY</small><b class="huge">${BADGE_ID}</b><small>Scan this device<br>with JobBuddy to pair</small></div>`;
+    case 'pairing': return `<div class="bs"><small>PAIR WITH</small><b>${esc(p.short)}?</b><div class="bcode">${PAIR_CODE}</div><small>${PRESS}</small></div>`;
+    case 'idle': { const l = badgeLook(); return `<div class="bs idle"><div class="badge-av">${avatar(l.avatar, l.color, 104, ui.frame)}</div><b>${esc(p.short)}</b><small>${esc(l.tag)}</small><small class="dim">TAP TO MEET · hold devices together</small></div>`; }
+    case 'request': return `<div class="bs"><small>LINK WITH ${partner.short.toUpperCase()}?</small><div class="bcode">${linkCode(partner.id)}</div><small>Same code on both screens?</small><small>Press to link · Hold to cancel</small></div>`;
     case 'waiting': return `<div class="bs">${avatar(partner.avatar, partner.color, 64)}<small>Waiting for</small><b>${partner.short}…</b></div>`;
-    case 'declined': return `<div class="bs"><b>Maybe later</b><small>Nothing was shared.</small></div>`;
-    case 'prompt': return `<div class="bs prompt"><small>YOU + ${partner.short.toUpperCase()} · #${esc(b.tag)}</small><p>${esc(b.prompt)}</p><small>Connect? ● accept · ○ not now</small></div>`;
-    case 'saved': return `<div class="bs"><b class="huge">✓</b><b>Accepted</b><small>Find ${partner.short} in your app</small></div>`;
+    case 'declined': return `<div class="bs"><b>Saved as pending</b><small>${partner ? partner.short + ' can tap back later.' : ''}<br>Nothing else was shared.</small></div>`;
+    case 'prompt': return `<div class="bs prompt"><small>✓ LINKED · YOU &amp; ${partner.short.toUpperCase()}</small><small class="dim">ICEBREAKER</small><p>${esc(b.prompt)}</p><small>● Saved to your event memories</small><small class="dim">Press for a new prompt · Hold when done</small></div>`;
     case 'returned': return `<div class="bs off"><b>Thanks!</b><small>Data cleared.<br>Ready for next person.</small></div>`;
     default: return '';
   }
@@ -1179,54 +1299,53 @@ function badgePanel() {
   const L = S.live; const online = L && ev(L.eventId)?.mode === 'online';
   const hasBadge = L && L.badgeId;
   const e = L && ev(L.eventId);
-  const nearby = e && e.attendees.map((id) => PEOPLE[id]);
+  const nearby = e && e.attendees.map((id) => PEOPLE[id]).filter((p) => !S.encounters.some((x) => x.person === p.id && x.eventId === e.id));
   const idle = S.badge.screen === 'idle';
   const hint = {
-    off: 'No EventBuddy assigned. Collect one at check-in.', unpaired: 'Assigned but not paired. Pair it from the phone.', pairing: 'Press ● to confirm the code matches the phone.',
-    idle: 'Showing your public avatar. Tap devices with someone nearby.', request: 'The other EventBuddy asked to talk. Press ● if you want to.', waiting: 'Waiting for the other person to press ●.',
-    declined: 'They chose “not now”. No info exchanged.', prompt: 'Shared prompt shown on both devices. Connect? ● accept · ○ not now.', saved: 'Encounter synced to the app.', returned: 'EventBuddy unpaired and wiped.'
+    off: 'No EventBuddy assigned. Collect one at check-in.', unpaired: 'Assigned but not paired. Scan its QR from the phone.', pairing: 'Press Meet if the code matches the phone. Hold to cancel.',
+    idle: 'Showing your avatar and career line. Hold devices together with someone nearby.', request: 'Same code on both screens? Press Meet to link, hold to cancel.', waiting: 'Waiting for the other person to press Meet.',
+    declined: 'They didn’t press yet. The tap is saved as pending.', prompt: 'Linked. Take turns answering out loud. Press for a new prompt, hold when done.', returned: 'EventBuddy unpaired and wiped.'
   }[S.badge.screen];
-  return `<div class="bp-head"><b>EventBuddy</b><small>Simulated hardware · ESP32 + NFC + 240×240 screen · <a href="./tappy/" target="_blank" rel="noopener">open as separate app ↗</a></small><button class="icon-btn bp-close" data-a="badge-close">${ICON.close}</button></div>
+  return `<div class="bp-head"><b>EventBuddy</b><small>Simulated hardware · NFC + small screen + one Meet button · <a href="./tappy/" target="_blank" rel="noopener">open as separate app ↗</a></small><button class="icon-btn bp-close" data-a="badge-close">${ICON.close}</button></div>
     <div class="device ${hasBadge ? '' : 'dim'}">
       <div class="nfc">NFC</div>
       <div class="screen">${online ? '<div class="bs off"><small>Online events</small><b>No EventBuddy</b></div>' : badgeScreen()}</div>
-      <div class="hw-btns"><button class="hw a" data-a="hw" data-x="A" aria-label="Yes button">●</button><button class="hw b" data-a="hw" data-x="B" aria-label="No button">○</button></div>
-      <small class="dev-id">${BADGE_ID}</small>
+      <div class="hw-btns"><button class="hw a meet" data-meet aria-label="Meet button: press for yes, hold for no">MEET</button></div>
+      <small class="dev-id">${BADGE_ID} · press = yes · hold = no</small>
     </div>
     <p class="bp-hint">${online ? 'Online events use waves in the app instead.' : hint}</p>
-    ${idle && nearby ? `<div class="bp-demo"><small>DEMO · tap devices with someone nearby</small>${nearby.slice(0, 3).map((p) => `<button data-a="tap" data-x="${p.id}">${avatar(p.avatar, p.color, 28)}${p.short}${p.responds === 'later' ? ' <i>(will say not now)</i>' : ''}</button>`).join('')}</div>` : ''}`;
+    ${idle && nearby?.length ? `<div class="bp-demo"><small>DEMO · tap devices with someone nearby</small>${nearby.slice(0, 3).map((p) => `<button data-a="tap" data-x="${p.id}">${avatar(p.avatar, p.color, 28)}${p.short}${p.responds === 'later' ? ' <i>(won’t press yet)</i>' : ''}</button>`).join('')}</div>` : ''}`;
 }
 
 function setBadge(screen, extra = {}) { S.badge = { ...S.badge, ...extra, screen }; save(); render(); }
 let badgeTimer;
 function badgeLater(ms, fn) { clearTimeout(badgeTimer); badgeTimer = setTimeout(fn, ms); }
+const icebreaker = (not) => { const l = ICEBREAKERS.filter((q) => q !== not); return l[Math.floor(Math.random() * l.length)]; };
 
+// btn: 'A' = press (yes), 'B' = hold (no)
 function hw(btn) {
   const b = S.badge; const L = S.live;
+  navigator.vibrate?.(btn === 'B' ? 40 : 15);
   if (b.screen === 'pairing') {
     if (btn === 'A') { L.paired = true; L.pairing = false; setBadge('idle'); toast('EventBuddy paired ✓'); }
     else { L.pairing = false; setBadge('unpaired'); }
   } else if (b.screen === 'request') {
-    if (btn === 'A') {
-      setBadge('waiting');
-      const p = PEOPLE[b.partner];
-      badgeLater(1400, () => {
-        if (p.responds === 'later') { setBadge('declined'); badgeLater(2400, () => setBadge('idle', { partner: null })); }
-        else { const pr = makePrompt(p); setBadge('prompt', { prompt: pr.text, tag: pr.tag }); }
-      });
-    } else setBadge('idle', { partner: null });
+    if (btn === 'B') return setBadge('idle', { partner: null });
+    setBadge('waiting');
+    const p = PEOPLE[b.partner];
+    badgeLater(1400, () => {
+      if (p.responds === 'later') { addEncounter(p.id, L.eventId, '', 'tappy', true); setBadge('declined'); badgeLater(2400, () => setBadge('idle', { partner: null })); }
+      else { const q = icebreaker(); addEncounter(p.id, L.eventId, q, 'tappy'); setBadge('prompt', { prompt: q }); toast(`Linked with ${p.short} · saved quietly`); }
+    });
   } else if (b.screen === 'prompt') {
-    if (btn === 'A') {
-      addEncounter(b.partner, L.eventId, b.prompt, 'tappy');
-      setBadge('saved'); toast(`Accepted · ${PEOPLE[b.partner].short}`);
-      badgeLater(2200, () => setBadge('idle', { partner: null }));
-    } else setBadge('idle', { partner: null });
-  } else if (b.screen === 'idle' && btn === 'A') toast('Badge: showing your avatar');
+    if (btn === 'A') setBadge('prompt', { prompt: icebreaker(b.prompt) });
+    else setBadge('idle', { partner: null });
+  } else if (b.screen === 'idle') toast(btn === 'A' ? 'Hold devices together with someone to meet' : 'Nothing to cancel');
 }
 
-function addEncounter(person, eventId, prompt, via) {
+function addEncounter(person, eventId, prompt, via, waiting = false) {
   if (S.encounters.some((x) => x.person === person && x.eventId === eventId)) return;
-  S.encounters.push({ id: 'x' + Date.now(), person, eventId, prompt, via, at: Date.now() });
+  S.encounters.push({ id: 'x' + Date.now(), person, eventId, prompt, via, at: Date.now(), ...(waiting ? { waiting: true } : {}) });
   save();
 }
 
@@ -1268,8 +1387,6 @@ const A = {
   'bd-pick': (x) => { const [k, v] = x.split('|'); ui.regDraft[k] = v; render(); },
   'badge-save': (id) => { const d = ui.regDraft; S.regs[id].badge = { avatar: d.avatar, color: d.color, tag: d.tag }; S.lastBadge = S.regs[id].badge; save(); toast('EventBuddy updated'); history.back(); },
   logout: () => { S.onboarded = false; S.profile = null; save(); toast('Logged out'); go('home'); },
-  'home-ye': (x) => { ui.yeTab = x; render(); },
-  'ev-phase': (x) => { const [id, ph] = x.split('|'); (ui.phase ||= {})[id] = ph; render(); },
   'home-mode': (x) => { ui.homeMode = x; render(); },
   'filter-go': (x) => { ui.filter = x; go('events'); },
   filter: (x) => { ui.filter = x; render(); },
@@ -1300,15 +1417,52 @@ const A = {
   'reg-toggle': (x, el) => { ui.regDraft[x] = el.checked; },
   register: (id) => {
     const e = ev(id); const d = ui.regDraft || {};
-    S.regs[id] = { status: e.approval ? 'pending' : 'going', list: d.list !== false, wall: d.wall !== false };
-    if (e.badges) { S.regs[id].badge = { avatar: d.avatar, color: d.color, tag: d.tag }; S.lastBadge = S.regs[id].badge; }
-    save(); toast(e.approval ? 'Request sent' : 'You’re in ✓');
-    history.replaceState(null, '', '#/ticket/' + id); render();
+    const full = e.going >= e.capacity && e.waitlist;
+    S.regs[id] = { status: full ? 'waitlist' : e.approval ? 'pending' : 'going', pos: full ? e.waitPos || 3 : undefined, list: d.list !== false, wall: d.wall !== false };
+    save(); toast(full ? `You’re #${e.waitPos || 3} on the waitlist` : e.approval ? 'Request sent' : 'You’re in ✓');
+    history.replaceState(null, '', '#/' + (e.approval && !full ? 'ticket/' : 'event/') + id); render();
   },
   approve: (id) => { S.regs[id].status = 'going'; save(); toast('🎉 Approved — address unlocked'); render(); },
   decline: (id) => { S.regs[id].status = 'declined'; save(); render(); },
-  cancel: (id) => { if (confirm('Cancel? Your spot goes to the next person.')) { delete S.regs[id]; save(); toast('Cancelled'); go('event/' + id); } },
-  checkin: (id) => { S.regs[id].status = 'checkedin'; S.live = { eventId: id }; save(); earn(20, 'Checked in at an event'); render(); },
+  cancel: (id) => { if (confirm('Can’t make it? Your spot goes straight to the next person on the waitlist.')) { delete S.regs[id]; save(); toast('RSVP cancelled · spot released'); go('event/' + id); render(); } },
+  'confirm-att': (id) => { S.regs[id].confirmed = true; save(); toast('Attendance confirmed ✓'); render(); },
+  'wait-offer': (id) => { S.regs[id].status = 'offered'; save(); toast('A spot freed up for you'); render(); },
+  'wait-claim': (id) => { S.regs[id] = { ...S.regs[id], status: 'going', confirmed: true, pos: undefined }; save(); toast('Spot claimed ✓'); render(); },
+  yseg: (x) => { ui.yseg = x; render(); },
+  phase: (x) => { const [id, i] = x.split('|'); ui.phase = { ...(ui.phase || {}), [id]: +i }; render(); },
+  'phase-go': (x) => { const [id, i] = x.split('|'); ui.phase = { ...(ui.phase || {}), [id]: +i }; go('event/' + id); },
+  asub: (x) => { ui.asub = x; render(); },
+  'live-go': (x) => { const [id, t] = x.split('|'); ui.liveTab = t; go('live/' + id); },
+  'who-sheet': (x) => { const [id, mode] = x.split('|'); ui.sheet = { type: 'who', id, mode }; render(); },
+  'buddy-start': (id) => { ui.bd = null; ui.bdNext = 'buddyq/' + id; go('buddy'); },
+  'bq-pick': (x) => {
+    const [k, v, multi] = x.split('|'); const o = ['avatar', 'color', 'career', 'level', 'looking', 'vibe', 'hobbies'].includes(k) ? ui.bd : ui.bq;
+    if (multi === '1') o[k] = (o[k] || []).includes(v) ? o[k].filter((t) => t !== v) : [...(o[k] || []), v]; else o[k] = v;
+    const top = $('#app').scrollTop; render(); $('#app').scrollTop = top;
+  },
+  'bd-toggle': (x, el) => { ui.bd.showMbti = el.checked; },
+  'buddy-save': () => { S.buddy = { ...ui.bd, saved: true }; ui.bd = null; save(); toast('EventBuddy profile saved'); const n = ui.bdNext; ui.bdNext = null; if (n) { history.replaceState(null, '', '#/' + n); render(); } else if (/^#\/buddy(q|review)/.test(location.hash)) render(); else history.back(); },
+  'bq-save': (id) => { const q = ui.bq; if (!q.hoping.length || !q.open || !q.skill) { toast('Answer the three questions first'); return; } const { id: _, ...ans } = q; S.regs[id].q = ans; ui.bq = null; save(); history.replaceState(null, '', '#/buddyreview/' + id); render(); },
+  'memory-open': (id) => { ui.mem = { photo: false, text: '' }; ui.sheet = { type: 'memory', id }; render(); },
+  'memory-photo': () => { ui.mem.photo = !ui.mem.photo; render(); },
+  'memory-share': (id) => {
+    const d = ui.mem; if (!d.text.trim() && !d.photo) { toast('Add a photo or a line first'); return; }
+    S.memories = S.memories || {}; S.memories[id] = [{ by: 'me', text: d.text.trim() || 'A moment from the night', day: 1, seed: 7, photo: d.photo }, ...(S.memories[id] || [])];
+    ui.sheet = null; ui.mem = null; save(); earn(15, 'Shared an event memory');
+    render();
+  },
+  'tap-back': (xid) => { const x = S.encounters.find((y) => y.id === xid); if (x) { x.waiting = false; x.prompt = icebreaker(); save(); toast(`${PEOPLE[x.person].short} tapped back · moved to met`); render(); } },
+  'review-requests': () => { ui.cmode = 'Networks'; ui.nsub = 'Requests'; go('community'); },
+  'connect-open': (x) => { if (!S.profile) { go('onboarding'); return; } ui.reqText = ''; ui.sheet = { type: 'connect', id: x }; render(); },
+  'connect-send': (x) => { ui.sheet = null; ui.reqText = ''; A.follow(x); },
+  'msg-open': (x) => { if (!S.profile) { go('onboarding'); return; } ui.reqText = ''; ui.sheet = { type: 'msgreq', id: x }; render(); },
+  'msg-send': (x) => {
+    const t = (ui.reqText || '').trim(); if (!t) { toast('Write a first message'); return; }
+    S.msgReqs = { ...(S.msgReqs || {}), [x]: { state: 'pending', at: Date.now() } }; const c = chats(); c[x] = [...(c[x] || []), ['me', t]];
+    ui.sheet = null; ui.reqText = ''; save(); toast(`Message request sent to ${PEOPLE[x].short}`); go('chat/' + x);
+  },
+  'msg-accept': (x) => { S.msgReqs[x].state = 'accepted'; chats()[x].push([x, 'Hey! Happy to chat 🙂']); save(); toast(`${PEOPLE[x].short} accepted · chat unlocked`); render(); },
+  checkin: (id) => { S.regs[id].status = 'checkedin'; S.regs[id].confirmed = true; S.live = { eventId: id }; ui.phase = { ...(ui.phase || {}), [id]: 1 }; save(); earn(20, 'Checked in at an event'); render(); },
   'give-badge': (id) => { S.live = { eventId: id, badgeId: BADGE_ID }; S.badge = { screen: 'unpaired' }; save(); render(); },
   'no-badge': (id) => { S.live = { eventId: id, noBadge: true }; save(); go('live/' + id); },
   scan: () => startScan(),
@@ -1322,7 +1476,7 @@ const A = {
   theme: (x) => { localStorage.setItem(THEME_KEY, x); applyTheme(); render(); },
   'theme-cycle': () => { const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; localStorage.setItem(THEME_KEY, next); applyTheme(); render(); },
   'pair-confirm': () => { S.live.paired = true; S.live.pairing = false; setBadge('idle'); toast('EventBuddy paired ✓'); },
-  'demo-enc': (x) => { const pr = makePrompt(PEOPLE[x]); addEncounter(x, S.live.eventId, pr.text, 'tappy'); toast(`Accepted · ${PEOPLE[x].short}`); render(); },
+  'demo-enc': (x) => { addEncounter(x, S.live.eventId, icebreaker(), 'tappy'); toast(`Linked with ${PEOPLE[x].short} · saved quietly`); render(); },
   'pair-cancel': () => { S.live.pairing = false; setBadge('unpaired'); },
   'sheet-person': (x) => { ui.sheet = { type: 'person', id: x }; render(); },
   'sheet-close': () => { ui.sheet = null; render(); },
@@ -1339,9 +1493,14 @@ const A = {
     badgeLater(2600, () => setBadge('off'));
   },
   finish: (id) => {
-    S.regs[id].status = 'attended'; S.live = null; ui.waved = {}; save();
+    const online = S.live?.online;
+    S.regs[id].status = 'attended'; S.live = null; ui.waved = {};
+    // Taps sync after the event: people you linked with send you a request to accept or decline at home.
+    S.encounters.filter((x) => x.eventId === id && !x.waiting && !S.followers.includes(x.person)).forEach((x) => { S.followers = [...S.followers, x.person]; });
+    S.dismissed = (S.dismissed || []).filter((p) => !S.encounters.some((x) => x.eventId === id && x.person === p));
+    ui.phase = { ...(ui.phase || {}), [id]: 2 }; save();
     document.body.classList.remove('badge-open');
-    go('recap/' + id);
+    go((online ? 'recap/' : 'synced/') + id);
   },
   'lobby-toggle': (id, el) => { S.regs[id].list = el.checked; save(); },
   'join-online': (id) => { S.regs[id].status = 'going'; S.live = { eventId: id, online: true }; save(); toast('Attendance confirmed ✓'); go('room/' + id); },
@@ -1353,16 +1512,16 @@ const A = {
   },
   'incoming-wave': (x) => { ui.sheet = { type: 'incoming', id: x }; render(); },
   'accept-wave': (x) => { const pr = makePrompt(PEOPLE[x]); ui.sheet = { type: 'match', id: x, prompt: pr.text, tag: pr.tag }; render(); },
-  'save-enc': (x) => { addEncounter(x, S.live.eventId, ui.sheet.prompt, S.live.online ? 'wave' : 'hi'); ui.sheet = null; toast(`Accepted · ${PEOPLE[x].short}`); render(); },
+  'save-enc': (x) => { addEncounter(x, S.live.eventId, ui.sheet.prompt, S.live.online ? 'wave' : 'hi'); ui.sheet = null; toast(`Saved · ${PEOPLE[x].short}`); render(); },
   follow: (x) => {
     if (!S.profile) { go('onboarding'); return; }
     const p = PEOPLE[x]; const was = S.following.includes(x);
-    if (was) { if (isConn(x) && !confirm(`Remove ${p.short} as a connection? You’ll stop following them.`)) return; S.following = S.following.filter((y) => y !== x); save(); toast(`Unfollowed ${p.short}`); render(); return; }
+    if (was) { const wasConn = isConn(x); if (!confirm(wasConn ? `Remove ${p.short} as a connection?` : `Cancel your request to ${p.short}?`)) return; S.following = S.following.filter((y) => y !== x); save(); toast(wasConn ? `Removed ${p.short}` : 'Request cancelled'); render(); return; }
     S.following = [...S.following, x]; save();
     if (isConn(x)) { earn(5, `New connection · ${p.short}`, true); toast(`🤝 You and ${p.short} are now connected · +5 pts`); }
     else {
-      toast(`Following ${p.short}. You’ll connect if they follow back.`);
-      if (FOLLOWS_BACK.includes(x)) setTimeout(() => { if (!S.following.includes(x) || S.followers.includes(x)) return; S.followers = [...S.followers, x]; earn(5, `New connection · ${p.short}`, true); render(); toast(`🤝 ${p.short} followed you back — you’re connected · +5 pts`); }, 3000);
+      toast(`Request sent to ${p.short}. You’ll connect when they accept.`);
+      if (FOLLOWS_BACK.includes(x)) setTimeout(() => { if (!S.following.includes(x) || S.followers.includes(x)) return; S.followers = [...S.followers, x]; earn(5, `New connection · ${p.short}`, true); render(); toast(`🤝 ${p.short} accepted — you’re connected · +5 pts`); }, 3000);
     }
     render();
   },
@@ -1371,9 +1530,6 @@ const A = {
   'growth-help-close': () => { ui.growthHelp = false; render(); },
   circle: (x) => { ui.circle = x || null; render(); },
   cmode: (x) => { ui.cmode = x; render(); },
-  'intro-go': (x) => { ui.introStep = Math.max(0, +x); render(); },
-  'intro-done': () => { S.seenIntro = true; ui.introStep = 0; save(); go('home'); render(); },
-  'intro-open': () => { ui.introStep = 0; go('intro'); },
   'ce-new': () => { if (!S.profile) { go('onboarding'); return; } ui.ce = null; go('createEvent'); },
   'ce-cover': () => { ui.ce.cover++; render(); },
   'ce-toggle': (k, el) => { ui.ce[k] = el.checked; render(); },
@@ -1416,7 +1572,7 @@ const A = {
   },
   nsub: (x) => { ui.nsub = x; render(); },
   ctab: (x) => { ui.ctab = x; render(); },
-  dismiss: (x) => { S.dismissed = [...(S.dismissed || []), x]; save(); toast('Request removed'); render(); },
+  dismiss: (x) => { S.dismissed = [...(S.dismissed || []), x]; save(); toast('Declined quietly — they won’t be told'); render(); },
   comments: (x) => { ui.sheet = { type: 'comments', id: x }; render(); },
   'send-comment': (x) => {
     if (!S.profile) { ui.sheet = null; go('onboarding'); return; }
@@ -1459,17 +1615,17 @@ const A = {
     setTimeout(() => { const p = S.posts.find((y) => y.id === post.id); if (!p) return; p.comments++; earn(2, 'Sofia commented on your post'); render(); }, 7000);
   },
   helped: (x) => { S.helped = S.helped.includes(x) ? S.helped.filter((p) => p !== x) : [...S.helped, x]; save(); render(); },
-  reset: () => { if (confirm('Reset all demo data?')) { localStorage.removeItem(KEY); S = fresh(); Object.assign(ui, { sheet: null, ob: null, compose: null, waved: {}, pairInput: '' }); go('home'); render(); } }
+  reset: () => { if (confirm('Reset all demo data?')) { localStorage.removeItem(KEY); S = fresh(); Object.assign(ui, { sheet: null, ob: null, compose: null, waved: {}, pairInput: '', phase: {}, bd: null, bq: null, mem: null }); go('home'); render(); } }
 };
 
 /* =============================================================== RENDER */
-const NO_NAV = ['intro', 'createEvent', 'pod', 'podnew', 'welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'cv', 'mock', 'event', 'recap', 'circle', 'chat'];
+const NO_NAV = ['buddy', 'buddyq', 'buddyreview', 'pending', 'synced', 'createEvent', 'pod', 'podnew', 'welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'cv', 'mock', 'event', 'recap', 'circle', 'chat'];
 const TABS = [['home', 'Event', 'var(--t-event)'], ['community', 'Community', 'var(--t-comm)'], ['messages', 'Messages', 'var(--t-msg)'], ['me', 'Account', 'var(--t-acc)']];
 const scrollEnd = () => { const a = $('#app'); a.scrollTop = a.scrollHeight; };
 
 function route() {
   const [name = '', arg] = location.hash.replace(/^#\/?/, '').split('/');
-  if (!name || name === 'welcome') return [S.seenIntro ? 'home' : 'intro'];
+  if (!name || name === 'welcome') return ['home'];
   return [V[name] ? name : 'notfound', arg];
 }
 
@@ -1493,7 +1649,7 @@ function render() {
   const showNav = !NO_NAV.includes(name);
   $('#nav').hidden = !showNav;
   const un = unreadTotal();
-  $('#nav').innerHTML = TABS.map(([k, l, c]) => `<button class="${name === k || (k === 'home' && name === 'events') ? 'on' : ''}" data-a="nav" data-x="${k}" style="color:${c}" aria-label="${l}">${TAB_ICON[k]}<span>${l}</span>${k === 'messages' && un ? `<i class="cnt">${un}</i>` : ''}</button>`).join('');
+  $('#nav').innerHTML = TABS.map(([k, l]) => `<button class="${name === k || (k === 'home' && name === 'events') ? 'on' : ''}" data-a="nav" data-x="${k}" aria-label="${l}">${TAB_ICON[k]}<span>${l}</span>${k === 'messages' && un ? `<i class="cnt">${un}</i>` : ''}</button>`).join('');
   $('#badge').innerHTML = badgePanel();
   document.body.classList.toggle('has-badge', !!(S.live && S.live.badgeId));
 }
@@ -1501,7 +1657,7 @@ function render() {
 function tickBadge() {
   ui.frame++;
   const el = document.querySelector('.badge-av');
-  if (el && S.badge.screen === 'idle') { const l = badgeLook(S.live?.eventId); el.innerHTML = avatar(l.avatar, l.color, 118, ui.frame); }
+  if (el && S.badge.screen === 'idle') { const l = badgeLook(); el.innerHTML = avatar(l.avatar, l.color, 104, ui.frame); }
 }
 
 document.addEventListener('click', (e) => {
@@ -1521,6 +1677,7 @@ document.addEventListener('input', (e) => {
   if (m === 'q') { ui.q = v; $('#event-list').innerHTML = eventListHTML(); return; }
   if (m === 'pairInput') { ui.pairInput = v; return; }
   if (m === 'commentText') { ui.commentText = v; return; }
+  if (m === 'reqText') { ui.reqText = v; return; }
   if (m === 'msgText') { ui.msgText = v; return; }
   if (m === 'todoText') { ui.todoText = v; return; }
   if (m === 'cq' || m === 'nq') { ui[m] = v; const pos = e.target.selectionStart; const top = $('#app').scrollTop; render(); $('#app').scrollTop = top; const n = document.querySelector(`[data-model="${m}"]`); n.focus(); n.setSelectionRange(pos, pos); return; }
@@ -1528,13 +1685,17 @@ document.addEventListener('input', (e) => {
   ui[obj][key] = v;
   if (obj === 'ob') { const btn = $('[data-a="ob-next"]'); const o = ui.ob; if (btn && o.step === 0) btn.disabled = !(o.name.trim() && o.field && o.stage); }
 });
+// Meet button: a short press = yes, holding ~0.6 s = no.
+let meetTimer = null; let meetHeld = false;
+document.addEventListener('pointerdown', (e) => { if (!e.target.closest('[data-meet]')) return; meetHeld = false; e.target.closest('[data-meet]').classList.add('down'); meetTimer = setTimeout(() => { meetHeld = true; document.querySelector('[data-meet]')?.classList.add('held'); hw('B'); }, 600); });
+document.addEventListener('pointerup', (e) => { if (meetTimer === null) return; clearTimeout(meetTimer); meetTimer = null; document.querySelector('[data-meet]')?.classList.remove('down', 'held'); if (!meetHeld && e.target.closest('[data-meet]')) hw('A'); });
+document.addEventListener('pointercancel', () => { clearTimeout(meetTimer); meetTimer = null; });
 window.addEventListener('hashchange', render);
 setInterval(tickBadge, 650);
 
 // Deep-link helpers for design capture: ?demo=1 logs in the demo account, ?theme=light|dark forces a theme.
 {
   const q = new URLSearchParams(location.search);
-  if (q.get('intro')) { S.seenIntro = false; save(); }
   if (q.get('theme')) { localStorage.setItem(THEME_KEY, q.get('theme')); applyTheme(); }
   if (q.get('demo') && !S.onboarded) { S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; seedAccount(140); save(); }
 }

@@ -37,7 +37,7 @@ export const EVENTS = [
   {
     id: 'crit-circle', img: 'covers/crit-circle.jpg', mode: 'offline', title: 'Portfolio Crit Circle', circle: 'UTS Design Crowd',
     date: 'Thu 24 Sep', time: '18:00 – 20:00', when: 'Next Thursday', venue: 'UTS Building 2, Ultimo', distance: '0.4 km',
-    cost: 'Free', capacity: 30, going: 22, approval: false, badges: true, host: 'leo', cover: ['#FF9E7A', '#3A1E14'],
+    cost: 'Free', capacity: 30, going: 30, approval: false, waitlist: true, waitPos: 3, badges: true, host: 'leo', cover: ['#FF9E7A', '#3A1E14'],
     audience: 'Students and juniors who want honest feedback on one portfolio piece.',
     agenda: [['18:00', 'Check-in'], ['18:15', 'Crit rounds'], ['19:40', 'Wrap up']],
     attendees: ['sofia', 'priya', 'marcus'], tags: ['Portfolio', 'UX']
@@ -57,6 +57,63 @@ export const EVENTS = [
     agenda: [['18:00', 'Doors'], ['19:00', 'Hiring lightning round']], attendees: ['ahmed', 'david'], tags: ['Networking', 'Interviews']
   }
 ];
+
+// A past event the demo account attended, so the After view has content from the start.
+EVENTS.push({
+  id: 'portfolio-night', past: true, mode: 'offline', title: 'Portfolio Night: Career Swap', circle: 'UTS Design Crowd',
+  date: 'Sat 13 Sep', time: '18:30 – 20:30', when: 'Last Saturday', venue: 'Local Design Studio, Newtown', distance: '3.2 km',
+  cost: 'Free', capacity: 30, going: 24, approval: false, badges: true, host: 'sofia', cover: ['#7CE0C3', '#123A30'],
+  audience: 'A relaxed evening to trade portfolio feedback across disciplines. Bring one piece you’re stuck on.',
+  agenda: [['18:30', 'Check-in & EventBuddy pick-up'], ['19:00', 'Swap rounds'], ['20:15', 'EventBuddy return']],
+  attendees: ['leo', 'marcus', 'sofia', 'hannah', 'david', 'priya'], tags: ['Portfolio', 'UX']
+});
+
+/* EventBuddy profile (Week 9 revision): one core profile reused for every event,
+   plus a few questions the host sets per event. Personality/MBTI is optional and never shown on the device. */
+export const BUDDY = {
+  career: ['Design', 'Engineering', 'Product', 'Marketing', 'Student', 'Other'],
+  level: ['Beginner', 'Intermediate', 'Experienced'],
+  looking: ['Mentor', 'Collaborator', 'New job', 'Just meeting people'],
+  vibe: ['Small groups, deep conversations', 'Room-wide, high energy mingling'],
+  hobbies: ['Music', 'Hiking', 'Reading', 'Gaming', 'Travel', 'Cooking', 'Art', 'Movies', 'Sports', 'Photography'],
+  mbti: ['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP', 'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP']
+};
+export const EVENT_Q = {
+  hoping: ['Portfolio feedback', 'Career advice', 'Meeting other juniors', 'Job leads', 'Just chatting'],
+  open: ['Yes, all in', 'A little', 'Just here to chat'],
+  skill: ['New to it', 'Some experience', 'Advanced']
+};
+export const DEFAULT_AUTO_REPLY = 'Great meeting you today — let’s keep in touch 👋';
+// Career-focused icebreakers shown on both devices after a link. Picked fresh each time, not from personality answers.
+export const ICEBREAKERS = [
+  'What’s one thing you’d tell your first-year self about this career?',
+  'What’s one skill you’re trying to build this year?',
+  'What’s the best piece of feedback you’ve ever had on your work?',
+  'What did you almost do instead of this career?',
+  'What’s a small win from your last month?'
+];
+// What each person's auto-reply says when they accept a connection request.
+export const AUTO_REPLY = {
+  marcus: 'Loved swapping career-change stories — let’s grab a coffee sometime',
+  david: 'Great meeting you! Happy to look at your portfolio flow',
+  priya: 'Nice to meet you — send me that side project link!',
+  sofia: 'So good chatting! Bring a case study to crit circle',
+  leo: 'Hey! Keep me posted on your internship applications',
+  hannah: 'Great meeting you today, let’s keep in touch',
+  ahmed: 'Good chat — ping me when grad applications open',
+  maya: 'Thanks for coming! See you at the next one'
+};
+// Shared after the event (Event Circle memories). Open for 7 days, then archived.
+export const MEMORY_SEED = {
+  'portfolio-night': [
+    { by: 'sofia', text: 'Loved the portfolio review roundtable — such useful feedback!', day: 1, seed: 3 },
+    { by: 'leo', text: 'Made a genuine connection over career-change stories and design sketches.', day: 1, seed: 5 },
+    { by: 'marcus', text: 'Notes from the swap round: lead with the problem, not the tool.', day: 2, seed: 1 }
+  ]
+};
+export const EVENT_CHAT_SEED = {
+  'portfolio-night': [['sofia', 'Anyone have the slides from the roundtable?'], ['leo', 'Uploading them to the circle tonight!']]
+};
 
 // Demo social graph for the logged-in account: mutual follows = Connections.
 export const SEED_GRAPH = { following: ['priya', 'sofia', 'leo', 'hannah', 'maya'], followers: ['priya', 'sofia', 'leo', 'hannah', 'maya', 'marcus', 'ahmed'] };
