@@ -1,7 +1,7 @@
 {
-  "name": "EventBuddy · JobBuddy",
-  "short_name": "EventBuddy",
-  "description": "EventBuddy — the JobBuddy event device (simulated hardware).",
+  "name": "Tappy · JobBuddy",
+  "short_name": "Tappy",
+  "description": "Tappy — the JobBuddy event device (simulated hardware).",
   "id": "./",
   "start_url": "./",
   "scope": "./",

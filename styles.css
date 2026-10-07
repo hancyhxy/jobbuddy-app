@@ -849,3 +849,15 @@ i.pill { height: 30px; }
 .nc-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 22px; }
 .nc-head h3 { margin: 0; }
 .nc-conn { display: block; margin-top: 10px; padding: 0; color: #d6f36b; font-weight: 600; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
+/* Phone demo uses two phones (JobBuddy + Tappy app), so hide the floating simulated device on mobile. Laptop keeps the side-by-side panel. */
+@media (max-width: 860px) { body.has-badge .badge-fab, .badge-panel { display: none !important; } }
+/* Status chips: one colour per state */
+.chip.st-registered { background: #dff3d0 !important; color: #2c5a12 !important; }  /* Registered: green */
+.chip.st-confirmed  { background: #dbe8ff !important; color: #1d4fa8 !important; }  /* Confirmed: blue */
+.chip.st-confirm    { background: #fff1c2 !important; color: #7a5a00 !important; }  /* Confirm attendance: amber, action needed */
+.chip.st-pending    { background: #ece2ff !important; color: #5b2ea6 !important; }  /* Pending approval: purple */
+.chip.st-waitlist   { background: #ffe4cc !important; color: #9a4a00 !important; }  /* Waitlist: orange */
+.chip.st-offered    { background: #d4f4ee !important; color: #0f6b5c !important; }  /* Spot offered: teal */
+.chip.st-declined   { background: #ececec !important; color: #8a8a8a !important; text-decoration: line-through; }
+.chip.st-past       { background: #eeeeee !important; color: #555 !important; }     /* Attended / past: grey */
+.chip.st-hosting    { background: #111 !important; color: #fff !important; }        /* Hosting: black */

@@ -23,7 +23,7 @@ export const EVENTS = [
     date: 'Fri 18 Sep', time: '11:30 – 13:30', when: 'Now', venue: 'Single O, Surry Hills', distance: '1.2 km',
     cost: 'Free', capacity: 25, going: 18, approval: false, badges: true, host: 'sofia', cover: ['#7CE0C3', '#123A30'],
     audience: 'Junior and student designers meeting over coffee. Bring one question about your first design job.',
-    agenda: [['11:30', 'Arrive & collect EventBuddy devices'], ['11:45', 'Intro round'], ['12:15', 'Coffee & tap to talk'], ['13:15', 'Wrap up & EventBuddy return']],
+    agenda: [['11:30', 'Arrive & collect Tappy devices'], ['11:45', 'Intro round'], ['12:15', 'Coffee & tap to talk'], ['13:15', 'Wrap up & Tappy return']],
     attendees: ['leo', 'sofia', 'hannah', 'marcus', 'priya'], tags: ['UX', 'Portfolio', 'Networking']
   },
   {
@@ -31,7 +31,7 @@ export const EVENTS = [
     date: 'Sat 19 Sep', time: '17:30 – 20:30', when: 'This Saturday', venue: 'Harbour Commons, Surry Hills', distance: '2.1 km',
     cost: 'Free', capacity: 60, going: 47, approval: true, badges: true, host: 'maya', cover: ['#D7FF3A', '#1E3A2F'],
     audience: 'Builders, designers and career changers curious about AI agents. No experience needed.',
-    agenda: [['17:30', 'Check-in & collect EventBuddy devices'], ['18:00', 'Lightning talks · 3 × 7 min'], ['18:30', 'Build & chat — open floor'], ['20:15', 'Demos & EventBuddy return']],
+    agenda: [['17:30', 'Check-in & collect Tappy devices'], ['18:00', 'Lightning talks · 3 × 7 min'], ['18:30', 'Build & chat — open floor'], ['20:15', 'Demos & Tappy return']],
     attendees: ['marcus', 'david', 'priya', 'sofia', 'ahmed', 'hannah', 'leo'], tags: ['AI tools', 'Startups']
   },
   {
@@ -72,7 +72,7 @@ EVENTS.push({
   date: 'Sat 13 Sep', time: '18:30 – 20:30', when: 'Last Saturday', venue: 'Local Design Studio, Newtown', distance: '3.2 km',
   cost: 'Free', capacity: 30, going: 24, approval: false, badges: true, host: 'sofia', cover: ['#7CE0C3', '#123A30'],
   audience: 'A relaxed evening to trade portfolio feedback across disciplines. Bring one piece you’re stuck on.',
-  agenda: [['18:30', 'Check-in & EventBuddy pick-up'], ['19:00', 'Swap rounds'], ['20:15', 'EventBuddy return']],
+  agenda: [['18:30', 'Check-in & Tappy pick-up'], ['19:00', 'Swap rounds'], ['20:15', 'Tappy return']],
   attendees: ['leo', 'marcus', 'sofia', 'hannah', 'david', 'priya'], tags: ['Portfolio', 'UX']
 });
 
@@ -98,7 +98,7 @@ EVENTS.push({
   agenda: [['18:00', 'Panel'], ['19:00', 'Mingle']], attendees: ['ahmed', 'david', 'marcus'], tags: ['Interviews', 'Networking']
 });
 
-/* EventBuddy profile (Week 9 revision): one core profile reused for every event,
+/* Tappy profile (Week 9 revision): one core profile reused for every event,
    plus a few questions the host sets per event. Personality/MBTI is optional and never shown on the device. */
 export const BUDDY = {
   career: ['Design', 'Engineering', 'Product', 'Marketing', 'Student', 'Other'],

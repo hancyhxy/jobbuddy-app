@@ -1,4 +1,4 @@
-// JobBuddy EventBuddy — standalone simulated hardware app.
+// JobBuddy Tappy — standalone simulated hardware app.
 // Shares localStorage with the phone app (same origin), so two windows in one browser stay in sync.
 // On a separate device it runs on its own; the operator menu (⋯) stands in for signals from the phone/staff.
 import { PEOPLE, ICEBREAKERS, AVATAR_CHOICES, AVATAR_COLORS } from '../js/data.js';
@@ -30,7 +30,7 @@ function owner() {
   const o = S.badge.owner;
   if (o && PEOPLE[o]) return PEOPLE[o];
   if (o !== 'demo' && S.profile) {
-    const b = S.buddy || {}; // one EventBuddy profile reused for every event
+    const b = S.buddy || {}; // one Tappy profile reused for every event
     return { ...S.profile, short: S.profile.name.split(' ')[0], avatar: b.avatar || S.profile.avatar, color: b.color || S.profile.color, line: b.career ? `${b.career} · ${b.level}` : S.profile.field };
   }
   return DEMO_OWNER;
@@ -59,15 +59,15 @@ function screen() {
 function sheetHTML() {
   if (!sheet) return '';
   let inner = '';
-  if (sheet === 'nfc') inner = `<b>Touch EventBuddy devices with…</b><small>Simulates holding this EventBuddy against another attendee’s badge.</small>
+  if (sheet === 'nfc') inner = `<b>Touch Tappy devices with…</b><small>Simulates holding this Tappy against another attendee’s badge.</small>
     ${PARTNERS.map((id) => { const p = PEOPLE[id]; return `<button class="opt" data-a="tap" data-x="${id}">${avatar(p.avatar, p.color, 32)}<span>${p.name}${p.responds === 'later' ? '<i>won’t press yet → saved as pending</i>' : ''}</span></button>`; }).join('')}`;
   if (sheet === 'op') {
     const hasProfile = !!S.profile;
     inner = `<b>Operator</b><small>Stands in for the phone and staff while the devices aren’t linked.</small>
-      <button class="opt" data-a="assign">1 · Staff assigns EventBuddy ${BADGE_ID}</button>
+      <button class="opt" data-a="assign">1 · Staff assigns Tappy ${BADGE_ID}</button>
       <button class="opt" data-a="pair-req">2 · Phone sends pair request</button>
       <button class="opt" data-a="return">3 · Staff confirms return (wipe)</button>
-      <button class="opt" data-a="reset">Reset EventBuddy</button>
+      <button class="opt" data-a="reset">Reset Tappy</button>
       <button class="opt" data-a="to-script">▶ Presentation mode (scripted)</button>
       <small class="lbl">SHOWN ON BADGE</small>
       <div class="owners">${[hasProfile ? ['me', S.profile.name.split(' ')[0]] : null, ['demo', 'Emma (demo)'], ...['leo', 'marcus', 'sofia'].map((id) => [id, PEOPLE[id].short])].filter(Boolean)
@@ -77,8 +77,8 @@ function sheetHTML() {
 }
 
 const HINT = {
-  off: 'Not assigned. Open ⋯ → Staff assigns EventBuddy.', unpaired: 'Scan this QR from the phone to pair.', pairing: 'Press Meet if the code matches the phone. Hold to cancel.',
-  idle: 'Tap the NFC strip to hold devices together with someone.', request: 'Same code on both? Press to link · hold to cancel', waiting: 'Waiting for the other EventBuddy…',
+  off: 'Not assigned. Open ⋯ → Staff assigns Tappy.', unpaired: 'Scan this QR from the phone to pair.', pairing: 'Press Meet if the code matches the phone. Hold to cancel.',
+  idle: 'Tap the NFC strip to hold devices together with someone.', request: 'Same code on both? Press to link · hold to cancel', waiting: 'Waiting for the other Tappy…',
   declined: 'They didn’t press yet. Saved as pending.', prompt: 'Take turns answering. Press for a new prompt · hold when done', returned: 'Unpaired and wiped.'
 };
 const MEET = `<div class="hw-row"><button class="hw a meet" data-meet aria-label="Meet: press = yes, hold = no">MEET</button></div><small class="meet-legend">PRESS = YES · HOLD = NO</small>`;
@@ -170,15 +170,15 @@ const PROMPT_TEXT = () => ICEBREAKERS[promptIdx % ICEBREAKERS.length];
 
 const STEPS = [
   { title: 'Ready at the desk', screen: () => `<div class="bs off"><small>JobBuddy</small><b>${BADGE_ID}</b><small>Ready for the next attendee</small></div>`,
-    note: 'On the phone: event → During → “Check in at the event” → DEMO Staff scans your pass → DEMO Staff hands you EventBuddy EB-07.' },
+    note: 'On the phone: event → During → “Check in at the event” → DEMO Staff scans your pass → DEMO Staff hands you Tappy EB-07.' },
   { title: 'Scan to pair', screen: () => `<div class="bs qr-screen">${qrSVG(BADGE_ID)}<small>SCAN WITH JOBBUDDY · ${BADGE_ID}</small></div>`,
-    note: 'On the phone: check the EventBuddy profile review → “Scan device”, then point the camera at this QR.' },
+    note: 'On the phone: check the Tappy profile review → “Scan device”, then point the camera at this QR.' },
   { title: 'Confirm the code', a: 'next', screen: () => `<div class="bs"><small>PAIR WITH</small><b>${esc(look.name)}?</b><div class="bcode">${PAIR_CODE}</div><small>Press = yes · Hold = no</small></div>`,
-    note: 'Phone shows 4812 too. Press Meet here, then tap “EventBuddy shows ✓ — continue” on the phone.' },
-  { title: 'Paired', screen: () => `<div class="bs"><b class="huge">✓</b><b>Hi ${esc(look.name)}</b><small>EventBuddy is yours tonight</small></div>`,
+    note: 'Phone shows 4812 too. Press Meet here, then tap “Tappy shows ✓ — continue” on the phone.' },
+  { title: 'Paired', screen: () => `<div class="bs"><b class="huge">✓</b><b>Hi ${esc(look.name)}</b><small>Tappy is yours tonight</small></div>`,
     note: 'On the phone: “Back to event”. The phone goes in the pocket — the device does the work.' },
   { title: 'Idle · tap to meet', nfc: true, screen: () => `<div class="bs idle"><div class="badge-av">${avatar(look.avatar, look.color, 104, frame)}</div><b>${esc(look.name)}</b><small>${esc(look.tag)}</small><small class="dim">TAP TO MEET</small></div>`,
-    note: 'Walk up to someone. Hold two EventBuddy devices together: tap the NFC strip (or Next).' },
+    note: 'Walk up to someone. Hold two Tappy devices together: tap the NFC strip (or Next).' },
   { title: 'Link code', a: 'next', b: 'decline', screen: () => `<div class="bs"><small>LINK WITH ${MARCUS.short.toUpperCase()}?</small><div class="bcode">${linkCode(MARCUS.id)}</div><small>Same code on both screens?</small><small>Press to link · Hold to cancel</small></div>`,
     note: 'Both screens show the same code. Press Meet to link (hold = cancel, nothing is shared).' },
   { title: 'Waiting', auto: 1600, screen: () => `<div class="bs">${avatar(MARCUS.avatar, MARCUS.color, 64)}<small>Waiting for</small><b>${MARCUS.short}…</b></div>`,
@@ -186,9 +186,9 @@ const STEPS = [
   { title: 'Linked · icebreaker', a: 'prompt', b: 'skip', screen: () => `<div class="bs prompt"><small>✓ LINKED · YOU &amp; ${MARCUS.short.toUpperCase()}</small><small class="dim">ICEBREAKER</small><p>${esc(PROMPT_TEXT())}</p><small>● Saved to your event memories</small></div>`,
     note: 'Take turns answering out loud. Press Meet for a new prompt, hold when done. No “accept” here — that happens later at home.' },
   { title: 'Return', screen: () => `<div class="bs"><small>LEAVING?</small><b>Return me<br>at the desk</b><small>Your taps are<br>already in the app</small></div>`,
-    note: 'On the phone: “Leaving? Return EventBuddy” → DEMO Staff confirms return → Taps synced → Review in Network.' },
+    note: 'On the phone: “Leaving? Return Tappy” → DEMO Staff confirms return → Taps synced → Review in Network.' },
   { title: 'Wiped', screen: () => `<div class="bs off"><b>Thanks!</b><small>Data cleared.<br>Ready for the next person.</small></div>`,
-    note: 'EventBuddy is unpaired and wiped. On the phone, accept or decline Marcus in Network → Requests. Next restarts the demo.' }
+    note: 'Tappy is unpaired and wiped. On the phone, accept or decline Marcus in Network → Requests. Next restarts the demo.' }
 ];
 
 function setStep(i) {
@@ -210,12 +210,12 @@ function scriptHW(btn) {
 }
 
 function scriptSheet() {
-  return `<b>Presentation mode</b><small>Scripted EventBuddy for two-phone demos. No connection to the other phone is needed.</small>
+  return `<b>Presentation mode</b><small>Scripted Tappy for two-phone demos. No connection to the other phone is needed.</small>
     <button class="opt" data-a="s-restart">↺ Restart from step 1</button>
     <button class="opt" data-a="s-notes">${notes ? 'Hide' : 'Show'} presenter notes</button>
     <small class="lbl">NAME ON TAPPY</small>
     <input class="field" data-look="name" value="${esc(look.name)}" maxlength="14">
-    <small class="lbl">AVATAR (match your EventBuddy profile)</small>
+    <small class="lbl">AVATAR (match your Tappy profile)</small>
     <div class="look-grid">${AVATAR_CHOICES.map((k) => `<button class="${look.avatar === k ? 'on' : ''}" data-a="s-look" data-x="avatar|${k}">${avatar(k, look.color, 44)}</button>`).join('')}</div>
     <div class="owners">${AVATAR_COLORS.map((c) => `<button class="sw ${look.color === c ? 'on' : ''}" style="background:${c}" data-a="s-look" data-x="color|${c}"></button>`).join('')}</div>
     <small class="lbl">CAREER LINE</small>
