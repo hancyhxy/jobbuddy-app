@@ -76,6 +76,28 @@ EVENTS.push({
   attendees: ['leo', 'marcus', 'sofia', 'hannah', 'david', 'priya'], tags: ['Portfolio', 'UX']
 });
 
+// More past events so the Past row on Home scrolls sideways.
+EVENTS.push({
+  id: 'ux-breakfast', past: true, mode: 'offline', title: 'UX Breakfast Club', circle: 'UTS Design Crowd',
+  date: 'Wed 10 Sep', time: '08:00 – 09:30', when: 'Last week', venue: 'Paramount Coffee, Surry Hills', distance: '1.5 km',
+  cost: 'Free', capacity: 20, going: 16, approval: false, badges: true, host: 'leo', cover: ['#FFD166', '#3A2E10'],
+  audience: 'Early-bird designers swapping one UX win and one struggle over breakfast.',
+  agenda: [['08:00', 'Coffee & intros'], ['08:30', 'Win / struggle round'], ['09:15', 'Wrap up']],
+  attendees: ['leo', 'sofia', 'hannah'], tags: ['UX', 'Networking']
+}, {
+  id: 'ai-tools-jam', past: true, mode: 'online', title: 'AI Tools Jam for Designers', circle: 'Harbour Builders',
+  date: 'Thu 4 Sep', time: '18:00 – 19:00 AEST', when: '2 weeks ago', platform: 'Zoom (link in app)',
+  cost: 'Free', capacity: 150, going: 96, approval: false, badges: false, host: 'maya', cover: ['#E7A6FF', '#2A1838'],
+  audience: 'Show-and-tell of AI tools in real design workflows.',
+  agenda: [['18:00', 'Demos'], ['18:40', 'Q&A']], attendees: ['maya', 'priya', 'david'], tags: ['AI tools', 'UX']
+}, {
+  id: 'grad-panel', past: true, mode: 'offline', title: 'Grad Hiring Panel', circle: 'Sydney Tech',
+  date: 'Tue 26 Aug', time: '18:00 – 20:00', when: '3 weeks ago', venue: 'UTS Building 11, Ultimo', distance: '0.5 km',
+  cost: 'Free', capacity: 80, going: 72, approval: false, badges: true, host: 'ahmed', cover: ['#8FB8FF', '#14223A'],
+  audience: 'Hiring managers explain what they look for in grad applications.',
+  agenda: [['18:00', 'Panel'], ['19:00', 'Mingle']], attendees: ['ahmed', 'david', 'marcus'], tags: ['Interviews', 'Networking']
+});
+
 /* EventBuddy profile (Week 9 revision): one core profile reused for every event,
    plus a few questions the host sets per event. Personality/MBTI is optional and never shown on the device. */
 export const BUDDY = {

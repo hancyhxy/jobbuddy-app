@@ -808,6 +808,10 @@ function seedAccount(points) {
   S.regs['portfolio-night'] = { status: 'attended', list: true, confirmed: true };
   // Mock one offline event per time state so Before / During / After can be shown without walking the flow.
   S.regs['crit-circle'] = { status: 'going', list: true, wall: true, confirmed: true };
+  S.regs['switch-ux'] = { status: 'going', list: true };
+  S.regs['data-ama'] = { status: 'going', list: true };
+  S.regs['mixer'] = { status: 'going', list: true, wall: true, confirmed: true };
+  ['ux-breakfast', 'ai-tools-jam', 'grad-panel'].forEach((id) => { S.regs[id] = { status: 'attended', list: true, confirmed: true }; });
   S.regs['coffee-meetup'] = { status: 'checkedin', list: true, wall: true, confirmed: true };
   S.live = { eventId: 'coffee-meetup', badgeId: BADGE_ID, paired: true }; S.badge = { screen: 'idle' };
   S.encounters = [['leo', 'What’s one skill you’re trying to build this year?'], ['sofia', 'What’s the best piece of feedback you’ve ever had on your work?'], ['marcus', 'What did you almost do instead of this career?']]
