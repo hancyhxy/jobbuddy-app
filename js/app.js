@@ -219,7 +219,6 @@ V.home = () => {
     <section class="pad">
       ${p ? `<div class="pills" style="gap:6px">${p.interests.map((t) => `<i class="tag">${esc(t)}</i>`).join('')}</div>` : ''}
       <div style="height:22px"></div>
-      ${liveE ? `<button class="live-card flush" data-a="nav" data-x="${liveE.mode === 'online' ? 'room' : 'live'}/${liveE.id}"><span class="dot"></span><div><small>HAPPENING NOW</small><b>${esc(liveE.title)}</b></div>${ICON.chev}</button>` : ''}
       <button class="h2link" data-a="nav" data-x="me"><h2>Your events</h2>${ICON.chev}</button>
       ${p ? `<div class="seg3" style="margin-bottom:12px">${[['upcoming', `Upcoming · ${mine.length}`], ['past', `Past · ${pastMine.length}`]].map(([k, l]) => `<button class="${yseg === k ? 'on' : ''}" data-a="yseg" data-x="${k}">${l}</button>`).join('')}</div>` : ''}
       ${yseg === 'past' && p ? (pastMine.length ? `<div class="hscroll">${pastMine.map(yeCard).join('')}</div>` : '<div class="empty">Events you attend show up here with the people you met.</div>')

@@ -1,5 +1,5 @@
 // Network-first so edits show immediately; cache keeps the demo working offline.
-const CACHE = 'jobbuddy-v36';
+const CACHE = 'jobbuddy-v37';
 const SHELL = ['./', 'index.html', 'styles.css', 'manifest.webmanifest', 'js/app.js', 'js/data.js', 'js/avatar.js', 'js/icons.js', 'js/sprites.js', 'icons/icon.svg', 'tappy/', 'tappy/index.html', 'tappy/tappy.js', 'tappy/tappy.css', 'tappy/manifest.webmanifest', 'icons/tappy.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
