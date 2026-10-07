@@ -915,3 +915,5 @@ i.pill { height: 30px; }
 .dir-grid button.on { background: #d7ff3a; border-color: #111; }
 .director { max-height: 100vh; overflow-y: auto; padding: 16px 0; scrollbar-width: none; }
 .dir-foot button { font-size: 13px; }
+/* Desktop has the Demo director, so DEMO shortcuts that the director or Tappy MEET already cover are hidden there (host approval / waves stay). Two-phone (mobile) demos keep them. */
+@media (min-width: 861px) { .phone .demo:is([data-a=checkin], [data-a=give-badge], [data-a=pair-confirm], [data-a=demo-enc], [data-a=return-badge]) { display: none !important; } }

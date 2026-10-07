@@ -1364,7 +1364,7 @@ function badgeScreen() {
     case 'unpaired': return `<div class="bs"><small>EVENTBUDDY</small><b class="huge">${BADGE_ID}</b><small>Scan this device<br>with JobBuddy to pair</small></div>`;
     case 'pairing': return `<div class="bs"><small>PAIR WITH</small><b>${esc(p.short)}?</b><div class="bcode">${PAIR_CODE}</div><small>${PRESS}</small></div>`;
     case 'idle': { const l = badgeLook(); return `<div class="bs idle"><div class="badge-av">${avatar(l.avatar, l.color, 104, ui.frame)}</div><b>${esc(p.short)}</b><small>${esc(l.tag)}</small><small class="dim">TAP TO MEET · hold devices together</small></div>`; }
-    case 'request': return `<div class="bs"><small>LINK WITH ${partner.short.toUpperCase()}?</small><div class="bcode">${linkCode(partner.id)}</div><small>Same code on both screens?</small><small>Press to link · Hold to cancel</small></div>`;
+    case 'request': return `<div class="bs">${avatar(partner.avatar, partner.color, 64)}<small>MEET</small><b>${partner.short}?</b><small>Press to meet · Hold to cancel</small></div>`;
     case 'waiting': return `<div class="bs">${avatar(partner.avatar, partner.color, 64)}<small>Waiting for</small><b>${partner.short}…</b></div>`;
     case 'declined': return `<div class="bs"><b>Saved as pending</b><small>${partner ? partner.short + ' can tap back later.' : ''}<br>Nothing else was shared.</small></div>`;
     case 'prompt': return `<div class="bs prompt"><small>✓ LINKED · YOU &amp; ${partner.short.toUpperCase()}</small><small class="dim">ICEBREAKER</small><p>${esc(b.prompt)}</p><small>● Saved to your event memories</small><small class="dim">Press for a new prompt · Hold when done</small></div>`;
@@ -1381,7 +1381,7 @@ function badgePanel() {
   const idle = S.badge.screen === 'idle';
   const hint = {
     off: 'No Tappy assigned. Collect one at check-in.', unpaired: 'Assigned but not paired. Scan its QR from the phone.', pairing: 'Press Meet if the code matches the phone. Hold to cancel.',
-    idle: 'Showing your avatar and career line. Hold devices together with someone nearby.', request: 'Same code on both screens? Press Meet to link, hold to cancel.', waiting: 'Waiting for the other person to press Meet.',
+    idle: 'Showing your avatar and career line. Hold devices together with someone nearby.', request: 'Shows who you just tapped. Press Meet to say yes, hold to cancel.', waiting: 'Waiting for the other person to press Meet.',
     declined: 'They didn’t press yet. The tap is saved as pending.', prompt: 'Linked. Take turns answering out loud. Press for a new prompt, hold when done.', returned: 'Tappy unpaired and wiped.'
   }[S.badge.screen];
   return `<div class="bp-head"><b>Tappy</b><small>Simulated hardware · NFC + small screen + one Meet button · <a href="./tappy/" target="_blank" rel="noopener">open as separate app ↗</a></small><button class="icon-btn bp-close" data-a="badge-close">${ICON.close}</button></div>
@@ -1730,7 +1730,7 @@ const SCENES = [
   ['Collect Tappy', 'Staff hands over TP-07'],
   ['Pair · code', 'Same code on phone and Tappy'],
   ['Paired', 'Phone: connected · Tappy: avatar'],
-  ['Tap Marcus', 'Tappy asks to link'],
+  ['Tap Marcus', 'Tappy: Meet Marcus?'],
   ['Linked · icebreaker', 'Shared prompt · saved'],
   ['Leaving', 'Return Tappy at the desk'],
   ['Returned · synced', 'Tappy wiped · taps synced'],
@@ -1780,7 +1780,7 @@ function directorPanel() {
     <ol class="dir-list">${SCENES.map(([t, d], i) => `<li><button class="${i === cur ? 'on' : ''}" data-a="scene" data-x="${i}"><i>${i + 1}</i><span><b>${t}</b><small>${d}</small></span></button></li>`).join('')}</ol>
     <div class="dir-foot"><button data-a="scene" data-x="${Math.max(0, cur - 1)}">◀ Prev</button><button class="pri" data-a="scene" data-x="${Math.min(SCENES.length - 1, cur + 1)}">Next ▶</button></div>
     <div class="dir-sec"><b>Tappy only</b><small>Changes the device screen, the phone stays where it is.</small></div>
-    <div class="dir-grid">${TAPPY_DEV.map(([k, l]) => `<button class="${S.badge.screen === k.split(':')[0] ? 'on' : ''}" data-a="tappy-dev" data-x="${k}">${l}</button>`).join('')}</div>
+    <div class="dir-grid">${TAPPY_DEV.map(([k, l]) => `<button class="${(([sc, w]) => S.badge.screen === sc && (!w || S.badge.partner === w))(k.split(':')) ? 'on' : ''}" data-a="tappy-dev" data-x="${k}">${l}</button>`).join('')}</div>
     <div class="dir-foot"><button data-a="hw" data-x="A">● Press MEET</button><button data-a="hw" data-x="B">Hold MEET</button></div>
     <button class="dir-reset" data-a="dir-reset">Reset demo data</button>
     <p class="dir-note">Event: Portfolio Crit Circle · person met: Marcus. You can still click inside the phone and press MEET normally.</p>`;

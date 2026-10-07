@@ -47,7 +47,7 @@ function screen() {
     case 'unpaired': return `<div class="bs qr-screen">${qrSVG(BADGE_ID)}<small>SCAN WITH JOBBUDDY · ${BADGE_ID}</small></div>`;
     case 'pairing': return `<div class="bs"><small>PAIR WITH</small><b>${esc(o.short)}?</b><div class="bcode">${PAIR_CODE}</div><small>Press = yes · Hold = no</small></div>`;
     case 'idle': return `<div class="bs idle"><div class="badge-av">${avatar(o.avatar, o.color, 104, frame)}</div><b>${esc(o.short)}</b><small>${esc(o.line)}</small><small class="dim">TAP TO MEET</small></div>`;
-    case 'request': return `<div class="bs"><small>LINK WITH ${p.short.toUpperCase()}?</small><div class="bcode">${linkCode(p.id)}</div><small>Same code on both screens?</small><small>Press to link · Hold to cancel</small></div>`;
+    case 'request': return `<div class="bs">${avatar(p.avatar, p.color, 64)}<small>MEET</small><b>${p.short}?</b><small>Press to meet · Hold to cancel</small></div>`;
     case 'waiting': return `<div class="bs">${avatar(p.avatar, p.color, 64)}<small>Waiting for</small><b>${p.short}…</b></div>`;
     case 'declined': return `<div class="bs"><b>Saved as pending</b><small>${p ? p.short + ' can tap back later.' : ''}<br>Nothing else was shared.</small></div>`;
     case 'prompt': return `<div class="bs prompt"><small>✓ LINKED · YOU &amp; ${p.short.toUpperCase()}</small><small class="dim">ICEBREAKER</small><p>${esc(b.prompt)}</p><small>● Saved to your event memories</small></div>`;
@@ -179,8 +179,8 @@ const STEPS = [
     note: 'On the phone: “Back to event”. The phone goes in the pocket — the device does the work.' },
   { title: 'Idle · tap to meet', nfc: true, screen: () => `<div class="bs idle"><div class="badge-av">${avatar(look.avatar, look.color, 104, frame)}</div><b>${esc(look.name)}</b><small>${esc(look.tag)}</small><small class="dim">TAP TO MEET</small></div>`,
     note: 'Walk up to someone. Hold two Tappy devices together: tap the NFC strip (or Next).' },
-  { title: 'Link code', a: 'next', b: 'decline', screen: () => `<div class="bs"><small>LINK WITH ${MARCUS.short.toUpperCase()}?</small><div class="bcode">${linkCode(MARCUS.id)}</div><small>Same code on both screens?</small><small>Press to link · Hold to cancel</small></div>`,
-    note: 'Both screens show the same code. Press Meet to link (hold = cancel, nothing is shared).' },
+  { title: 'Meet Marcus?', a: 'next', b: 'decline', screen: () => `<div class="bs">${avatar(MARCUS.avatar, MARCUS.color, 64)}<small>MEET</small><b>${MARCUS.short}?</b><small>Press to meet · Hold to cancel</small></div>`,
+    note: 'Tappy shows who you just tapped. Press Meet to say yes (hold = cancel, nothing is shared).' },
   { title: 'Waiting', auto: 1600, screen: () => `<div class="bs">${avatar(MARCUS.avatar, MARCUS.color, 64)}<small>Waiting for</small><b>${MARCUS.short}…</b></div>`,
     note: 'Both people have to press. If they don’t, the tap is saved as pending on the phone.' },
   { title: 'Linked · icebreaker', a: 'prompt', b: 'skip', screen: () => `<div class="bs prompt"><small>✓ LINKED · YOU &amp; ${MARCUS.short.toUpperCase()}</small><small class="dim">ICEBREAKER</small><p>${esc(PROMPT_TEXT())}</p><small>● Saved to your event memories</small></div>`,
