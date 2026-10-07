@@ -19,21 +19,6 @@ export const PEOPLE = {
 
 export const EVENTS = [
   {
-    id: 'crit-circle', img: 'covers/crit-circle.jpg', mode: 'offline', title: 'Portfolio Crit Circle', circle: 'UTS Design Crowd',
-    date: 'Thu 17 Sep', time: '18:00 – 20:00', when: 'Last Thursday', phase: 'after', venue: 'UTS Building 2, Ultimo', distance: '0.4 km',
-    cost: 'Free', capacity: 30, going: 22, approval: false, badges: true, host: 'leo', cover: ['#FF9E7A', '#3A1E14'],
-    audience: 'Students and juniors who want honest feedback on one portfolio piece.',
-    agenda: [['18:00', 'Check-in'], ['18:15', 'Crit rounds'], ['19:40', 'Wrap up']],
-    attendees: ['sofia', 'priya', 'marcus'], tags: ['Portfolio', 'UX']
-  },
-  {
-    id: 'data-ama', img: 'covers/data-ama.jpg', mode: 'online', title: 'Data Careers AMA', circle: 'Data Folks',
-    date: 'Fri 18 Sep', time: '12:30 – 13:15 AEST', when: 'Now', phase: 'during', platform: 'Zoom (link in app)',
-    cost: 'Free', capacity: 300, going: 88, approval: false, badges: false, host: 'marcus', cover: ['#8FB8FF', '#14223A'],
-    audience: 'Grads and switchers asking what data jobs are really like.',
-    agenda: [['12:30', 'Panel'], ['12:55', 'Questions']], attendees: ['marcus', 'priya'], tags: ['Data viz', 'Interviews']
-  },
-  {
     id: 'build-night', img: 'covers/build-night.jpg', mode: 'offline', title: 'Build Night: AI Agents in Practice', circle: 'Harbour Builders',
     date: 'Sat 19 Sep', time: '17:30 – 20:30', when: 'This Saturday', venue: 'Harbour Commons, Surry Hills', distance: '2.1 km',
     cost: 'Free', capacity: 60, going: 47, approval: true, badges: true, host: 'maya', cover: ['#D7FF3A', '#1E3A2F'],
@@ -48,6 +33,21 @@ export const EVENTS = [
     audience: 'Anyone moving into UX from another field. Cameras optional.',
     agenda: [['18:00', 'Three switch stories'], ['18:35', 'Wave & 5-min chats'], ['18:55', 'Open Q&A']],
     attendees: ['marcus', 'david', 'hannah', 'ahmed'], tags: ['UX', 'Career change'], recording: true
+  },
+  {
+    id: 'crit-circle', img: 'covers/crit-circle.jpg', mode: 'offline', title: 'Portfolio Crit Circle', circle: 'UTS Design Crowd',
+    date: 'Thu 24 Sep', time: '18:00 – 20:00', when: 'Next Thursday', venue: 'UTS Building 2, Ultimo', distance: '0.4 km',
+    cost: 'Free', capacity: 30, going: 22, approval: false, badges: true, host: 'leo', cover: ['#FF9E7A', '#3A1E14'],
+    audience: 'Students and juniors who want honest feedback on one portfolio piece.',
+    agenda: [['18:00', 'Check-in'], ['18:15', 'Crit rounds'], ['19:40', 'Wrap up']],
+    attendees: ['sofia', 'priya', 'marcus'], tags: ['Portfolio', 'UX']
+  },
+  {
+    id: 'data-ama', img: 'covers/data-ama.jpg', mode: 'online', title: 'Data Careers AMA', circle: 'Data Folks',
+    date: 'Tue 29 Sep', time: '12:30 – 13:15 AEST', when: 'In 2 weeks', platform: 'Zoom (link in app)',
+    cost: 'Free', capacity: 300, going: 88, approval: false, badges: false, host: 'marcus', cover: ['#8FB8FF', '#14223A'],
+    audience: 'Grads and switchers asking what data jobs are really like.',
+    agenda: [['12:30', 'Panel'], ['12:55', 'Questions']], attendees: ['marcus', 'priya'], tags: ['Data viz', 'Interviews']
   },
   {
     id: 'mixer', img: 'covers/mixer.jpg', mode: 'offline', title: 'Sydney Tech Mixer', circle: 'Sydney Tech',
