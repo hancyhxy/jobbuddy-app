@@ -1563,6 +1563,7 @@ const A = {
     setTimeout(() => { const pr = makePrompt(PEOPLE[x]); ui.sheet = { type: 'match', id: x, prompt: pr.text, tag: pr.tag }; render(); }, 1600);
   },
   scene: (x) => scene(+x),
+  'dir-toggle': () => toggleDirector(),
   'tappy-dev': (x) => tappyDev(x),
   'dir-reset': () => { if (confirm('Reset all demo data?')) { localStorage.removeItem(KEY); S = fresh(); ui.scene = undefined; S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; seedAccount(140); save(); go('home'); render(); } },
   tap: (x) => setBadge('request', { partner: x }),
@@ -1774,9 +1775,14 @@ function tappyDev(x) {
   const extra = screen === 'request' ? { partner: who } : screen === 'prompt' ? { partner: S.badge.partner || DIR_PEER, prompt: icebreaker() } : { partner: null };
   setBadge(screen, extra);
 }
+const DIR_KEY = 'jobbuddy-director-open';
+function toggleDirector(open = !document.body.classList.contains('dir-open')) {
+  document.body.classList.toggle('dir-open', open); localStorage.setItem(DIR_KEY, open ? '1' : '0');
+}
+toggleDirector(localStorage.getItem(DIR_KEY) !== '0');
 function directorPanel() {
   const cur = ui.scene ?? -1;
-  return `<div class="dir-head"><b>Demo director</b><small>One click sets the phone and Tappy together.<br>← / → step scenes · Space = press MEET · H = hold</small></div>
+  return `<div class="dir-head"><b>Demo director</b><small>One click sets the phone and Tappy together.<br>← / → scenes · Space = MEET · H = hold · D = hide</small></div>
     <ol class="dir-list">${SCENES.map(([t, d], i) => `<li><button class="${i === cur ? 'on' : ''}" data-a="scene" data-x="${i}"><i>${i + 1}</i><span><b>${t}</b><small>${d}</small></span></button></li>`).join('')}</ol>
     <div class="dir-foot"><button data-a="scene" data-x="${Math.max(0, cur - 1)}">◀ Prev</button><button class="pri" data-a="scene" data-x="${Math.min(SCENES.length - 1, cur + 1)}">Next ▶</button></div>
     <div class="dir-sec"><b>Tappy only</b><small>Changes the device screen, the phone stays where it is.</small></div>
@@ -1820,6 +1826,7 @@ document.addEventListener('keydown', (e) => {
   if (!e.target.closest?.('input, textarea') && matchMedia('(min-width: 861px)').matches && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
     const cur = ui.scene ?? -1; scene(Math.max(0, Math.min(SCENES.length - 1, cur + (e.key === 'ArrowRight' ? 1 : -1)))); return;
   }
+  if (!e.target.closest?.('input, textarea') && matchMedia('(min-width: 861px)').matches && (e.key === 'd' || e.key === 'D')) { toggleDirector(); return; }
   // Keyboard MEET for the simulated Tappy: Space = press (yes), H = hold (no).
   if (!e.target.closest?.('input, textarea') && matchMedia('(min-width: 861px)').matches && S.live?.badgeId && (e.key === ' ' || e.key === 'h' || e.key === 'H')) {
     e.preventDefault(); const btn = document.querySelector('[data-meet]'); btn?.classList.add('pressed'); setTimeout(() => btn?.classList.remove('pressed'), 180);
