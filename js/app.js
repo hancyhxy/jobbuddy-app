@@ -626,19 +626,43 @@ V.checkin = (id) => {
     </section>`;
 };
 
+
+/* "How it works" after pairing: three animated slides (tap → press Meet → talk). Swipe, tap the dots, or let it auto-play. */
+function howCarousel() {
+  const me_ = me(); const l = badgeLook(); const mk = PEOPLE.marcus;
+  const mini = (cls, inner) => `<div class="hw-dev ${cls}"><div class="hw-scr">${inner}</div><i class="hw-btn">MEET</i></div>`;
+  const face = (p, n) => `<div class="hw-face">${avatar(p.avatar, p.color, 34)}<b>${esc(n)}</b></div>`;
+  const slides = [
+    ['1', 'Tap', 'Hold your Tappy against someone else’s.', `<div class="how-art tap">${mini('l', face(l, me_.short))}<span class="hw-wave"></span>${mini('r', face(mk, mk.short))}</div>`],
+    ['2', 'Both press MEET', 'Press = yes. Hold = not now. Nothing happens unless you both press.', `<div class="how-art press">${mini('c', `<div class="hw-face">${avatar(mk.avatar, mk.color, 30)}<small>MEET</small><b>${mk.short}?</b></div>`)}<span class="hw-finger"></span></div>`],
+    ['3', 'Talk, then decide later', 'You get an icebreaker. The tap is saved quietly — connect at home if you want.', `<div class="how-art talk">${mini('c', `<div class="hw-ice"><small>✓ LINKED</small><p>${esc(ICEBREAKERS[1])}</p></div>`)}<span class="hw-bubble a">💬</span><span class="hw-bubble b">💬</span></div>`]
+  ];
+  return `<div class="how-car"><div class="how-track">${slides.map(([n, t, d, art]) => `<section class="how-slide">${art}<small class="how-step">STEP ${n} OF 3</small><h3>${t}</h3><p class="muted">${d}</p></section>`).join('')}</div>
+    <div class="how-dots">${slides.map((_, i) => `<button data-a="how-go" data-x="${i}" aria-label="Step ${i + 1}" class="${i ? '' : 'on'}"></button>`).join('')}</div></div>`;
+}
+let howTimer;
+function startHowCarousel() {
+  clearInterval(howTimer);
+  const t = document.querySelector('.how-track'); if (!t) return;
+  const dots = [...document.querySelectorAll('.how-dots button')];
+  const idx = () => Math.round(t.scrollLeft / t.clientWidth);
+  t.onscroll = () => dots.forEach((d, i) => d.classList.toggle('on', i === idx()));
+  t.onpointerdown = () => clearInterval(howTimer);   // user takes over: stop auto-play
+  howTimer = setInterval(() => { if (!document.body.contains(t)) return clearInterval(howTimer); t.scrollTo({ left: ((idx() + 1) % dots.length) * t.clientWidth, behavior: 'smooth' }); }, 3600);
+}
+
 V.pair = (id) => {
   const L = S.live;
   if (!L || L.eventId !== id || !L.badgeId) return V.checkin(id);
-  if (L.paired) return `<header class="bar"><span></span><b>Paired</b><span></span></header>
+  if (L.paired) { setTimeout(startHowCarousel, 0); return `<header class="bar"><span></span><b>Paired</b><span></span></header>
     <section class="pad center">
       <div class="big-check">${ICON.check}</div>
       <h2>You’re connected!</h2>
       <p class="muted">Your Tappy wearable (${BADGE_ID}) is paired and live for ${esc(ev(id).title)}.</p>
-      <div class="card-soft" style="text-align:left;margin-top:16px"><h3 style="margin:0 0 8px">How it works</h3><p class="muted small" style="font-size:14px">Tap your device with another attendee’s and both press Meet. You get a career question to talk about, and the tap is saved quietly. You decide later, at home, whether to connect.</p></div>
-      <div class="rules"><div><b>Tap</b><small>hold devices together</small></div><div><b>Press = yes</b><small>hold = no</small></div><div><b>Linked</b><small>icebreaker + saved quietly</small></div></div>
+      ${howCarousel()}
       <p class="note">${ICON.lock} Linking never adds a connection. You accept or decline later, at home.</p>
     </section>
-    <footer class="sticky"><button class="btn primary" data-a="phase-go" data-x="${id}|1">Back to event</button></footer>`;
+    <footer class="sticky"><button class="btn primary" data-a="phase-go" data-x="${id}|1">Back to event</button></footer>`; }
   if (L.pairing) return `<header class="bar"><span></span><b>Link your Tappy</b><span></span></header>
     <section class="pad center">
       <div class="big-check" style="background:var(--s1);color:var(--tx)">${ICON.badge}</div>
@@ -1571,6 +1595,7 @@ const A = {
     setTimeout(() => { const pr = makePrompt(PEOPLE[x]); ui.sheet = { type: 'match', id: x, prompt: pr.text, tag: pr.tag }; render(); }, 1600);
   },
   scene: (x) => scene(+x),
+  'how-go': (x) => { clearInterval(howTimer); const t = document.querySelector('.how-track'); t?.scrollTo({ left: +x * t.clientWidth, behavior: 'smooth' }); },
   'dir-toggle': () => toggleDirector(),
   'tappy-dev': (x) => tappyDev(x),
   'dir-reset': () => { if (confirm('Reset all demo data?')) { localStorage.removeItem(KEY); S = fresh(); ui.scene = undefined; S.profile = { ...DEFAULT_PROFILE }; S.onboarded = true; seedAccount(140); save(); go('home'); render(); } },
