@@ -39,5 +39,3 @@ body.badge-app { background: #000; overflow: hidden; touch-action: manipulation;
 .look-grid .av { width: 100% !important; height: auto !important; aspect-ratio: 1; }
 .owners .sw { width: 28px; height: 28px; border-radius: 50%; } .owners .sw.on { box-shadow: 0 0 0 2px #000, 0 0 0 4px #fff; }
 .badge-app .sheet .field { padding: 10px 12px; font-size: 15px; background: #222; border-color: #333; }
-.hw-row .hw.meet { width: calc(150px * var(--k)); border-radius: calc(32px * var(--k)); font-size: calc(15px * var(--k)); }
-.meet-legend { color: #666; font: 700 10px ui-monospace, Menlo, monospace; letter-spacing: .18em; }
