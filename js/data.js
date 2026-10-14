@@ -167,14 +167,22 @@ export const FOLLOWS_BACK = ['david']; // people who follow back a few seconds a
 
 // Public = anyone on JobBuddy. Circle = members of that event circle only (private).
 export const SEED_POSTS = [
-  { id: 'p1', author: 'david', circle: 'Harbour Builders', aud: 'circle', type: 'Offer help', text: 'Happy to do 20-min PM mock interviews for anyone who came to last week’s build night. Reply here and I’ll share slots.', helpful: 14, comments: 6, ago: '2h' },
-  { id: 'p2', author: 'marcus', circle: 'Switchers Circle', aud: 'public', type: 'Takeaway', text: 'Biggest lesson from switching: my teaching portfolio WAS a data portfolio. Reframed 3 lesson plans as dashboards and got two callbacks.', helpful: 31, comments: 12, ago: '5h' },
-  { id: 'p3', author: 'priya', circle: 'Harbour Builders', aud: 'circle', type: 'Resource', text: 'The agent-eval checklist from my talk is pinned in the circle. Built for people who have never shipped an agent.', helpful: 22, comments: 4, ago: '1d' },
-  { id: 'p4', author: 'sofia', circle: 'UTS Design Crowd', aud: 'public', type: 'Question', text: 'Juniors: what would make a portfolio crit feel less scary? Designing Thursday’s format now.', helpful: 6, comments: 18, ago: '1d' },
-  { id: 'p5', author: 'hannah', circle: 'Sydney Tech', aud: 'public', type: 'Going together', text: 'Going to the Sydney Tech Mixer alone on Friday — anyone want to walk in together? I’ll be at the door at 6.', helpful: 3, comments: 9, ago: '3h' },
-  { id: 'p6', author: 'ahmed', circle: 'Sydney Tech', aud: 'public', type: 'Referral', text: 'My team is hiring 2 grad engineers (Feb start). Happy to refer people I’ve actually talked to — say hi at the mixer first.', helpful: 41, comments: 23, ago: '6h' },
-  { id: 'p7', author: 'leo', circle: 'UTS Design Crowd', aud: 'circle', type: 'Win', text: 'Got my first design internship!! The crit circle feedback on my case study is literally what the interviewer asked about. Thank you all 🙏', helpful: 27, comments: 15, ago: '8h' },
-  { id: 'p8', author: 'maya', circle: 'Harbour Builders', aud: 'circle', type: 'Question', text: 'Next build night theme vote: (a) voice agents (b) agents for spreadsheets (c) evals deep-dive. Reply with a letter.', helpful: 9, comments: 31, ago: '2d' }
+  { id: 'p1', topic: 'product', author: 'david', circle: 'Harbour Builders', aud: 'circle', type: 'Offer help', text: 'Happy to do 20-min PM mock interviews for anyone who came to last week’s build night. Reply here and I’ll share slots.', helpful: 14, comments: 6, ago: '2h' },
+  { id: 'p2', topic: 'career-switch', author: 'marcus', circle: 'Switchers Circle', aud: 'public', type: 'Takeaway', text: 'Biggest lesson from switching: my teaching portfolio WAS a data portfolio. Reframed 3 lesson plans as dashboards and got two callbacks.', helpful: 31, comments: 12, ago: '5h' },
+  { id: 'p3', topic: 'data-ai', author: 'priya', circle: 'Harbour Builders', aud: 'circle', type: 'Resource', text: 'The agent-eval checklist from my talk is pinned in the circle. Built for people who have never shipped an agent.', helpful: 22, comments: 4, ago: '1d' },
+  { id: 'p4', topic: 'design', author: 'sofia', circle: 'UTS Design Crowd', aud: 'public', type: 'Question', text: 'Juniors: what would make a portfolio crit feel less scary? Designing Thursday’s format now.', helpful: 6, comments: 18, ago: '1d' },
+  { id: 'p5', topic: 'meetups', author: 'hannah', circle: 'Sydney Tech', aud: 'public', type: 'Going together', text: 'Going to the Sydney Tech Mixer alone on Friday — anyone want to walk in together? I’ll be at the door at 6.', helpful: 3, comments: 9, ago: '3h' },
+  { id: 'p6', topic: 'engineering', author: 'ahmed', circle: 'Sydney Tech', aud: 'public', type: 'Referral', text: 'My team is hiring 2 grad engineers (Feb start). Happy to refer people I’ve actually talked to — say hi at the mixer first.', helpful: 41, comments: 23, ago: '6h' },
+  { id: 'p7', topic: 'design', author: 'leo', circle: 'UTS Design Crowd', aud: 'circle', type: 'Win', text: 'Got my first design internship!! The crit circle feedback on my case study is literally what the interviewer asked about. Thank you all 🙏', helpful: 27, comments: 15, ago: '8h' },
+  { id: 'p8', topic: 'data-ai', author: 'maya', circle: 'Harbour Builders', aud: 'circle', type: 'Question', text: 'Next build night theme vote: (a) voice agents (b) agents for spreadsheets (c) evals deep-dive. Reply with a letter.', helpful: 9, comments: 31, ago: '2d' },
+  { id: 'p9', topic: 'design', author: 'leo', circle: 'Public', aud: 'public', type: 'Resource', text: 'Made a one-page case study template after my internship interviews: problem, 3 decisions, what changed. Free to copy.', helpful: 19, comments: 7, ago: '4h' },
+  { id: 'p10', topic: 'data-ai', author: 'priya', circle: 'Public', aud: 'public', type: 'Takeaway', text: 'Shipped my first agent at work. The model was the easy part — writing 10 real test cases first saved me a week of guessing.', helpful: 25, comments: 9, ago: '7h' },
+  { id: 'p11', topic: 'data-ai', author: 'marcus', circle: 'Public', aud: 'public', type: 'Question', text: 'SQL take-home tasks: how long do you actually spend? Mine said “2 hours” and took me 6.', helpful: 11, comments: 16, ago: '1d' },
+  { id: 'p12', topic: 'product', author: 'david', circle: 'Public', aud: 'public', type: 'Offer help', text: 'Send me your PM case study draft — I’ll mark up three this weekend and share the patterns back here.', helpful: 33, comments: 21, ago: '3h' },
+  { id: 'p13', topic: 'product', author: 'maya', circle: 'Public', aud: 'public', type: 'Question', text: 'Juniors in product: what do you wish someone had told you before your first roadmap meeting?', helpful: 8, comments: 13, ago: '2d' },
+  { id: 'p14', topic: 'career-switch', author: 'hannah', circle: 'Public', aud: 'public', type: 'Question', text: 'Marketing → product switchers: bootcamp, or just ship side projects? Trying to decide before Feb.', helpful: 12, comments: 19, ago: '9h' },
+  { id: 'p15', topic: 'engineering', author: 'ahmed', circle: 'Public', aud: 'public', type: 'Takeaway', text: 'Read 200 grad CVs this month. The ones I called all linked to something running, not just a repo.', helpful: 38, comments: 14, ago: '1d' },
+  { id: 'p16', topic: 'meetups', author: 'sofia', circle: 'Public', aud: 'public', type: 'Going together', text: 'First time at Portfolio Crit Circle? Grab a coffee with me at 5:30 before it starts — I’ll show you how it runs.', helpful: 5, comments: 6, ago: '5h' }
 ];
 
 export const SEED_COMMENTS = {
@@ -214,6 +222,15 @@ export const PRACTITIONERS = [
   { id: 'david', role: 'Product manager interviews', slots: ['Tue 18:30', 'Thu 12:00', 'Sat 10:00'] },
   { id: 'ahmed', role: 'Graduate engineering interviews', slots: ['Wed 19:00', 'Fri 08:00'] },
   { id: 'sofia', role: 'UX research & design interviews', slots: ['Mon 17:30', 'Thu 18:00'] }
+];
+// Community topics: posts are browsed by subject first, then opened one by one.
+export const TOPICS = [
+  { id: 'design', name: 'Design', blurb: 'Portfolios, crits and first design jobs' },
+  { id: 'engineering', name: 'Engineering', blurb: 'Grad roles, CVs and side projects' },
+  { id: 'data-ai', name: 'Data & AI', blurb: 'Analytics, ML and AI tools' },
+  { id: 'product', name: 'Product', blurb: 'PM cases, interviews and roadmaps' },
+  { id: 'career-switch', name: 'Career switch', blurb: 'Moving into tech from another field' },
+  { id: 'meetups', name: 'Meetups', blurb: 'Find someone to go with, share takeaways' }
 ];
 export const POST_TYPES = ['Question', 'Takeaway', 'Resource', 'Offer help', 'Referral', 'Going together', 'Win'];
 

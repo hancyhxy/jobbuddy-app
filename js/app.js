@@ -1,10 +1,10 @@
-import { FIELDS, STAGES, INTERESTS, AVATAR_CHOICES, AVATAR_COLORS, PEOPLE, EVENTS, SEED_POSTS, SEED_COMMENTS, SEED_GRAPH, FOLLOWS_BACK, POINT_RULES, LEVELS, REDEEM, PRACTITIONERS, POST_TYPES, LEVEL_PERKS, RULE_ICONS, PROMPTS, BUDDY, EVENT_Q, ICEBREAKERS, AUTO_REPLY, DEFAULT_AUTO_REPLY, MEMORY_SEED, EVENT_CHAT_SEED } from './data.js';
+import { FIELDS, STAGES, INTERESTS, AVATAR_CHOICES, AVATAR_COLORS, PEOPLE, EVENTS, SEED_POSTS, SEED_COMMENTS, SEED_GRAPH, FOLLOWS_BACK, POINT_RULES, LEVELS, REDEEM, PRACTITIONERS, POST_TYPES, TOPICS, LEVEL_PERKS, RULE_ICONS, PROMPTS, BUDDY, EVENT_Q, ICEBREAKERS, AUTO_REPLY, DEFAULT_AUTO_REPLY, MEMORY_SEED, EVENT_CHAT_SEED } from './data.js';
 import { avatar } from './avatar.js';
 import { ICON } from './icons.js';
 
 /* ------------------------------------------------------------------ state */
 const KEY = 'jobbuddy-proto-v1';
-const BADGE_ID = 'TP-07';
+let BADGE_ID = 'TP-07';   // Live mode (local server) sets this per person
 const PAIR_CODE = '4812';
 
 const fresh = () => ({
@@ -172,6 +172,7 @@ function stCls(e, r) {
 }
 function rowChip(e, r) {
   if (r.status === 'checkedin') return '<i class="chip chip-live"><span class="dot"></span>Live now</i>';
+  if (window.__liveNow === e.id && r.status === 'going') return '<i class="chip chip-live"><span class="dot"></span>Happening now \u00b7 Check in</i>';
   if (r.status === 'attended') { const n = S.encounters.filter((x) => x.eventId === e.id && !x.waiting).length; return `<i class="chip st-past">${n ? `${n} connection${n === 1 ? '' : 's'}` : 'You went'}</i>`; }
   if (r.status === 'going' && e.mode === 'offline' && !r.confirmed) return '<i class="chip st-confirm">Confirm attendance</i>';
   return `<i class="chip ${stCls(e, r)}">${statusLabel(e, r)}</i>`;
@@ -204,7 +205,7 @@ V.home = () => {
   const liveE = S.live && ev(S.live.eventId);
   const mine = EVENTS.filter((e) => !e.past && (isHost(e) || ['pending', 'going', 'checkedin', 'waitlist', 'offered'].includes(reg(e.id)?.status)));
   // Live event first, then confirmed in-person events, then the rest.
-  const rank = (e) => { const r = reg(e.id); return r?.status === 'checkedin' ? 0 : e.mode === 'offline' && r?.confirmed ? 1 : 2; };
+  const rank = (e) => { const r = reg(e.id); return r?.status === 'checkedin' || e.id === window.__liveNow ? 0 : e.mode === 'offline' && r?.confirmed ? 1 : 2; };
   mine.sort((a, b) => rank(a) - rank(b));
   const pastMine = EVENTS.filter((e) => reg(e.id)?.status === 'attended');
   const yseg = ui.yseg === 'past' ? 'past' : 'upcoming';
@@ -320,7 +321,7 @@ function eventPhase(e, r) {
     <section class="pad">
       <button class="host" data-a="nav" data-x="person/${hostOf(e).id}">${av(hostOf(e), 32)}<span><small>Hosted by</small><b>${esc(hostOf(e).name)}</b></span></button>
       <h1 class="title sm">${esc(e.title)}</h1>
-      <p class="muted small">${e.date} · ${e.time}${now === 1 ? ' · <b style="color:var(--green2)">Live now</b>' : ''}<br>${esc(e.venue)}</p>
+      <p class="muted small">${e.date} · ${e.time}${now === 1 || window.__liveNow === e.id ? ' · <b style="color:var(--green2)">Live now</b>' : ''}<br>${esc(e.venue)}</p>
       ${steps}`;
   let body = ''; let foot = '';
   if (ph === 0) {
@@ -354,6 +355,23 @@ function eventPhase(e, r) {
         <div class="stats">${[['saved', met, 'met so far'], ['pending', pend, 'pending'], ['here', room, 'in the room']].map(([k, n, l]) => `<button data-a="${k === 'pending' ? 'nav' : 'live-go'}" data-x="${k === 'pending' ? 'pending/' + id : id + '|' + k}"><b>${n}</b><small>${l}</small></button>`).join('')}</div>
         <p class="muted small">Synced 2 min ago</p>`;
       foot = `<button class="btn primary" data-a="live-go" data-x="${id}|saved">See who I’ve met</button><button class="link" style="margin:4px auto 0" data-a="exit-tap" data-x="${id}">Leaving? ${L.noBadge ? 'Wrap up' : 'Tap Tappy at the exit'}</button>`;
+      if (window.__liveNow === id) {
+        // Live demo: pairing is the main action; who you met is a row, not the main button.
+        // After a card is chosen, the footer shows the card in use + Switch; how-to sits in the page with a diagram.
+        const c = liveCards()[S.cardSel || 0]; const sym = TAPPY_BTN[L.badgeId] || '\u2605';
+        const guide = L.paired || L.pairing ? liveGuide(L.badgeId, c, sym, L.paired) : '';
+        const devL = L.card ? `<button class="eb-card" data-a="nav" data-x="livecard/${id}"><span>${ICON.badge}</span><div><b>${L.badgeId} found</b><small>Choose the card it shows</small></div>${ICON.chev}</button>`
+          : L.paired || L.pairing ? guide
+          : `<div class="eb-card"><span class="ok">${ICON.check}</span><div><b>You\u2019re checked in</b><small>Tap Pair and scan the QR on your Tappy</small></div></div>`;
+        body = body.replace(dev, devL).replace('<p class="muted small">Synced 2 min ago</p>', `<button class="linkrow" data-a="live-go" data-x="${id}|saved">See who I\u2019ve met \u00b7 ${met} \u203a</button>`);
+        const bar = `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:18px;background:#111;color:#fff">${avatar(c.avatar, c.color, 46)}
+          <div style="flex:1;min-width:0"><small style="display:block;color:#D7FF3A;font-size:10px;font-weight:700;letter-spacing:.06em">${L.paired ? `SHOWING ON ${L.badgeId}` : `CONFIRM WITH ${sym} ON ${L.badgeId}`}</small><b style="display:block">${esc(c.name)}</b><small style="color:#bbb">${esc(me().short)} \u00b7 ${esc(cardTag(c))}</small></div>
+          <button class="btn small" data-a="nav" data-x="livecard/${id}" style="background:#fff;color:#111">Switch</button></div>`;
+        foot = L.paired ? `${bar}<button class="link" style="margin:6px auto 0" data-a="exit-tap" data-x="${id}">Leaving? Tap Tappy at the exit</button>`
+          : L.pairing ? bar
+          : L.card ? `<button class="btn primary" data-a="nav" data-x="livecard/${id}">Choose your card</button>`
+          : `<button class="btn primary" data-a="live-scan">Pair your Tappy</button><button class="link" style="margin:4px auto 0" data-a="no-badge" data-x="${id}">Continue without a Tappy</button>`;
+      }
     }
   } else {
     if (now < 2) body = `<div class="phase-card"><small>AFTER THE EVENT</small><b>Connections first, memories second</b><p>After you leave, the people you tapped show up here and in Network → Requests. Memories stay open for 7 days.</p></div>`;
@@ -409,7 +427,7 @@ const chipRow = (list, val, key, multi) => `<div class="pills">${list.map((v) =>
 
 V.buddy = () => {
   if (!S.profile) return V.me();
-  const p = me(); const b = ui.bd || (ui.bd = { avatar: p.avatar, color: p.color, career: 'Design', level: 'Beginner', looking: 'Mentor', vibe: BUDDY.vibe[0], mbti: '', showMbti: false, hobbies: [], ...(S.buddy || {}) });
+  const p = me(); const b = ui.bd || (ui.bd = { avatar: p.avatar, color: p.color, career: BUDDY.career.includes(p.field) ? p.field : (['Data', 'Software'].includes(p.field) ? 'Engineering' : 'Other'), level: 'Beginner', looking: 'Mentor', vibe: BUDDY.vibe[0], mbti: '', showMbti: false, hobbies: [], ...(S.buddy || {}) });
   return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>Tappy Profile</b><span></span></header>
     <section class="pad">
       <p class="muted center small" style="margin-top:-6px">Reused for every event — edit anytime</p>
@@ -896,7 +914,7 @@ V.post = (id) => {
     <section class="pad post-detail">
       <div class="pd-author">${p.anon ? '<span class="ph anon" style="width:44px;height:44px">?</span>' : `<button class="plain" data-a="nav" data-x="${own ? 'me' : 'person/' + p.author}">${av(a, 44)}</button>`}
         <div><b>${esc(a.name)}</b><small>${p.anon ? '' : esc(a.headline || '') + ' · '}${p.ago}</small></div>${rel}</div>
-      <div class="pd-tags"><i class="chip">${p.type}</i><i class="chip">${p.aud === 'circle' ? ICON.lock : ''}${esc(p.circle)}</i></div>
+      <div class="pd-tags"><i class="chip">${p.type}</i>${p.aud === 'circle' ? `<i class="chip">${ICON.lock}${esc(p.circle)}</i>` : topicOf(p.topic) ? `<button class="chip" data-a="nav" data-x="topic/${p.topic}">${esc(topicOf(p.topic).name)}</button>` : `<i class="chip">${esc(p.circle)}</i>`}</div>
       ${POST_EXTRA[id]?.title ? `<h1 class="pd-title">${esc(POST_EXTRA[id].title)}</h1>` : ''}
       ${POST_EXTRA[id] ? `<img class="pd-img" src="posts/${id}.jpg" alt="">` : ''}
       <p class="pd-text">${esc(p.text)}</p>
@@ -920,14 +938,50 @@ V.community = () => {
     <div class="spacer"></div>`;
 };
 
+/* Community = topics first (Design, Engineering…), then the posts inside a topic. */
+const topicOf = (id) => TOPICS.find((t) => t.id === id);
+const topicPosts = (id) => allPosts().filter((p) => p.aud === 'public' && p.topic === id);
+const postTitle = (p) => POST_EXTRA[p.id]?.title || p.text.split(/(?<=[.!?])\s/)[0];
+// Content-first row: what the post is about leads; the author is a small byline.
+function topicPostCard(p) {
+  const a = p.anon ? { name: 'Anonymous member' } : who(p.author);
+  const helped = S.helped.includes(p.id); const n = p.comments + ((S.myComments || {})[p.id] || []).length;
+  const title = postTitle(p); const body = POST_EXTRA[p.id]?.title ? p.text : p.text.slice(title.length).trim();
+  return `<article class="tpost tappable" data-a="nav" data-x="post/${p.id}">
+    <div class="tp-meta"><i class="chip">${p.type}</i><small>${p.ago}</small></div>
+    <h3>${esc(title)}</h3>${body ? `<p>${esc(body)}</p>` : ''}
+    <footer>${p.anon ? '<span class="ph anon" style="width:22px;height:22px">?</span>' : av(a, 22)}<small class="grow">${esc(a.name)}</small><span class="${helped ? 'on' : ''}">${ICON.spark}${p.helpful + (helped ? 1 : 0)}</span><span>${ICON.chat}${n}</span></footer>
+  </article>`;
+}
 function communityView() {
   const q = (ui.cq || '').toLowerCase();
-  const list = allPosts().filter((p) => p.aud === 'public' && (!q || (p.text + p.circle + p.type + (who(p.author)?.name || '')).toLowerCase().includes(q)));
-  return `<div class="search">${ICON.search}<input data-model="cq" placeholder="Search" aria-label="Search posts" value="${esc(ui.cq || '')}"></div>
+  const topics = TOPICS.filter((t) => !q || (t.name + t.blurb).toLowerCase().includes(q));
+  const hits = q ? allPosts().filter((p) => p.aud === 'public' && (p.text + p.type + (topicOf(p.topic)?.name || '') + (who(p.author)?.name || '')).toLowerCase().includes(q)) : [];
+  const tile = (t) => { const ps = topicPosts(t.id); const faces = [...new Set(ps.filter((p) => !p.anon && p.author !== 'me').map((p) => p.author))].slice(0, 3);
+    return `<button class="topic" data-a="nav" data-x="topic/${t.id}">${art(seedOf(t.name), 'topic-art')}<b>${esc(t.name)}</b><small>${esc(t.blurb)}</small>
+      <span class="topic-foot"><span class="faces">${faces.map((id) => av(PEOPLE[id], 20)).join('')}</span>${ps.length} post${ps.length === 1 ? '' : 's'}</span></button>`; };
+  return `<div class="search">${ICON.search}<input data-model="cq" placeholder="Search topics and posts" aria-label="Search topics and posts" value="${esc(ui.cq || '')}"></div>
     <button class="btn primary" style="margin-bottom:18px" data-a="compose" data-x="">+ Create post</button>
-    <p class="note">${ICON.globe} Open to everyone on JobBuddy: questions, takeaways, referrals, and people looking for someone to go with.</p>
-    ${list.map(postCard).join('') || '<div class="empty">No posts match that search</div>'}`;
+    ${topics.length ? `<h2 style="margin:0 0 4px">${q ? 'Topics' : 'Browse by topic'}</h2>
+    <p class="muted small" style="margin-bottom:14px">Open to everyone on JobBuddy. Pick a topic to read its posts.</p>
+    <div class="topic-grid">${topics.map(tile).join('')}</div>` : ''}
+    ${q ? `<h3 style="margin-top:22px">Posts</h3>${hits.map(topicPostCard).join('') || '<div class="empty">No posts match that search</div>'}` : ''}`;
 }
+
+V.topic = (id) => {
+  const t = topicOf(id); if (!t) return V.notfound();
+  const sort = ui.tsort === 'Helpful' ? 'Helpful' : 'Latest';
+  const ps = topicPosts(id); const list = sort === 'Helpful' ? [...ps].sort((a, b) => b.helpful - a.helpful) : ps;
+  return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>${esc(t.name)}</b><span></span></header>
+    <section class="pad">
+      ${art(seedOf(t.name), 'heroart')}
+      <h1 style="margin-top:14px">${esc(t.name)}</h1><p class="muted">${esc(t.blurb)} · ${ps.length} post${ps.length === 1 ? '' : 's'}</p>
+      <div class="pd-chead"><h3>Posts</h3><div class="seg-mini">${['Latest', 'Helpful'].map((k) => `<button class="${sort === k ? 'on' : ''}" data-a="tsort" data-x="${k}">${k}</button>`).join('')}</div></div>
+      ${list.map(topicPostCard).join('') || '<div class="empty">No posts yet — start the first one.</div>'}
+      <div class="spacer"></div>
+    </section>
+    <footer class="sticky"><button class="btn primary" data-a="compose-topic" data-x="${id}">+ Post in ${esc(t.name)}</button></footer>`;
+};
 
 const requests = () => S.followers.filter((id) => !S.following.includes(id) && !(S.dismissed || []).includes(id));
 function metAt(id) { const x = S.encounters.find((y) => y.person === id); return x ? ev(x.eventId).title : ''; }
@@ -1120,7 +1174,8 @@ const PLACEHOLDER = { Question: 'What are you stuck on?', Takeaway: 'What’s on
 V.compose = (eventId) => {
   const e = eventId && ev(eventId);
   const mine = circlesJoined();
-  if (!ui.compose || ui.compose.eventId !== eventId) ui.compose = { eventId, type: e ? 'Takeaway' : 'Question', text: '', audience: e || mine.length ? 'circle' : 'public', circle: e ? e.circle : mine[0] };
+  const tp = ui.composeTopic; ui.composeTopic = null;
+  if (!ui.compose || ui.compose.eventId !== eventId || tp) ui.compose = { eventId, type: e ? 'Takeaway' : 'Question', text: '', audience: tp ? 'public' : e || mine.length ? 'circle' : 'public', circle: e ? e.circle : mine[0], topic: tp || TOPICS[0].id };
   const c = ui.compose;
   return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><b>Create post</b><button class="btn small primary" data-a="post">Post</button></header>
     <section class="pad">
@@ -1129,7 +1184,8 @@ V.compose = (eventId) => {
       <textarea class="field area" data-model="compose.text" placeholder="${PLACEHOLDER[c.type]}">${esc(c.text)}</textarea>
       <h3>Who can see this</h3>
       <div class="seg3">${[['circle', 'Circle'], ['public', 'Public'], ['anon', 'Anonymous']].map(([k, l]) => `<button class="${c.audience === k ? 'on' : ''}" data-a="compose-aud" data-x="${k}">${l}</button>`).join('')}</div>
-      ${c.audience === 'circle' ? `<div class="pills" style="margin-top:12px">${(e ? [e.circle] : mine).map((x) => `<button class="pill ${c.circle === x ? 'on' : ''}" data-a="compose-circle" data-x="${x}">${ICON.lock}${x}</button>`).join('')}</div>` : ''}
+      ${c.audience === 'circle' ? `<div class="pills" style="margin-top:12px">${(e ? [e.circle] : mine).map((x) => `<button class="pill ${c.circle === x ? 'on' : ''}" data-a="compose-circle" data-x="${x}">${ICON.lock}${x}</button>`).join('')}</div>`
+        : `<h3>Topic</h3><div class="pills">${TOPICS.map((t) => `<button class="pill ${c.topic === t.id ? 'on' : ''}" data-a="compose-topicpick" data-x="${t.id}">${esc(t.name)}</button>`).join('')}</div>`}
       <p class="note">${ICON.spark} +${e ? 15 : 10} pts for posting. More when people mark it helpful or reply.</p>
     </section>`;
 };
@@ -1720,14 +1776,17 @@ const A = {
   rate: (x) => { const [id, i] = x.split('|'); S.feedback[id] = +i; save(); toast('Thanks — sent to the host'); render(); },
   compose: (x) => { if (!S.onboarded) { go('onboarding'); return; } go('compose/' + x); },
   'compose-type': (x) => { ui.compose.type = x; render(); },
+  'compose-topic': (x) => { if (!S.onboarded) { go('onboarding'); return; } ui.composeTopic = x; go('compose/'); },
+  'compose-topicpick': (x) => { ui.compose.topic = x; render(); },
+  tsort: (x) => { ui.tsort = x; render(); },
   'compose-aud': (x) => { ui.compose.audience = x; render(); },
   post: () => {
     const c = ui.compose; if (!c.text.trim()) { toast('Write something first'); return; }
     const e = c.eventId && ev(c.eventId);
     const aud = c.audience === 'circle' ? 'circle' : 'public';
-    const post = { id: 'm' + Date.now(), author: 'me', anon: c.audience === 'anon', aud, circle: aud === 'circle' ? c.circle || (e && e.circle) : 'Public', type: c.type, text: c.text.trim(), helpful: 0, comments: 0, ago: 'now' };
+    const post = { id: 'm' + Date.now(), author: 'me', anon: c.audience === 'anon', aud, circle: aud === 'circle' ? c.circle || (e && e.circle) : 'Public', topic: aud === 'public' ? c.topic : undefined, type: c.type, text: c.text.trim(), helpful: 0, comments: 0, ago: 'now' };
     S.posts.unshift(post); ui.compose = null; save();
-    if (aud === 'circle') { ui.ctab = 'Stories'; history.replaceState(null, '', '#/circle/' + encodeURIComponent(post.circle)); render(); } else { ui.cmode = 'Community'; history.replaceState(null, '', '#/community'); render(); }
+    if (aud === 'circle') { ui.ctab = 'Stories'; history.replaceState(null, '', '#/circle/' + encodeURIComponent(post.circle)); render(); } else { ui.cmode = 'Community'; history.replaceState(null, '', '#/topic/' + post.topic); render(); }
     e ? earn(15, 'Shared an event takeaway') : earn(10, 'Published a post');
     setTimeout(() => { const p = S.posts.find((y) => y.id === post.id); if (!p) return; p.helpful++; earn(5, 'Marcus marked your post helpful'); render(); }, 3500);
     setTimeout(() => { const p = S.posts.find((y) => y.id === post.id); if (!p) return; p.comments++; earn(2, 'Sofia commented on your post'); render(); }, 7000);
@@ -1737,7 +1796,7 @@ const A = {
 };
 
 /* =============================================================== RENDER */
-const NO_NAV = ['post', 'buddy', 'buddyq', 'buddyreview', 'pending', 'synced', 'createEvent', 'pod', 'podnew', 'welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'cv', 'mock', 'event', 'recap', 'circle', 'chat'];
+const NO_NAV = ['post', 'buddy', 'buddyq', 'buddyreview', 'pending', 'synced', 'createEvent', 'pod', 'podnew', 'welcome', 'onboarding', 'register', 'badgeedit', 'ticket', 'checkin', 'pair', 'live', 'leave', 'lobby', 'room', 'compose', 'rewards', 'people', 'person', 'cv', 'mock', 'event', 'recap', 'circle', 'topic', 'chat'];
 const TABS = [['home', 'Event', 'var(--t-event)'], ['community', 'Community', 'var(--t-comm)'], ['messages', 'Messages', 'var(--t-msg)'], ['me', 'Account', 'var(--t-acc)']];
 const scrollEnd = () => { const a = $('#app'); a.scrollTop = a.scrollHeight; };
 
@@ -1751,7 +1810,8 @@ function route() {
 const mixWhite = (hex, k) => '#' + [1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * k + 255 * (1 - k)).toString(16).padStart(2, '0')).join('');
 function statusBar(name, arg) {
   const e = ['event', 'recap'].includes(name) && ev(arg);
-  const c = e ? mixWhite(e.cover[0], 0.5) : '#ffffff';
+  const inTab = !navigator.standalone && !matchMedia('(display-mode: standalone)').matches;
+  const c = e && !inTab ? mixWhite(e.cover[0], 0.5) : '#ffffff';   // in a browser tab the whole toolbar recolours = flash
   const m = document.querySelector('meta[name="theme-color"]'); if (m && m.content !== c) m.content = c;
   document.body.style.background = e ? c : '';
 }
@@ -1911,7 +1971,382 @@ setInterval(tickBadge, 650);
     S.seedV = SEED_V; save();
   }
 }
+V.tappy = () => '<section class="pad center"><p class="muted">Pairing your Tappy…</p></section>';   // #/tappy/TP-07 from the QR (Live mode)
 loadMyEvents();
 render();
+
+/* ----------------------------------------------------------- Live mode
+   Only active when the page is served by the JobBuddy Live server on the hotspot
+   (sprint-3/live-server). It links this phone to a real Tappy board:
+   staff hand-over binds the board, MEET on the board confirms, taps arrive as
+   encounters, the exit tap wipes the board. GitHub Pages has no /api, so this stays off. */
+const LIVE = { on: false, uid: localStorage.getItem('jobbuddy-live-uid'), sent: '', returned: 0, rev: -1 };
+// Detailed Tappy settings (Account -> Tappy). Collected once, used for matching; never shown on the device.
+const LIVE_SETTINGS = {
+  emma: { looking: 'Mentor', vibe: 'Small groups, deep conversations', hobbies: ['Art', 'Photography'], mbti: 'INFP', showMbti: false, hoping: ['Portfolio feedback', 'Career advice'], open: 'A little', skill: 'New to it', opener: 'Hi! I design apps and love talking portfolios.', reply: 'Great meeting you today — let’s keep in touch 👋' },
+  marcus: { looking: 'New job', vibe: 'Room-wide, high energy mingling', hobbies: ['Sports', 'Gaming'], mbti: 'ENTJ', showMbti: false, hoping: ['Career advice', 'Job leads'], open: 'Yes, all in', skill: 'Some experience', opener: 'Teacher moving into web dev — ask me anything!', reply: 'Good to meet you — let’s grab a coffee sometime!' }
+};
+const LIVE_PEOPLE = {
+  emma: { device: 'TP-07', profile: { ...DEFAULT_PROFILE } },
+  marcus: { device: 'TP-08', profile: { name: 'Marcus Rivera', field: 'Data', stage: 'Switching careers', interests: ['Career change', 'Data viz', 'Interviews'], fact: 'Has taught 900 Year 9s to love graphs.', avatar: 'male_2_1', color: '#8FB8FF', showStage: false, photo: 'people/marcus.jpg' } }
+};
+const liveApi = (path, body) => fetch('/api/live/' + path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}).then((r) => r.json());
+
+function liveLogin(uid) {
+  const who = LIVE_PEOPLE[uid]; if (!who) return;
+  LIVE.uid = uid; localStorage.setItem('jobbuddy-live-uid', uid); BADGE_ID = localStorage.getItem('jobbuddy-live-device') || who.device;
+  const next = S.afterOnboard || 'home';
+  localStorage.removeItem(KEY); S = { ...fresh(), seedV: '2026-10-07' };
+  S.profile = { ...who.profile }; S.onboarded = true; seedAccount(140);
+  S.cards = null; liveCards(); liveApplyCard();   // Designer + Web coder templates, Designer selected
+  // At the live event, no Tappy yet, nobody met yet. Pairing is the first thing to do.
+  S.regs['coffee-meetup'] = { status: 'checkedin', list: true, wall: true, confirmed: true };
+  S.live = { eventId: 'coffee-meetup' }; S.badge = { screen: 'off' };
+  S.tsDefaults = { ...LIVE_SETTINGS[uid] };
+  S.encounters = S.encounters.filter((x) => x.eventId !== 'coffee-meetup');
+  S.following = S.following.filter((x) => x !== uid); S.followers = S.followers.filter((x) => x !== uid);
+  save(); liveTrimSelf(); go(next); render();
+  toast(`Logged in as ${who.profile.name.split(' ')[0]}`);
+  if (LIVE.pendingDev) { const d = LIVE.pendingDev; LIVE.pendingDev = null; livePairFromQr(d); }
+}
+
+// Scanning the QR on a Tappy (phone Camera app) opens #/tappy/TP-07: check in and bind that board.
+const LIVE_EVENT = 'coffee-meetup';
+function livePairFromQr(dev) {
+  dev = String(dev || '').toUpperCase();
+  if (!LIVE.uid || !S.profile) { LIVE.pendingDev = dev; toast('Log in to pair your Tappy'); history.replaceState(null, '', '#/auth'); render(); return; }
+  BADGE_ID = dev; localStorage.setItem('jobbuddy-live-device', dev);
+  const id = LIVE_EVENT;
+  const d0 = S.tsDefaults || {};
+  S.regs[id] = { ...(S.regs[id] || {}), status: 'checkedin', confirmed: true, list: true, wall: true, q: { hoping: d0.hoping || [], open: d0.open || '', skill: d0.skill || '', opener: d0.opener || '', reply: d0.reply || DEFAULT_AUTO_REPLY } };
+  S.live = { eventId: id, badgeId: dev, pairing: false, card: true }; S.badge = { screen: 'off' }; ui.phase = { ...(ui.phase || {}), [id]: 1 }; save();
+  LIVE.arriving = true;
+  liveApi('arrive', { user: LIVE.uid, device: dev }).then(() => toast(`${dev} is yours \u00b7 now choose a card`)).catch(() => toast('Server not reachable')).finally(() => { LIVE.arriving = false; });
+  if (/^#\/tappy\//i.test(location.hash)) { history.replaceState(null, '', '#/livecard/' + id); render(); } else go('livecard/' + id);   // in-app scan: keep the event page to go back to
+}
+
+/* Cards: what the Tappy shows (avatar, colour, career line). Pick one per event, edit it, or make a new one. */
+// Two ready-made templates per person, so the demo starts with a normal profile.
+function liveTemplates() {
+  const p = S.profile || DEFAULT_PROFILE;
+  const base = LIVE_SETTINGS[LIVE.uid] || LIVE_SETTINGS.emma;
+  return [
+    { name: 'Designer', avatar: p.avatar, color: p.color, career: 'Design', level: 'Beginner',
+      about: { ...base, looking: 'Mentor', hoping: ['Portfolio feedback', 'Career advice'], opener: 'Hi! I design apps and love talking portfolios.' } },
+    { name: 'Web coder', avatar: p.avatar, color: p.color === '#8FB8FF' ? '#7CE0C3' : '#8FB8FF', career: 'Web coder', level: 'Beginner',
+      about: { ...base, looking: 'Collaborator', vibe: 'Room-wide, high energy mingling', hobbies: ['Gaming', 'Music'], hoping: ['Meeting other juniors', 'Job leads'], skill: 'Some experience', opener: 'I build web apps — looking for people to make side projects with.' } }
+  ];
+}
+function liveCards() {
+  if (!S.cards?.length || !S.cards.every((c) => c.name && c.about)) { S.cards = liveTemplates(); S.cardSel = 0; save(); }
+  return S.cards;
+}
+// The chosen card is the Tappy profile (what badgeLook() and the board use).
+function liveApplyCard() {
+  const c = liveCards()[S.cardSel || 0];
+  const a = c.about || {};
+  S.buddy = { ...(S.buddy || {}), avatar: c.avatar, color: c.color, career: c.career, level: c.level, looking: a.looking, vibe: a.vibe, hobbies: a.hobbies || [], mbti: a.mbti, reply: a.reply, saved: true };
+  S.tsDefaults = { ...a };
+  const L = S.live; if (L?.eventId && S.regs[L.eventId]) S.regs[L.eventId].q = { hoping: a.hoping || [], open: a.open || '', skill: a.skill || '', opener: a.opener || '', reply: a.reply || DEFAULT_AUTO_REPLY };
+  save();
+  LIVE.sent = '';
+}
+// Physical MEET button on each board: TP-07 has a star, TP-08 a heart.
+const TAPPY_BTN = { 'TP-07': '\u2605\uFE0E', 'TP-08': '\u2665\uFE0E' };   // \uFE0E: text glyph, not a red emoji on iOS
+// Diagram of a board, same finger-press animation as the original Link page; the MEET key is the board's real button.
+function liveDevice(c, sym, caption = '') {
+  const name = esc(me()?.short || '');
+  return `<div class="how-art press link-art"><div class="hw-dev c"><div class="hw-scr"><div class="hw-face">${caption ? `<small>${caption}</small>` : ''}${avatar(c.avatar, c.color, 30)}<b>${name}</b></div></div><i class="hw-btn" style="font-size:15px;line-height:1;padding-top:3px;padding-bottom:3px">${sym}</i></div><span class="hw-finger"></span></div>`;
+}
+function liveGuide(dev, c, raw, paired) {
+  const device = liveDevice(c, raw, paired ? '' : 'IS THIS YOU?'); const sym = `<span style="color:#3E6FE6">${raw}</span>`;
+  const steps = paired
+    ? [['Tap Tappys together', 'Hold your Tappy against someone else\u2019s \u2014 that\u2019s how you meet'], ['Talk', 'You both get the same icebreaker question'], [`Press ${sym}`, `Once for a new question \u00b7 hold ${sym} when you\u2019re done`]]
+    : [['Check the screen', `${dev} shows your card`], [`Press ${sym} once`, 'If it\u2019s you \u2014 hold it if it isn\u2019t']];
+  return `<div style="background:#f4f4f1;border-radius:18px;padding:16px;margin:12px 0">
+      <small style="display:block;font-weight:700;letter-spacing:.06em;color:#666;font-size:10px;margin-bottom:10px">${paired ? 'HOW TO USE YOUR TAPPY' : 'ONE LAST STEP'}</small>
+      <div style="display:flex;justify-content:center;margin-bottom:12px">${device}</div>
+      <ol class="link-steps" style="text-align:left;margin:0">${steps.map(([t, d]) => `<li><b>${t}</b><small>${d}</small></li>`).join('')}</ol>
+    </div>`;
+}
+const CARD_CAREERS = [...new Set([...BUDDY.career, 'Web coder'])];
+const cardTag = (c) => `${c.career} \u00b7 ${c.level}`;
+const cardMini = (c, size = 56) => `<div class="mini-screen" style="width:auto;padding:10px 6px"><div class="bs idle" style="animation:none">${avatar(c.avatar, c.color, size)}<b>${esc(me()?.short || '')}</b><small>${esc(cardTag(c))}</small></div></div>`;
+
+function liveUseCard(id) {
+  const L = S.live; liveApplyCard();   // push the new look before the board shows it
+  livePoll().then(() => {
+    if (L?.paired) { toast(`${L.badgeId} updated`); go('event/' + id); return; }
+    return liveApi('card', { user: LIVE.uid }).then(() => {
+      L.card = false; L.pairing = true; S.badge = { screen: 'pairing' }; save();
+      go('pair/' + id);
+    });
+  }).catch(() => toast('Server not reachable'));
+}
+
+/* In-app QR scanner (Live mode). Needs the https link: Safari only opens the camera on secure pages.
+   Decodes the Tappy's QR with jsQR (js/vendor/jsQR.js, Apache-2.0) and pairs that board. */
+let liveScanStream = null;
+function liveScanStop() {
+  liveScanStream?.getTracks().forEach((t) => t.stop()); liveScanStream = null;
+  document.getElementById('live-scan')?.remove();
+}
+async function liveScan() {
+  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { livePickDevice('This browser can\u2019t open the camera.'); return; }
+  if (!window.jsQR) await new Promise((ok, no) => { const t = document.createElement('script'); t.src = 'js/vendor/jsQR.js'; t.onload = ok; t.onerror = no; document.head.appendChild(t); }).catch(() => {});
+  if (!window.jsQR) { toast('Scanner failed to load'); return; }
+  const o = document.createElement('div'); o.id = 'live-scan';
+  o.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#fff;font-family:Inter,system-ui';
+  o.innerHTML = `<div style="position:relative;width:78vw;max-width:340px;aspect-ratio:1;border-radius:24px;overflow:hidden;background:#111"><video playsinline muted autoplay style="width:100%;height:100%;object-fit:cover"></video><div style="position:absolute;inset:14%;border:3px solid #D7FF3A;border-radius:18px"></div></div>
+    <b style="font-size:18px">Point at the QR on the Tappy</b><button style="all:unset;padding:12px 28px;border-radius:99px;background:#fff;color:#000;font-weight:600;cursor:pointer">Cancel</button>`;
+  document.body.appendChild(o);
+  o.querySelector('button').onclick = liveScanStop;
+  const video = o.querySelector('video'); const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  try { liveScanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }); }
+  catch { liveScanStop(); livePickDevice('Camera not allowed.'); return; }
+  video.srcObject = liveScanStream; await video.play().catch(() => {});
+  const tick = () => {
+    if (!liveScanStream) return;
+    if (video.videoWidth) {
+      const w = 480; const h = Math.round(w * video.videoHeight / video.videoWidth);
+      canvas.width = w; canvas.height = h; ctx.drawImage(video, 0, 0, w, h);
+      const code = window.jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' });
+      const m = code?.data.match(/tappy\/(TP-\d+)/i);
+      if (m) { navigator.vibrate?.(30); liveScanStop(); livePairFromQr(m[1]); return; }
+    }
+    requestAnimationFrame(tick);
+  };
+  tick();
+}
+// No camera (in-app browser, http, permission denied): pick the number printed on the Tappy instead.
+function livePickDevice(why) {
+  document.getElementById('live-pick')?.remove();
+  const o = document.createElement('div'); o.id = 'live-pick';
+  o.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#0008;display:flex;align-items:flex-end;font-family:Inter,system-ui';
+  o.innerHTML = `<div style="background:#fff;width:100%;border-radius:22px 22px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom))">
+    <b style="font-size:18px">Which Tappy do you have?</b><p style="color:#666;margin:6px 0 14px">${why} Pick the number on its screen instead.</p>
+    ${Object.entries(TAPPY_BTN).map(([d, sym]) => `<button data-pick="${d}" style="all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:12px;width:100%;padding:14px;margin:6px 0;border:1px solid #ddd;border-radius:14px"><span style="width:40px;height:40px;border-radius:10px;background:#1f1f1f;color:#3E6FE6;display:grid;place-items:center;font-size:24px">${sym}</span><b>${d}</b></button>`).join('')}
+    <button data-pick="" style="all:unset;cursor:pointer;display:block;margin:10px auto 0;color:#666">Cancel</button></div>`;
+  o.onclick = (e) => { const b = e.target.closest('[data-pick]'); if (!b && e.target !== o) return; o.remove(); if (b?.dataset.pick) livePairFromQr(b.dataset.pick); };
+  document.body.appendChild(o);
+}
+function liveRouteQr() { const m = location.hash.match(/^#\/tappy\/(TP-\d+)/i); if (m) { livePairFromQr(m[1]); return true; } return false; }
+function liveTrimSelf() { if (LIVE.uid && LIVE.uid !== 'emma') EVENTS.forEach((e) => { e.attendees = (e.attendees || []).filter((x) => x !== LIVE.uid); }); }
+
+function livePeer(id, people) {
+  const p = people?.[id]; if (!p) return;
+  const base = PEOPLE[id] || { id, photo: id === 'emma' ? 'people/me.jpg' : `people/${id}.jpg`, interests: [], fact: '', responds: 'yes', headline: p.line };
+  PEOPLE[id] = { ...base, name: id === 'marcus' ? base.name || p.name : p.name, short: p.name.split(' ')[0], field: (p.line || '').split(/ [·-] /)[0] || base.field, avatar: p.avatar, color: p.color };
+}
+
+async function livePoll() {
+  if (!LIVE.uid || !S.profile) return;
+  try {
+    const l = badgeLook(); const p = S.profile || {};
+    const look = { name: (p.name || '').split(' ')[0], line: l.tag, avatar: l.avatar, color: l.color, device: BADGE_ID };
+    const key = JSON.stringify(look);
+    const d = await liveApi('user/' + LIVE.uid, key !== LIVE.sent ? look : undefined);
+    LIVE.sent = key; LIVE.ok = true;
+    Object.keys(d.people || {}).forEach((id) => { if (id !== LIVE.uid) livePeer(id, d.people); });
+    const L = S.live;
+    // The server is the truth: if this person's Tappy was reset or given to someone else, go back to "Pair your Tappy".
+    if (L?.badgeId && !d.step && !LIVE.arriving && !L.returned) {
+      S.live = { eventId: L.eventId }; S.badge = { screen: 'off' }; save(); render(); toast(`${L.badgeId} is no longer paired \u00b7 pair again`); return;
+    }
+    if (L && L.pairing && d.paired && d.step && d.step !== 'confirm') { A['pair-confirm'](); if (route()[0] === 'pair') history.replaceState(null, '', '#/event/' + L.eventId); render(); }
+    if (L && L.eventId) {
+      let changed = false;
+      d.encounters.forEach((e) => {
+        const x = S.encounters.find((y) => y.person === e.peer && y.eventId === L.eventId);
+        if (!x) { addEncounter(e.peer, L.eventId, e.prompt, 'tappy', e.pending); changed = true; if (!e.pending) toast(`Linked with ${PEOPLE[e.peer]?.short || e.peer} · saved quietly`); }
+        else if (x.waiting && !e.pending) { x.waiting = false; x.prompt = e.prompt; save(); changed = true; toast(`Linked with ${PEOPLE[e.peer]?.short || e.peer} · saved quietly`); }
+      });
+      if (d.returned && d.returned !== LIVE.returned && L.paired && !L.returned) { LIVE.returned = d.returned; LIVE.skipExit = true; A['exit-tap'](L.eventId); LIVE.skipExit = false; }
+      else if (changed) render();
+    }
+    LIVE.returned = d.returned || LIVE.returned;
+  } catch { LIVE.ok = false; }
+}
+
+fetch('/api/live/health').then((r) => r.ok ? r.json() : null).then((h) => {
+  if (h?.app !== 'jobbuddy-live') return;
+  if (location.protocol === 'http:' && location.port === '8020' && !/^(localhost|127\.)/.test(location.hostname)) {
+    location.replace(`https://${location.hostname}:8443/${location.hash}`); return;   // camera only works on https
+  }
+  LIVE.on = true; window.__liveNow = LIVE_EVENT;
+  A['live-login'] = (x) => liveLogin(x);
+  const arrive = A.arrive, exitTap = A['exit-tap'];
+  A.arrive = (id) => { arrive(id); liveApi('arrive', { user: LIVE.uid, device: BADGE_ID }).then(() => toast(`${BADGE_ID} handed to you · press MEET on it`)); };
+  A['exit-tap'] = (id) => { if (!LIVE.skipExit) liveApi('exit', { user: LIVE.uid }); exitTap(id); };
+  // Log in: a normal login page with two mock accounts (Emma, Marcus).
+  const LIVE_EMAILS = { emma: 'emma@student.uts.edu.au', marcus: 'marcus.rivera@gmail.com' };
+  V.auth = () => `<header class="bar"><button class="icon-btn" data-a="back">${ICON.close}</button><span></span><span></span></header>
+  <section class="pad auth">
+    <span class="brand-dot big">${ICON.badge}</span>
+    <h2>Log in</h2>
+    <p class="muted">Keep your events and the people you meet.</p>
+    <input class="field" id="live-email" type="email" placeholder="Email" value="${ui.liveEmail || ''}" autocomplete="off">
+    <input class="field" type="password" placeholder="Password" value="${ui.liveEmail ? 'demo-pass' : ''}">
+    <button class="btn primary" data-a="login-demo">Log in</button>
+    <p class="muted small" style="margin:18px 0 6px">Demo accounts</p>
+    ${Object.entries(LIVE_PEOPLE).map(([id, w]) => `<button class="row" data-a="live-fill" data-x="${id}" style="width:100%;display:flex;gap:12px;align-items:center;padding:10px;border:1px solid #e5e5e5;border-radius:14px;background:#fff;margin:6px 0;text-align:left;font:inherit">${av({ ...w.profile, photo: w.profile.photo || 'people/me.jpg' }, 40)}<span><b>${w.profile.name}</b><br><small class="muted">${LIVE_EMAILS[id]}</small></span></button>`).join('')}
+  </section>`;
+  A['live-fill'] = (x) => { ui.liveEmail = LIVE_EMAILS[x]; render(); };
+  A['login-demo'] = () => {
+    const el = document.getElementById('live-email');
+    if (!el) { go('auth'); return; }   // header "Log in" button -> login page
+    const v = (el.value || '').trim().toLowerCase();
+    const uid = Object.keys(LIVE_EMAILS).find((k) => v && (v === LIVE_EMAILS[k] || v.startsWith(k)));
+    if (!uid) { toast('Use a demo account below'); return; }
+    ui.liveEmail = ''; liveLogin(uid);
+  };
+  if (!NO_NAV.includes('auth')) NO_NAV.push('auth');
+  // Arrive page: no staff step. Pick up any Tappy and scan the QR on its screen.
+  const checkin = V.checkin;
+  V.checkin = (id) => {
+    if (!reg(id)) return checkin(id);
+    const dev = LIVE_PEOPLE[LIVE.uid]?.device || BADGE_ID;
+    return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="event/${id}">${ICON.back}</button><b>Arrive</b><span></span></header>
+    <section class="pad center">
+      <div class="big-check" style="background:#111">${ICON.qr}</div>
+      <h2>Pick up a Tappy</h2>
+      <p class="muted">Its screen shows a QR code. Scan it to pair that Tappy to you.</p>
+      <button class="btn primary" data-a="live-scan" style="width:100%;margin:6px 0 14px">Scan QR</button>
+      <ol class="link-steps" style="text-align:left"><li><b>Scan the QR on the Tappy</b><small>Tap Scan QR above</small></li><li><b>Choose your card</b><small>Here on your phone</small></li><li><b>Press MEET</b><small>When the Tappy shows your card</small></li></ol>
+      ${demo('Pair ' + dev + ' without scanning', 'live-pair', dev)}
+      <button class="link" data-a="no-badge" data-x="${id}">Continue without a Tappy</button>
+    </section>`;
+  };
+  A['live-pair'] = (x) => livePairFromQr(x);
+  A['live-scan'] = () => liveScan();
+  NO_NAV.push('livecard', 'livecardedit');
+  const cardPage = (id) => {
+    const cards = liveCards(); const L = S.live || {}; const sel = Math.min(S.cardSel || 0, cards.length - 1);
+    const forEvent = id && L.eventId === id && L.badgeId;
+    return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>Choose your card</b><span></span></header>
+    <section class="pad">
+      <div class="badge-preview" style="margin-bottom:16px">${cardMini(cards[sel], 96)}</div>
+      ${cardsStrip(true)}
+    </section>
+    <footer class="sticky"><button class="btn primary" data-a="lc-use" data-x="${forEvent ? id : ''}">${forEvent ? (L.paired ? `Show on ${L.badgeId}` : 'Use this card') : 'Done'}</button></footer>`;
+  };
+  V.livecard = (id) => cardPage(id);
+  // Cards strip (Account + Tappy settings): how many cards, which one is in use, edit, add.
+  const cardsStrip = (pick) => {
+    const cards = liveCards(); const sel = Math.min(S.cardSel || 0, cards.length - 1); const p = me(); const dev = S.live?.badgeId;
+    const tile = (c, i) => `<div style="flex:0 0 148px;border-radius:18px;padding:12px;background:#111;color:#fff;position:relative">
+      <button data-a="lc-pick" data-x="${i}" style="all:unset;cursor:pointer;display:block">${avatar(c.avatar, c.color, 52)}<b style="display:block;margin-top:8px">${esc(c.name)}</b><small style="color:#bbb;font-size:11px">${esc(p.short)} \u00b7 ${esc(cardTag(c))}</small></button>
+      ${i === sel ? `<i class="chip chip-going" style="position:absolute;top:10px;right:10px;margin:0">${pick ? 'Selected' : 'In use'}</i>` : ''}
+      <button data-a="lc-edit" data-x="${i}" style="all:unset;cursor:pointer;display:block;margin-top:8px;font-size:12px;color:#D7FF3A">Edit</button></div>`;
+    return `${pick ? '' : `<div class="nc-head"><h3>Your cards \u00b7 ${cards.length}</h3></div>`}
+      <p class="muted small" style="margin:${pick ? '0' : '-4px'} 0 10px">${pick ? `Pick the card ${dev || 'your Tappy'} shows tonight. Edit it or add a new one.` : `Your Tappy${dev && S.live?.paired ? ' (' + dev + ')' : ''} shows the card in use. Tap a card to switch.`}</p>
+      <div class="hscroll" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px">${cards.map(tile).join('')}
+        <button data-a="lc-edit" data-x="new" style="all:unset;cursor:pointer;flex:0 0 120px;border-radius:18px;border:2px dashed #ccc;display:grid;place-items:center;color:#888;font-weight:600">+ New card</button></div>`;
+  };
+  V.buddy = () => V.me();   // cards (appearance + About you) are managed on Account
+  A['ts-set'] = (x) => { const [k, v] = x.split('|'); ui.ts[k] = v; const t = $('#app').scrollTop; render(); $('#app').scrollTop = t; };
+  A['ts-toggle'] = (x) => { const [k, v] = x.split('|'); const a = ui.ts[k] || []; ui.ts[k] = a.includes(v) ? a.filter((y) => y !== v) : [...a, v]; const t = $('#app').scrollTop; render(); $('#app').scrollTop = t; };
+  A['ts-save'] = () => { S.tsDefaults = { ...ui.ts }; S.buddy = { ...(S.buddy || {}), looking: ui.ts.looking, vibe: ui.ts.vibe, hobbies: ui.ts.hobbies, mbti: ui.ts.mbti, reply: ui.ts.reply, saved: true }; ui.ts = null; save(); toast('Tappy settings saved'); A.back(); };
+  // Account (Live demo): basic info, connections, cards, one tool. Nothing else.
+  V.me = () => {
+    const p = me();
+    if (!p) return `<header class="top"><h1>Account</h1></header><section class="pad center"><p class="muted">Log in to keep the people you meet.</p><button class="btn primary" data-a="login-demo">Log in</button></section>`;
+    return `<header class="top"><div style="display:flex;gap:14px;align-items:center">${av(p, 64)}<div><h1>${esc(p.name)}</h1><p class="muted" style="margin-top:4px">${p.stage} / ${p.field}</p></div></div><button class="icon-btn" data-a="edit-profile" aria-label="Edit profile">${ICON.edit}</button></header>
+    <section class="pad">
+      <p class="muted" style="margin:0">Hi, I\u2019m ${esc(p.short)} \u2014 ${p.stage.toLowerCase()} in ${p.field.toLowerCase()}. ${p.fact ? esc(p.fact) + '.' : ''}</p>
+      <button data-a="people-tab" data-x="connections" style="all:unset;cursor:pointer;display:block;margin:8px 0 20px;color:var(--green2);font-weight:600">${connections().length} connections \u203a</button>
+      ${cardsStrip()}
+      <h3 style="margin-top:24px">Career tools</h3>
+      <button class="tool" data-a="nav" data-x="cv"><span class="tool-ico">${ICON.file}</span><span class="row-main"><b>AI CV review</b><small>${S.cvFree ?? 3} free this month</small></span>${ICON.chev}</button>
+      <button class="tool" data-a="nav" data-x="mock"><span class="tool-ico">${ICON.people}</span><span class="row-main"><b>Mock interview with a person</b><small>${S.mockFree ?? 1} free session this month</small></span>${ICON.chev}</button>
+      <p class="muted small center" style="margin-top:28px"><button class="linkish small" data-a="logout">Log out</button> \u00b7 <button class="linkish small" data-a="reset">Reset demo data</button></p>
+      <div class="spacer"></div>
+    </section>`;
+  };
+  V.livecardedit = (i) => {
+    const cards = liveCards();
+    if (!ui.cd || ui.cd.i !== i) {
+      const src = i === 'new' ? { ...cards[0], name: 'My card', color: AVATAR_COLORS[(cards.length + 2) % AVATAR_COLORS.length] } : cards[+i];
+      ui.cd = { i, step: 1, ...JSON.parse(JSON.stringify(src)) };
+    }
+    const c = ui.cd; ui.cda = c.about || (c.about = {}); const A2 = c.about;
+    const chips = (list, key) => `<div class="pills">${list.map((v) => `<button class="pill ${c[key] === v ? 'on' : ''}" data-a="lc-set" data-x="${key}|${v}">${v}</button>`).join('')}</div>`;
+    const one = (list, key) => `<div class="pills">${list.map((v) => `<button class="pill ${A2[key] === v ? 'on' : ''}" data-a="lc-about" data-x="${key}|${v}|0">${v}</button>`).join('')}</div>`;
+    const many = (list, key) => `<div class="pills">${list.map((v) => `<button class="pill ${(A2[key] || []).includes(v) ? 'on' : ''}" data-a="lc-about" data-x="${key}|${v}|1">${v}</button>`).join('')}</div>`;
+    const steps = `<div style="display:flex;gap:6px;margin:0 0 14px">${['Appearance & text', 'About you'].map((t, k) => `<button data-a="lc-step" data-x="${k + 1}" style="all:unset;cursor:pointer;flex:1;text-align:center;padding:8px 4px;border-radius:12px;font-size:13px;font-weight:600;${c.step === k + 1 ? 'background:#111;color:#fff' : 'background:#f1f1ee;color:#777'}">${k + 1} \u00b7 ${t}</button>`).join('')}</div>`;
+    const title = i === 'new' ? 'New card' : `Edit ${esc(c.name)}`;
+    if (c.step === 2) return `<header class="bar"><button class="icon-btn" data-a="lc-step" data-x="1">${ICON.back}</button><b>${title}</b><span></span></header>
+    <section class="pad">
+      ${steps}
+      <p class="muted small" style="margin:0">Goes with this card. Used to pick prompts and people \u2014 never shown on the device.</p>
+      <h3>What are you hoping to find?</h3>${one(BUDDY.looking, 'looking')}
+      <h3>Your vibe at events</h3>${one(BUDDY.vibe, 'vibe')}
+      <h3>Interests &amp; hobbies</h3>${many(BUDDY.hobbies, 'hobbies')}
+      <h3>MBTI <small class="muted">(optional)</small></h3>
+      <select class="field" data-model="cda.mbti"><option value="">Not set</option>${BUDDY.mbti.map((m) => `<option ${A2.mbti === m ? 'selected' : ''}>${m}</option>`).join('')}</select>
+      <h3>What you hope to get from events</h3>${many(EVENT_Q.hoping, 'hoping')}
+      <h3>Talking to strangers about your career</h3>${one(EVENT_Q.open, 'open')}
+      <h3>Skill level</h3>${one(EVENT_Q.skill, 'skill')}
+      <h3>Opening message</h3><input class="field" data-model="cda.opener" value="${esc(A2.opener || '')}" maxlength="80">
+      <h3>Auto-reply when someone accepts</h3><input class="field" data-model="cda.reply" value="${esc(A2.reply || '')}" maxlength="80">
+      <div class="spacer"></div>
+    </section>
+    <footer class="sticky"><button class="btn primary" data-a="lc-save">Save card</button></footer>`;
+    const avs = AVATAR_CHOICES.includes(c.avatar) ? AVATAR_CHOICES : [c.avatar, ...AVATAR_CHOICES];
+    return `<header class="bar"><button class="icon-btn" data-a="back">${ICON.back}</button><b>${title}</b><span></span></header>
+    <section class="pad">
+      ${steps}
+      <div class="badge-preview">${cardMini(c, 84)}</div>
+      <h3>Card name</h3><input class="field" data-model="cd.name" value="${esc(c.name)}" maxlength="20">
+      <h3>Avatar</h3><div class="avatar-grid">${avs.map((k) => `<button class="${c.avatar === k ? 'on' : ''}" data-a="lc-set" data-x="avatar|${k}">${avatar(k, c.color, 60)}</button>`).join('')}</div>
+      <h3>Colour</h3><div class="swatches">${AVATAR_COLORS.map((col) => `<button class="${c.color === col ? 'on' : ''}" style="background:${col}" data-a="lc-set" data-x="color|${col}" aria-label="colour ${col}"></button>`).join('')}</div>
+      <h3>Career background</h3>${chips(CARD_CAREERS, 'career')}
+      <h3>Experience level</h3>${chips(BUDDY.level, 'level')}
+      <div class="spacer"></div>
+    </section>
+    <footer class="sticky"><button class="btn primary" data-a="lc-step" data-x="2">Next: About you</button></footer>`;
+  };
+  A['lc-pick'] = (x) => {
+    S.cardSel = +x; save();
+    if (route()[0] !== 'livecard') { liveApplyCard(); livePoll(); toast(`Tappy now shows ${liveCards()[+x].name}`); }
+    const t = $('#app').scrollTop; render(); $('#app').scrollTop = t;
+  };
+  A['lc-edit'] = (x) => { ui.cd = null; go('livecardedit/' + x); };
+  A['lc-step'] = (x) => { ui.cd.step = +x; $('#app').scrollTop = 0; render(); };
+  A['lc-about'] = (x) => { const [k, v, m] = x.split('|'); const a = ui.cd.about; if (m === '1') a[k] = (a[k] || []).includes(v) ? a[k].filter((y) => y !== v) : [...(a[k] || []), v]; else a[k] = v; const t = $('#app').scrollTop; render(); $('#app').scrollTop = t; };
+  A['lc-set'] = (x) => { const [k, v] = x.split('|'); ui.cd[k] = v; const t = $('#app').scrollTop; render(); $('#app').scrollTop = t; };
+  A['lc-save'] = () => { const { i, step: _s, ...c } = ui.cd; const cards = liveCards(); if (i === 'new') { cards.push(c); S.cardSel = cards.length - 1; } else { cards[+i] = c; S.cardSel = +i; } ui.cd = null; save(); if (S.live?.paired || !S.live?.badgeId) { liveApplyCard(); livePoll(); } toast('Card saved'); A.back(); };
+  A['lc-del'] = () => { const cards = liveCards(); cards.splice(+ui.cd.i, 1); S.cardSel = 0; ui.cd = null; save(); history.back(); };
+  A['lc-use'] = (x) => { if (x) return liveUseCard(x); liveApplyCard(); livePoll(); toast('Tappy profile saved'); A.back(); };
+  // Back: if there is nothing to go back to (page opened from the QR), go up one level instead.
+  const UP = { buddy: () => 'me', livecard: () => 'event/' + (S.live?.eventId || LIVE_EVENT), livecardedit: () => (S.live?.badgeId && !S.live.paired ? 'livecard/' + S.live.eventId : 'me'), buddyq: () => 'event/' + LIVE_EVENT, buddyreview: () => 'event/' + LIVE_EVENT, pair: () => 'event/' + LIVE_EVENT, auth: () => 'home' };
+  let inAppNavs = 0;   // hash changes made inside this tab; 0 = opened fresh (e.g. from the QR)
+  window.addEventListener('hashchange', () => { inAppNavs++; });
+  A.back = () => {
+    const before = location.hash; const name = route()[0];
+    if (inAppNavs > 0) { inAppNavs -= 2; history.back(); }   // back itself fires one hashchange
+    else { inAppNavs = 0; go(UP[name] ? UP[name]() : 'home'); return; }
+    setTimeout(() => { if (location.hash === before) go(UP[name] ? UP[name]() : 'home'); }, 300);
+  };
+  // Link page in Live: shows the real button on this board (TP-07 star, TP-08 heart). Once linked, back to the event.
+  V.pair = (id) => {
+    const L = S.live || {};
+    if (L.eventId !== id || !L.badgeId || L.paired || !L.pairing) return V.event(id);
+    const c = liveCards()[S.cardSel || 0]; const raw = TAPPY_BTN[L.badgeId] || '\u2605'; const sym = `<span style="color:#3E6FE6">${raw}</span>`;
+    return `<header class="bar"><button class="icon-btn" data-a="nav" data-x="event/${id}">${ICON.back}</button><b>Link your Tappy</b><span></span></header>
+    <section class="pad center">
+      ${liveDevice(c, raw, 'IS THIS YOU?')}
+      <h2 style="margin-top:18px">Press ${sym} on ${L.badgeId}</h2>
+      <p class="muted">That links ${L.badgeId} to you for this event.</p>
+      <ol class="link-steps" style="text-align:left"><li><b>Check the screen</b><small>It shows your card: ${esc(c.name)}</small></li><li><b>Press ${sym} once</b><small>Your phone updates right away</small></li></ol>
+      <p class="muted small">Not your card? <b>Hold ${sym}</b> to go back.</p>
+    </section>`;
+  };
+  window.addEventListener('hashchange', () => { if (LIVE.on) liveRouteQr(); });
+  if (!S.profile) LIVE.uid = null;   // logged out (e.g. Reset demo data)
+  if (LIVE.uid && LIVE_PEOPLE[LIVE.uid]) { BADGE_ID = localStorage.getItem('jobbuddy-live-device') || LIVE_PEOPLE[LIVE.uid].device; liveTrimSelf(); }
+  if (!liveRouteQr()) render();
+  setInterval(livePoll, 1000); livePoll();
+}).catch(() => {});
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').catch(() => {});
